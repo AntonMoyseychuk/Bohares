@@ -6,7 +6,8 @@
 
 int main(int argc, char* argv[])
 {
-#if defined(DEBUG_NO_ARGS)
+// #define DEBUG_NO_ARGS
+#ifdef DEBUG_NO_ARGS
     const char* str = "#= () {\n\r }[], .+-*/%^:;?~!><\n== >> << >= <= !=";
     bohLexer lexer = bohLexerCreate(str, strlen(str) + 1);
 
@@ -15,9 +16,11 @@ int main(int argc, char* argv[])
     const size_t tokensCount = bohTokenStorageGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
         const bohToken* pToken = bohTokenStorageAt(&tokens, i);
-        assert(pToken);
 
-        fprintf_s(stdout, "%s\n", bohTokenGetLexeme(pToken));
+        const bohString* pLexeme = bohTokenGetLexeme(pToken);
+        const char* pLexemeStr = bohStringGetDataConst(pLexeme);
+
+        fprintf_s(stdout, "%s (line: %u, column: %u)\n", pLexemeStr, pToken->line, pToken->column);
     }
 
     return EXIT_SUCCESS;
@@ -39,9 +42,11 @@ int main(int argc, char* argv[])
     const size_t tokensCount = bohTokenStorageGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
         const bohToken* pToken = bohTokenStorageAt(&tokens, i);
-        assert(pToken);
 
-        fprintf_s(stdout, "%s (line: %u, column: %u)\n", bohTokenGetLexeme(pToken), pToken->line, pToken->column);
+        const bohString* pLexeme = bohTokenGetLexeme(pToken);
+        const char* pLexemeStr = bohStringGetDataConst(pLexeme);
+
+        fprintf_s(stdout, "%s (line: %u, column: %u)\n", pLexemeStr, pToken->line, pToken->column);
     }
 
     bohFileContentFree(&fileContent);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include "utils/ds/string.h"
 
 
 typedef enum TokenType
@@ -64,14 +64,21 @@ typedef enum TokenType
 
 typedef struct Token
 {
+    bohString lexeme;
     bohTokenType type;
     uint32_t line;
     uint32_t column;
 } bohToken;
 
 
-bohToken bohTokenCreate(bohTokenType type, uint32_t line, uint32_t column);
-const char* bohTokenGetLexeme(const bohToken* pToken);
+bohToken bohTokenCreateDefault(void);
+bohToken bohTokenCreate(const char* pLexeme, bohTokenType type, uint32_t line, uint32_t column);
+
+void bohTokenDestroy(bohToken* pToken);
+
+void bohTokenAssign(bohToken* pDst, const bohToken* pSrc);
+
+const bohString* bohTokenGetLexeme(const bohToken* pToken);
 
 
 typedef struct TokenStorage

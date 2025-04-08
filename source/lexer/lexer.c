@@ -9,21 +9,16 @@ enum
 };
 
 
-static char lexAdvanceCurrChar(bohLexer* pLexer)
-{
-    const size_t nextCharIdx = pLexer->currPos + 1;
-
-    return nextCharIdx > pLexer->dataSize ? '\0' : pLexer->pData[pLexer->currPos++];
-}
+typedef bool (*storAlgorithmDelegate)(char ch);
 
 
-static char lexPickCurrChar(bohLexer* pLexer)
+static char lexPickCurrPosChar(bohLexer* pLexer)
 {
     return pLexer->pData[pLexer->currPos];
 }
 
 
-static char lexPickNextCharN(bohLexer* pLexer, size_t n)
+static char lexPickNextNStepChar(bohLexer* pLexer, size_t n)
 {
     const size_t nextNCharIdx = pLexer->currPos + n;
 
@@ -31,23 +26,56 @@ static char lexPickNextCharN(bohLexer* pLexer, size_t n)
 }
 
 
-static bool lexIsEndLineChar(char ch)
+static char lexAdvanceCurrPos(bohLexer* pLexer)
+{
+    const size_t nextCharIdx = pLexer->currPos + 1;
+
+    return nextCharIdx > pLexer->dataSize ? '\0' : pLexer->pData[pLexer->currPos++];
+}
+
+
+static char lexAdvanceCurrPosWhile(bohLexer* pLexer, storAlgorithmDelegate pFunc)
+{
+    char ch = lexPickCurrPosChar(pLexer);
+    
+    while(pFunc(ch)) {
+        lexAdvanceCurrPos(pLexer);
+        ch = lexPickCurrPosChar(pLexer);
+    }
+    
+    return ch;
+}
+
+
+static bool IsEndLineChar(char ch)
 {
     return ch == '\n' || ch == '\0';
 }
 
 
-static bool lexIsDigitChar(char ch)
+static bool IsNotEndLineChar(char ch)
+{
+    return !IsEndLineChar(ch);
+}
+
+
+static bool IsNotDoubleQuoteOrEndChar(char ch)
+{
+    return ch != '\"' && ch != '\0';
+}
+
+
+static bool IsDigitChar(char ch)
 {
     return ch >= '0' && ch <= '9';
 }
 
 
-static void lexAddTokenToStorage(bohTokenStorage* pStorage, const char* pLexeme, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
+static void storTokenStorageEmplaceBack(bohTokenStorage* pStorage, const char* pLexeme, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
 {
     assert(pStorage);
 
-    bohToken token = bohTokenCreateLexemSized(pLexeme, lexemeLength, type, line, column);
+    bohToken token = bohTokenCreateLexemeSized(pLexeme, lexemeLength, type, line, column);
 
     bohTokenStoragePushBack(pStorage, &token);
 }
@@ -79,7 +107,7 @@ bohToken bohTokenCreate(const char *pLexeme, bohTokenType type, uint32_t line, u
 }
 
 
-bohToken bohTokenCreateLexemSized(const char* pLexemeBegin, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
+bohToken bohTokenCreateLexemeSized(const char* pLexemeBegin, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
 {
     bohToken token;
 
@@ -301,9 +329,9 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
     
     while (pLexer->currPos < dataSize) {
         pLexer->startPos = pLexer->currPos;
-
-        const char ch = lexAdvanceCurrChar(pLexer);
         ++pLexer->column;
+
+        const char ch = lexAdvanceCurrPos(pLexer);
 
         bohTokenType type = TOKEN_TYPE_UNKNOWN;
 
@@ -318,9 +346,7 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 continue;
 
             case '#':
-                while(!lexIsEndLineChar(lexPickCurrChar(pLexer))) {
-                    lexAdvanceCurrChar(pLexer);
-                }
+                lexAdvanceCurrPosWhile(pLexer, IsNotEndLineChar);
                 continue;
 
             case '(': type = TOKEN_TYPE_LPAREN; break;
@@ -342,9 +368,9 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
             case '?': type = TOKEN_TYPE_QUESTION; break;
             case '~': type = TOKEN_TYPE_BITWISE_NOT; break;
             case '!': 
-                switch (lexPickCurrChar(pLexer)) {
+                switch (lexPickCurrPosChar(pLexer)) {
                     case '=':
-                        lexAdvanceCurrChar(pLexer);
+                        lexAdvanceCurrPos(pLexer);
                         type = TOKEN_TYPE_NOT_EQUAL;
                         break;
                     default: 
@@ -354,9 +380,9 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 
                 break;
             case '=':
-                switch (lexPickCurrChar(pLexer)) {
+                switch (lexPickCurrPosChar(pLexer)) {
                     case '=':
-                        lexAdvanceCurrChar(pLexer);
+                        lexAdvanceCurrPos(pLexer);
                         type = TOKEN_TYPE_EQUAL;
                         break;
                     default: 
@@ -366,13 +392,13 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 
                 break;
             case '>':
-                switch (lexPickCurrChar(pLexer)) {
+                switch (lexPickCurrPosChar(pLexer)) {
                     case '=':
-                        lexAdvanceCurrChar(pLexer);
+                        lexAdvanceCurrPos(pLexer);
                         type = TOKEN_TYPE_GEQUAL;
                         break;
                     case '>':
-                        lexAdvanceCurrChar(pLexer);
+                        lexAdvanceCurrPos(pLexer);
                         type = TOKEN_TYPE_RSHIFT;
                         break;
                     default: 
@@ -382,13 +408,13 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
 
                 break;
             case '<':
-                switch (lexPickCurrChar(pLexer)) {
+                switch (lexPickCurrPosChar(pLexer)) {
                     case '=':
-                        lexAdvanceCurrChar(pLexer);
+                        lexAdvanceCurrPos(pLexer);
                         type = TOKEN_TYPE_LEQUAL;
                         break;
                     case '<':
-                        lexAdvanceCurrChar(pLexer);
+                        lexAdvanceCurrPos(pLexer);
                         type = TOKEN_TYPE_LSHIFT;
                         break;
                     default: 
@@ -397,23 +423,34 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 }
 
                 break;
+            case '\"':
+            {
+                const char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotDoubleQuoteOrEndChar);
+                assert(currCh == '\"' && "Missed closing double quotes. Make it compile error");
+
+                lexAdvanceCurrPos(pLexer);
+
+                type = TOKEN_TYPE_STRING;
+                break;
+            }
             default:
                 type = TOKEN_TYPE_UNKNOWN;
                 break;
         }
 
         if (type == TOKEN_TYPE_UNKNOWN) {
-            if (lexIsDigitChar(ch)) {
-                while(lexIsDigitChar(lexPickCurrChar(pLexer))) { lexAdvanceCurrChar(pLexer); }
+            if (IsDigitChar(ch)) {
+                lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
 
                 type = TOKEN_TYPE_INTEGER;
 
-                if (lexPickCurrChar(pLexer) == '.') {
-                    assert(lexIsDigitChar(lexPickNextCharN(pLexer, 1))); // Assert for now, but it should be compilation error
+                if (lexPickCurrPosChar(pLexer) == '.') {
+                    const char nextCh = lexPickNextNStepChar(pLexer, 1);
+                    assert(IsDigitChar(nextCh) && "Invalid floating point number gramma. Make it compile error");
                     
-                    lexAdvanceCurrChar(pLexer); // Consume the '.'
+                    lexAdvanceCurrPos(pLexer); // Consume the '.'
                     
-                    while(lexIsDigitChar(lexPickCurrChar(pLexer))) { lexAdvanceCurrChar(pLexer); }
+                    lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
 
                     type = TOKEN_TYPE_FLOAT;
                 }
@@ -423,7 +460,7 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
         const char* pLexemBegin = type != TOKEN_TYPE_UNKNOWN ? pLexer->pData + pLexer->startPos : "unknown";
         const size_t lexemeLength = type != TOKEN_TYPE_UNKNOWN ? pLexer->currPos - pLexer->startPos : strlen(pLexemBegin);
 
-        lexAddTokenToStorage(&tokens, pLexemBegin, lexemeLength, type, pLexer->line, pLexer->column);
+        storTokenStorageEmplaceBack(&tokens, pLexemBegin, lexemeLength, type, pLexer->line, pLexer->column);
     }
 
     return tokens;

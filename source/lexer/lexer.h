@@ -73,6 +73,7 @@ typedef struct Token
 
 bohToken bohTokenCreateDefault(void);
 bohToken bohTokenCreate(const char* pLexeme, bohTokenType type, uint32_t line, uint32_t column);
+bohToken bohTokenCreateLexemSized(const char* pLexemeBegin, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column);
 
 void bohTokenDestroy(bohToken* pToken);
 

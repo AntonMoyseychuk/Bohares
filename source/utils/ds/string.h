@@ -14,6 +14,7 @@ typedef struct String
 
 bohString bohStringCreate(void);
 bohString bohStringCreateStr(const char* pCStr);
+bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd);
 
 void bohStringDestroy(bohString* pStr);
 

@@ -17,9 +17,7 @@ bohString bohStringCreate(void)
 
 bohString bohStringCreateStr(const char* pCStr)
 {
-    if (!pCStr) {
-        return bohStringCreate();
-    }
+    assert(pCStr);
 
     bohString str;
 
@@ -30,6 +28,35 @@ bohString bohStringCreateStr(const char* pCStr)
     if (str.capacity > 0) {
         str.pData = (char*)malloc(str.capacity);
         strcpy_s(str.pData, str.capacity * sizeof(char), pCStr);
+    }
+
+    return str;
+}
+
+
+bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd)
+{
+    assert(pBegin);
+    assert(pEnd);
+
+    const uintptr_t beginAddr = (uintptr_t)pBegin;
+    const uintptr_t endAddr = (uintptr_t)pEnd;
+
+    assert(endAddr >= beginAddr);
+
+    const size_t length = endAddr - beginAddr;
+
+    bohString str;
+
+    str.pData = "";
+    str.size = length;
+    str.capacity = str.size > 0 ? str.size + 1 : 0;
+
+    if (str.capacity > 0) {
+        str.pData = (char*)malloc(str.capacity);
+        
+        memcpy_s(str.pData, str.capacity, pBegin, length);
+        str.pData[length] = '\0';
     }
 
     return str;

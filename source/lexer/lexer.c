@@ -43,11 +43,11 @@ static bool lexIsDigitChar(char ch)
 }
 
 
-static void lexAddTokenToStorage(bohTokenStorage* pStorage, const char* pLexeme, bohTokenType type, uint32_t line, uint32_t column)
+static void lexAddTokenToStorage(bohTokenStorage* pStorage, const char* pLexeme, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
 {
     assert(pStorage);
 
-    bohToken token = bohTokenCreate(pLexeme, type, line, column);
+    bohToken token = bohTokenCreateLexemSized(pLexeme, lexemeLength, type, line, column);
 
     bohTokenStoragePushBack(pStorage, &token);
 }
@@ -71,6 +71,21 @@ bohToken bohTokenCreate(const char *pLexeme, bohTokenType type, uint32_t line, u
     bohToken token;
 
     token.lexeme = bohStringCreateStr(pLexeme);
+    token.type = type;
+    token.line = line;
+    token.column = column;
+
+    return token;
+}
+
+
+bohToken bohTokenCreateLexemSized(const char* pLexemeBegin, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
+{
+    bohToken token;
+
+    const char* pLexemeEnd = pLexemeBegin + lexemeLength;
+
+    token.lexeme = bohStringCreateFromTo(pLexemeBegin, pLexemeEnd);
     token.type = type;
     token.line = line;
     token.column = column;
@@ -290,9 +305,6 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
         const char ch = lexAdvanceCurrChar(pLexer);
         ++pLexer->column;
 
-        char pLexeme[32] = { 0 };
-        pLexeme[0] = ch;
-
         bohTokenType type = TOKEN_TYPE_UNKNOWN;
 
         switch (ch) {
@@ -334,7 +346,6 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                     case '=':
                         lexAdvanceCurrChar(pLexer);
                         type = TOKEN_TYPE_NOT_EQUAL;
-                        pLexeme[1] = '=';
                         break;
                     default: 
                         type = TOKEN_TYPE_NOT;
@@ -347,7 +358,6 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                     case '=':
                         lexAdvanceCurrChar(pLexer);
                         type = TOKEN_TYPE_EQUAL;
-                        pLexeme[1] = '=';
                         break;
                     default: 
                         type = TOKEN_TYPE_ASSIGN;
@@ -360,12 +370,10 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                     case '=':
                         lexAdvanceCurrChar(pLexer);
                         type = TOKEN_TYPE_GEQUAL;
-                        pLexeme[1] = '=';
                         break;
                     case '>':
                         lexAdvanceCurrChar(pLexer);
                         type = TOKEN_TYPE_RSHIFT;
-                        pLexeme[1] = '>';
                         break;
                     default: 
                         type = TOKEN_TYPE_GREATER;
@@ -378,12 +386,10 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                     case '=':
                         lexAdvanceCurrChar(pLexer);
                         type = TOKEN_TYPE_LEQUAL;
-                        pLexeme[1] = '=';
                         break;
                     case '<':
                         lexAdvanceCurrChar(pLexer);
                         type = TOKEN_TYPE_LSHIFT;
-                        pLexeme[1] = '<';
                         break;
                     default: 
                         type = TOKEN_TYPE_LESS;
@@ -396,7 +402,10 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 break;
         }
 
-        lexAddTokenToStorage(&tokens, type != TOKEN_TYPE_UNKNOWN ? pLexeme : "unknown", type, pLexer->line, pLexer->column);
+        const char* pLexemBegin = type != TOKEN_TYPE_UNKNOWN ? pLexer->pData + pLexer->startPos : "unknown";
+        const size_t lexemeLength = type != TOKEN_TYPE_UNKNOWN ? pLexer->currPos - pLexer->startPos : strlen(pLexemBegin);
+
+        lexAddTokenToStorage(&tokens, pLexemBegin, lexemeLength, type, pLexer->line, pLexer->column);
     }
 
     return tokens;

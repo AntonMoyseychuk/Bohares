@@ -27,7 +27,7 @@ static char lexPickNextCharN(bohLexer* pLexer, size_t n)
 {
     const size_t nextNCharIdx = pLexer->currPos + n;
 
-    return nextNCharIdx >= pLexer->dataSize ? '\0' : pLexer->pData[pLexer->currPos];
+    return nextNCharIdx >= pLexer->dataSize ? '\0' : pLexer->pData[nextNCharIdx];
 }
 
 
@@ -400,6 +400,24 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
             default:
                 type = TOKEN_TYPE_UNKNOWN;
                 break;
+        }
+
+        if (type == TOKEN_TYPE_UNKNOWN) {
+            if (lexIsDigitChar(ch)) {
+                while(lexIsDigitChar(lexPickCurrChar(pLexer))) { lexAdvanceCurrChar(pLexer); }
+
+                type = TOKEN_TYPE_INTEGER;
+
+                if (lexPickCurrChar(pLexer) == '.') {
+                    assert(lexIsDigitChar(lexPickNextCharN(pLexer, 1))); // Assert for now, but it should be compilation error
+                    
+                    lexAdvanceCurrChar(pLexer); // Consume the '.'
+                    
+                    while(lexIsDigitChar(lexPickCurrChar(pLexer))) { lexAdvanceCurrChar(pLexer); }
+
+                    type = TOKEN_TYPE_FLOAT;
+                }
+            }
         }
 
         const char* pLexemBegin = type != TOKEN_TYPE_UNKNOWN ? pLexer->pData + pLexer->startPos : "unknown";

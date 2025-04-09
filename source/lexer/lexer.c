@@ -168,6 +168,12 @@ static bool IsNotDoubleQuoteOrEndChar(char ch)
 }
 
 
+static bool IsNotMultilineCommentEndOrEndChar(char ch)
+{
+    return ch != ']' && ch != '\0';
+}
+
+
 static bool IsDigitChar(char ch)
 {
     return ch >= '0' && ch <= '9';
@@ -480,7 +486,18 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 continue;
 
             case '#':
-                lexAdvanceCurrPosWhile(pLexer, IsNotEndLineChar);
+                if (lexPickCurrPosChar(pLexer) == '[') {
+                    char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotMultilineCommentEndOrEndChar);
+                    assert(currCh == ']' && "Missed closing multiline comment symbol ]. Make it compile error");
+
+                    lexAdvanceCurrPos(pLexer); // Consume ']' symbol
+                    currCh = lexPickCurrPosChar(pLexer);
+                    assert(currCh == '#' && "Missed closing multiline comment symbol #. Make it compile error");
+
+                    lexAdvanceCurrPos(pLexer); // Consume '#' symbol
+                } else {
+                    lexAdvanceCurrPosWhile(pLexer, IsNotEndLineChar);
+                }
                 continue;
 
             case '(': type = TOKEN_TYPE_LPAREN; break;
@@ -562,7 +579,7 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
                 const char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotDoubleQuoteOrEndChar);
                 assert(currCh == '\"' && "Missed closing double quotes. Make it compile error");
 
-                lexAdvanceCurrPos(pLexer);
+                lexAdvanceCurrPos(pLexer); // Consume '"' symbol
 
                 type = TOKEN_TYPE_STRING;
                 break;

@@ -8,7 +8,8 @@ int main(int argc, char* argv[])
 {
 // #define DEBUG_NO_ARGS
 #ifdef DEBUG_NO_ARGS
-    const char* str = "\"Hellow World!\" 123 + 33.33";
+    const char* str = "#[ if x >= 0 then print(\"x is positive\n\") else print(\"x is negative\n\") end]#";
+
     bohLexer lexer = bohLexerCreate(str, strlen(str) + 1);
 
     bohTokenStorage tokens = bohLexerTokenize(&lexer);

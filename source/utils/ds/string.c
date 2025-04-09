@@ -139,21 +139,21 @@ char* bohStringGetData(bohString *pStr)
 }
 
 
-size_t bohStringGetSize(bohString *pStr)
+size_t bohStringGetSize(const bohString* pStr)
 {
     assert(pStr);
     return pStr->size;
 }
 
 
-size_t bohStringGetCapacity(bohString *pStr)
+size_t bohStringGetCapacity(const bohString* pStr)
 {
     assert(pStr);
     return pStr->capacity;
 }
 
 
-char bohStringAt(bohString* pStr, size_t index)
+char bohStringAt(const bohString* pStr, size_t index)
 {
     assert(pStr);
     assert(pStr->pData);
@@ -163,8 +163,44 @@ char bohStringAt(bohString* pStr, size_t index)
 }
 
 
-bool bohStringIsEmpty(bohString* pStr)
+bool bohStringIsEmpty(const bohString* pStr)
 {
     assert(pStr);
     return pStr->size == 0;
+}
+
+
+bool bohStringEqual(const bohString* pLeft, const bohString* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+
+    bohStringView left = bohStringViewCreateString(pLeft);
+    bohStringView right = bohStringViewCreateString(pRight);
+
+    return bohStringViewEqual(&left, &right);
+}
+
+
+bool bohStringLess(const bohString* pLeft, const bohString* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+
+    bohStringView left = bohStringViewCreateString(pLeft);
+    bohStringView right = bohStringViewCreateString(pRight);
+
+    return bohStringViewLess(&left, &right);
+}
+
+
+bool bohStringGreater(const bohString* pLeft, const bohString* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+
+    bohStringView left = bohStringViewCreateString(pLeft);
+    bohStringView right = bohStringViewCreateString(pRight);
+
+    return bohStringViewGreater(&left, &right);
 }

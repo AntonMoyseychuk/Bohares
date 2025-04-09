@@ -19,17 +19,26 @@ bohString bohStringCreate(void);
 bohString bohStringCreateCStr(const char* pCStr);
 bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd);
 
+
 void bohStringDestroy(bohString* pStr);
+
 
 bohString* bohStringAssign(bohString* pDst, const bohString* pSrc);
 bohString* bohStringAssignCStr(bohString* pDst, const char* pCStr);
 
+
 const char* bohStringGetDataConst(const bohString* pStr);
 char* bohStringGetData(bohString* pStr);
 
-size_t bohStringGetSize(bohString* pStr);
-size_t bohStringGetCapacity(bohString* pStr);
+size_t bohStringGetSize(const bohString* pStr);
+size_t bohStringGetCapacity(const bohString* pStr);
 
-char bohStringAt(bohString* pStr, size_t index);
+char bohStringAt(const bohString* pStr, size_t index);
 
-bool bohStringIsEmpty(bohString* pStr);
+
+bool bohStringIsEmpty(const bohString* pStr);
+
+
+bool bohStringEqual(const bohString* pLeft, const bohString* pRight);
+bool bohStringLess(const bohString* pLeft, const bohString* pRight);
+bool bohStringGreater(const bohString* pLeft, const bohString* pRight);

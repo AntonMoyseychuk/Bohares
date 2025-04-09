@@ -71,6 +71,18 @@ bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, const char* pSt
 }
 
 
+bohStringView *bohStringViewAssignStringView(bohStringView *pDst, const bohStringView *pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    pDst->pData = pSrc->pData;
+    pDst->size = pSrc->size;
+
+    return pDst;
+}
+
+
 bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* pStr)
 {
     assert(pDst);
@@ -94,6 +106,23 @@ size_t bohStringViewGetSize(const bohStringView* pStrView)
 {
     assert(pStrView);
     return pStrView->size;
+}
+
+
+char bohStringViewAt(const bohStringView* pStrView, size_t index)
+{
+    assert(pStrView);
+    assert(pStrView->pData);
+    assert(index < pStrView->size);
+
+    return pStrView->pData[index];
+}
+
+
+bool bohStringViewIsEmpty(const bohStringView* pStrView)
+{
+    assert(pStrView);
+    return pStrView->size == 0;
 }
 
 

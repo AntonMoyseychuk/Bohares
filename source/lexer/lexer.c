@@ -6,27 +6,30 @@
 
 typedef struct KeyWordToken
 {
-    const char* pLexeme;
+    bohStringView lexeme;
     bohTokenType type;
 } bohKeyWordToken;
 
 
+#define BOH_CREATE_KEY_WORD_TOKEN(lexeme, type) { { lexeme, sizeof(lexeme) - 1 }, type }
+
+
 static const bohKeyWordToken BOH_KEY_WORDS[] = {
-    { "if",     TOKEN_TYPE_IF },
-    { "then",   TOKEN_TYPE_THEN },
-    { "else",   TOKEN_TYPE_ELSE },
-    { "end",    TOKEN_TYPE_END },
-    { "true",   TOKEN_TYPE_TRUE },
-    { "false",  TOKEN_TYPE_FALSE },
-    { "and",    TOKEN_TYPE_AND },
-    { "or",     TOKEN_TYPE_OR },
-    { "while",  TOKEN_TYPE_WHILE },
-    { "do",     TOKEN_TYPE_DO },
-    { "for",    TOKEN_TYPE_FOR },
-    { "func",   TOKEN_TYPE_FUNC },
-    { "null",   TOKEN_TYPE_NULL },
-    { "print",  TOKEN_TYPE_PRINT },
-    { "return", TOKEN_TYPE_RETURN },
+    BOH_CREATE_KEY_WORD_TOKEN("if",     TOKEN_TYPE_IF),
+    BOH_CREATE_KEY_WORD_TOKEN("then",   TOKEN_TYPE_THEN),
+    BOH_CREATE_KEY_WORD_TOKEN("else",   TOKEN_TYPE_ELSE),
+    BOH_CREATE_KEY_WORD_TOKEN("end",    TOKEN_TYPE_END),
+    BOH_CREATE_KEY_WORD_TOKEN("true",   TOKEN_TYPE_TRUE),
+    BOH_CREATE_KEY_WORD_TOKEN("false",  TOKEN_TYPE_FALSE),
+    BOH_CREATE_KEY_WORD_TOKEN("and",    TOKEN_TYPE_AND),
+    BOH_CREATE_KEY_WORD_TOKEN("or",     TOKEN_TYPE_OR),
+    BOH_CREATE_KEY_WORD_TOKEN("while",  TOKEN_TYPE_WHILE),
+    BOH_CREATE_KEY_WORD_TOKEN("do",     TOKEN_TYPE_DO),
+    BOH_CREATE_KEY_WORD_TOKEN("for",    TOKEN_TYPE_FOR),
+    BOH_CREATE_KEY_WORD_TOKEN("func",   TOKEN_TYPE_FUNC),
+    BOH_CREATE_KEY_WORD_TOKEN("null",   TOKEN_TYPE_NULL),
+    BOH_CREATE_KEY_WORD_TOKEN("print",  TOKEN_TYPE_PRINT),
+    BOH_CREATE_KEY_WORD_TOKEN("return", TOKEN_TYPE_RETURN),
 };
 
 
@@ -42,23 +45,25 @@ typedef bool (*storAlgorithmDelegate)(char ch);
 
 static char lexPickCurrPosChar(bohLexer* pLexer)
 {
-    return pLexer->pData[pLexer->currPos];
+    return bohStringViewAt(&pLexer->data, pLexer->currPos);
 }
 
 
 static char lexPickNextNStepChar(bohLexer* pLexer, size_t n)
 {
     const size_t nextNCharIdx = pLexer->currPos + n;
+    const size_t dataSize = bohStringViewGetSize(&pLexer->data);
 
-    return nextNCharIdx >= pLexer->dataSize ? '\0' : pLexer->pData[nextNCharIdx];
+    return nextNCharIdx >= dataSize ? '\0' : bohStringViewAt(&pLexer->data, nextNCharIdx);
 }
 
 
 static char lexAdvanceCurrPos(bohLexer* pLexer)
 {
     const size_t nextCharIdx = pLexer->currPos + 1;
+    const size_t dataSize = bohStringViewGetSize(&pLexer->data);
 
-    return nextCharIdx > pLexer->dataSize ? '\0' : pLexer->pData[pLexer->currPos++];
+    return nextCharIdx > dataSize ? '\0' : bohStringViewAt(&pLexer->data, pLexer->currPos++);
 }
 
 
@@ -75,17 +80,17 @@ static char lexAdvanceCurrPosWhile(bohLexer* pLexer, storAlgorithmDelegate pFunc
 }
 
 
-static bohKeyWordToken lexConvertIdentifierLexemeToKeyWord(const char* pLexemBegin, size_t lexemeLength)
+static bohKeyWordToken lexConvertIdentifierLexemeToKeyWord(bohStringView tokenLexeme)
 { 
     for (size_t i = 0; i < BOH_KEY_WORDS_COUNT; ++i) {
         const bohKeyWordToken* pKeyWord = BOH_KEY_WORDS + i;
 
-        if (strncmp(pKeyWord->pLexeme, pLexemBegin, lexemeLength) == 0) {
+        if (bohStringViewEqual(&pKeyWord->lexeme, &tokenLexeme)) {
             return *pKeyWord;
         }
     }
 
-    bohKeyWordToken invalidKeyWordToken = { "unknown", TOKEN_TYPE_UNKNOWN };
+    bohKeyWordToken invalidKeyWordToken = BOH_CREATE_KEY_WORD_TOKEN("unknown", TOKEN_TYPE_UNKNOWN);
     return invalidKeyWordToken;
 }
 
@@ -212,7 +217,7 @@ bohToken bohTokenCreateDefault(void)
 {
     bohToken token;
 
-    token.lexeme = bohStringCreate();
+    token.lexeme = bohStringViewCreate();
     token.type = TOKEN_TYPE_UNKNOWN;
     token.line = 0;
     token.column = 0;
@@ -225,7 +230,7 @@ bohToken bohTokenCreate(const char *pLexeme, bohTokenType type, uint32_t line, u
 {
     bohToken token;
 
-    token.lexeme = bohStringCreateCStr(pLexeme);
+    token.lexeme = bohStringViewCreateCStr(pLexeme);
     token.type = type;
     token.line = line;
     token.column = column;
@@ -238,9 +243,7 @@ bohToken bohTokenCreateLexemeSized(const char* pLexemeBegin, size_t lexemeLength
 {
     bohToken token;
 
-    const char* pLexemeEnd = pLexemeBegin + lexemeLength;
-
-    token.lexeme = bohStringCreateFromTo(pLexemeBegin, pLexemeEnd);
+    token.lexeme = bohStringViewCreateCStrSized(pLexemeBegin, lexemeLength);
     token.type = type;
     token.line = line;
     token.column = column;
@@ -253,7 +256,7 @@ void bohTokenDestroy(bohToken* pToken)
 {
     assert(pToken);
 
-    bohStringDestroy(&pToken->lexeme);
+    bohStringViewReset(&pToken->lexeme);
     pToken->type = TOKEN_TYPE_UNKNOWN;
     pToken->line = 0;
     pToken->column = 0;
@@ -265,17 +268,17 @@ void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
     assert(pDst);
     assert(pSrc);
 
-    bohStringAssign(&pDst->lexeme, &pSrc->lexeme);
+    bohStringViewAssign(&pDst->lexeme, &pSrc->lexeme);
     pDst->type = pSrc->type;
     pDst->line = pSrc->line;
     pDst->column = pSrc->column;
 }
 
 
-const bohString* bohTokenGetLexeme(const bohToken* pToken)
+bohStringView bohTokenGetLexeme(const bohToken* pToken)
 {
     assert(pToken);
-    return &pToken->lexeme;
+    return pToken->lexeme;
 }
 
 
@@ -430,8 +433,7 @@ bohLexer bohLexerCreate(const char* pCodeData, size_t codeDataSize)
 
     bohLexer lexer;
 
-    lexer.pData = pCodeData;
-    lexer.dataSize = codeDataSize;
+    lexer.data = bohStringViewCreateCStrSized(pCodeData, codeDataSize);
 
     lexer.startPos = 0;
     lexer.currPos = 0;
@@ -447,8 +449,7 @@ void bohLexerDestroy(bohLexer* pLexer)
 {
     assert(pLexer);
 
-    pLexer->pData = NULL;
-    pLexer->dataSize = 0;
+    bohStringViewReset(&pLexer->data);
 
     pLexer->startPos = 0;
     pLexer->currPos = 0;
@@ -465,7 +466,7 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
 
     bohTokenStorage tokens = bohTokenStorageCreate();
 
-    const size_t dataSize = pLexer->dataSize;
+    const size_t dataSize = bohStringViewGetSize(&pLexer->data);
     
     while (pLexer->currPos < dataSize) {
         pLexer->startPos = pLexer->currPos;
@@ -617,11 +618,12 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
 
         assert(type != TOKEN_TYPE_UNKNOWN && "Undefined token");
 
-        const char* pLexemBegin = pLexer->pData + pLexer->startPos;
+        const char* pLexemBegin = bohStringViewGetData(&pLexer->data) + pLexer->startPos;
         const size_t lexemeLength = pLexer->currPos - pLexer->startPos;
 
         if (type == TOKEN_TYPE_IDENTIFIER) {
-            const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(pLexemBegin, lexemeLength);
+            const bohStringView lexemeStrView = bohStringViewCreateCStrSized(pLexemBegin, lexemeLength);
+            const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(lexemeStrView);
 
             if (keyWord.type != TOKEN_TYPE_UNKNOWN) {
                 type = keyWord.type;
@@ -637,5 +639,5 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
 
 bool bohLexerIsValid(bohLexer* pLexer)
 {
-    return pLexer && pLexer->pData != NULL && pLexer->dataSize > 0;
+    return pLexer && !bohStringViewIsEmpty(&pLexer->data);
 }

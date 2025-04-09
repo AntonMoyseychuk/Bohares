@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/ds/string.h"
+#include "utils/ds/string_view.h"
 
 
 typedef enum TokenType
@@ -63,7 +64,7 @@ typedef enum TokenType
 
 typedef struct Token
 {
-    bohString lexeme;
+    bohStringView lexeme;
     bohTokenType type;
     uint32_t line;
     uint32_t column;
@@ -78,7 +79,7 @@ void bohTokenDestroy(bohToken* pToken);
 
 void bohTokenAssign(bohToken* pDst, const bohToken* pSrc);
 
-const bohString* bohTokenGetLexeme(const bohToken* pToken);
+bohStringView bohTokenGetLexeme(const bohToken* pToken);
 bohTokenType bohTokenGetType(const bohToken* pToken);
 const char* bohTokenGetTypeStr(const bohToken* pToken);
 
@@ -108,14 +109,13 @@ bool bohTokenStorageIsEmpty(const bohTokenStorage* pStorage);
 
 typedef struct Lexer
 {
-    const char* pData;
-    size_t dataSize;
+    bohStringView data;
 
-    size_t startPos;
-    size_t currPos;
+    size_t startPos; // Begin of current lexeme
+    size_t currPos;  // Current position inside current lexeme
 
-    size_t line;
-    size_t column;
+    size_t line;     // Lexeme line
+    size_t column;   // Lexeme column
 } bohLexer;
 
 

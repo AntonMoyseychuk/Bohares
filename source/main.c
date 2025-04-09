@@ -44,8 +44,9 @@ int main(int argc, char* argv[])
     for (size_t i = 0; i < tokensCount; ++i) {
         const bohToken* pToken = bohTokenStorageAt(&tokens, i);
 
-        const bohString* pLexeme = bohTokenGetLexeme(pToken);
-        const char* pLexemeStr = bohStringGetDataConst(pLexeme);
+        const bohStringView lexeme = bohTokenGetLexeme(pToken);
+        const bohString lexemeStr = bohStringCreateStringView(&lexeme); // To make lexeme 0 terminated
+        const char* pLexemeStr = bohStringGetDataConst(&lexemeStr);
 
         fprintf_s(stdout, "%s\t(line: %u, col: %u): %s\n", bohTokenGetTypeStr(pToken), pToken->line, pToken->column, pLexemeStr);
     }

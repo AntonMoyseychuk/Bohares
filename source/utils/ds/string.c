@@ -64,6 +64,17 @@ bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd)
 }
 
 
+bohString bohStringCreateStringView(const bohStringView* pStrView)
+{
+    assert(pStrView);
+
+    const char* pStr = bohStringViewGetData(pStrView);
+    const size_t size = bohStringViewGetSize(pStrView);
+
+    return bohStringCreateFromTo(pStr, pStr + size);
+}
+
+
 void bohStringDestroy(bohString* pStr)
 {
     assert(pStr);

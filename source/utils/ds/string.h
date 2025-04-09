@@ -4,6 +4,9 @@
 #include <stdbool.h>
 
 
+typedef struct StringView bohStringView;
+
+
 typedef struct String
 {
     char* pData;    
@@ -13,13 +16,13 @@ typedef struct String
 
 
 bohString bohStringCreate(void);
-bohString bohStringCreateStr(const char* pCStr);
+bohString bohStringCreateCStr(const char* pCStr);
 bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd);
 
 void bohStringDestroy(bohString* pStr);
 
-void bohStringAssign(bohString* pDst, const bohString* pSrc);
-void bohStringAssignStr(bohString* pDst, const char* pCStr);
+bohString* bohStringAssign(bohString* pDst, const bohString* pSrc);
+bohString* bohStringAssignCStr(bohString* pDst, const char* pCStr);
 
 const char* bohStringGetDataConst(const bohString* pStr);
 char* bohStringGetData(bohString* pStr);

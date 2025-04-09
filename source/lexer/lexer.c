@@ -225,7 +225,7 @@ bohToken bohTokenCreate(const char *pLexeme, bohTokenType type, uint32_t line, u
 {
     bohToken token;
 
-    token.lexeme = bohStringCreateStr(pLexeme);
+    token.lexeme = bohStringCreateCStr(pLexeme);
     token.type = type;
     token.line = line;
     token.column = column;

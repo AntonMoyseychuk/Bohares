@@ -4,7 +4,7 @@
 #include "string.h"
 
 
-bohStringView bohStringViewCreate()
+bohStringView bohStringViewCreate(void)
 {
     bohStringView stringView;
 
@@ -104,7 +104,7 @@ bool bohStringViewEqual(const bohStringView* pLeft, const bohStringView* pRight)
 
     const size_t minSize = min(pLeft->size, pRight->size);
 
-    const int cmpResult = memicmp(pLeft->pData, pRight->pData, minSize);
+    const int cmpResult = _memicmp(pLeft->pData, pRight->pData, minSize);
 
     return cmpResult == 0 ? pLeft->size == pRight->size : false;
 }
@@ -117,7 +117,7 @@ bool bohStringViewLess(const bohStringView *pLeft, const bohStringView *pRight)
 
     const size_t minSize = min(pLeft->size, pRight->size);
 
-    const int cmpResult = memicmp(pLeft->pData, pRight->pData, minSize);
+    const int cmpResult = _memicmp(pLeft->pData, pRight->pData, minSize);
 
     if (cmpResult < 0) {
         return true;

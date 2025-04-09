@@ -13,7 +13,7 @@ typedef struct StringView
 } bohStringView;
 
 
-bohStringView bohStringViewCreate();
+bohStringView bohStringViewCreate(void);
 bohStringView bohStringViewCreateCStr(const char* pStr);
 bohStringView bohStringViewCreateCStrSized(const char* pStr, size_t size);
 bohStringView bohStringViewCreateString(const bohString* pStr);

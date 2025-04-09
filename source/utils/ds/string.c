@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "string.h"
+#include "string_view.h"
 
 
 bohString bohStringCreate(void)
@@ -15,7 +16,7 @@ bohString bohStringCreate(void)
 }
 
 
-bohString bohStringCreateStr(const char* pCStr)
+bohString bohStringCreateCStr(const char* pCStr)
 {
     assert(pCStr);
 
@@ -76,7 +77,7 @@ void bohStringDestroy(bohString* pStr)
 }
 
 
-void bohStringAssign(bohString* pDst, const bohString* pSrc)
+bohString* bohStringAssign(bohString* pDst, const bohString* pSrc)
 {
     assert(pDst);
     assert(pSrc);
@@ -85,7 +86,7 @@ void bohStringAssign(bohString* pDst, const bohString* pSrc)
 
     if (pSrc->capacity == 0) {
         *pDst = bohStringCreate();
-        return;
+        return pDst;
     }
 
     pDst->pData = (char*)malloc(pSrc->capacity);
@@ -93,26 +94,34 @@ void bohStringAssign(bohString* pDst, const bohString* pSrc)
 
     pDst->size = pSrc->size;
     pDst->capacity = pSrc->capacity;
+
+    return pDst;
 }
 
 
-void bohStringAssignStr(bohString* pDst, const char* pCStr)
+bohString* bohStringAssignCStr(bohString* pDst, const char* pCStr)
 {
     assert(pDst);
-    assert(pCStr);
+
+    if (!pCStr || strlen(pCStr) == 0) {
+        *pDst = bohStringCreate();
+        return pDst;
+    }
 
     const size_t cStrLength = strlen(pCStr);
     const size_t cStrCapacity = cStrLength + 1;
 
     if (pDst->capacity < cStrCapacity) {
         bohStringDestroy(pDst);
-        *pDst = bohStringCreateStr(pCStr);
-        return;
+        *pDst = bohStringCreateCStr(pCStr);
+        return pDst;
     }
 
     memset(pDst->pData, 0, pDst->capacity);
     strcpy_s(pDst->pData, pDst->capacity, pCStr);
     pDst->size = cStrLength;
+
+    return pDst;
 }
 
 

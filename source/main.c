@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
         const bohString* pLexeme = bohTokenGetLexeme(pToken);
         const char* pLexemeStr = bohStringGetDataConst(pLexeme);
 
-        fprintf_s(stdout, "token: %s\t(line: %u, column: %u)\n", pLexemeStr, pToken->line, pToken->column);
+        fprintf_s(stdout, "%s\t(line: %u, col: %u): %s\n", bohTokenGetTypeStr(pToken), pToken->line, pToken->column, pLexemeStr);
     }
 
     return EXIT_SUCCESS;
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
         const bohString* pLexeme = bohTokenGetLexeme(pToken);
         const char* pLexemeStr = bohStringGetDataConst(pLexeme);
 
-        fprintf_s(stdout, "token: %s\t(line: %u, column: %u)\n", pLexemeStr, pToken->line, pToken->column);
+        fprintf_s(stdout, "%s\t(line: %u, col: %u): %s\n", bohTokenGetTypeStr(pToken), pToken->line, pToken->column, pLexemeStr);
     }
 
     bohFileContentFree(&fileContent);

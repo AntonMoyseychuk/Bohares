@@ -57,7 +57,6 @@ typedef enum TokenType
     TOKEN_TYPE_FUNC,
     TOKEN_TYPE_NULL,
     TOKEN_TYPE_PRINT,
-    TOKEN_TYPE_PRINTLN,
     TOKEN_TYPE_RETURN,
 } bohTokenType;
 
@@ -80,6 +79,8 @@ void bohTokenDestroy(bohToken* pToken);
 void bohTokenAssign(bohToken* pDst, const bohToken* pSrc);
 
 const bohString* bohTokenGetLexeme(const bohToken* pToken);
+bohTokenType bohTokenGetType(const bohToken* pToken);
+const char* bohTokenGetTypeStr(const bohToken* pToken);
 
 
 typedef struct TokenStorage

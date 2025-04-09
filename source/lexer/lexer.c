@@ -3,9 +3,37 @@
 #include "lexer.h"
 
 
+
+typedef struct KeyWordToken
+{
+    const char* pLexeme;
+    bohTokenType type;
+} bohKeyWordToken;
+
+
+static const bohKeyWordToken BOH_KEY_WORDS[] = {
+    { "if",     TOKEN_TYPE_IF },
+    { "then",   TOKEN_TYPE_THEN },
+    { "else",   TOKEN_TYPE_ELSE },
+    { "end",    TOKEN_TYPE_END },
+    { "true",   TOKEN_TYPE_TRUE },
+    { "false",  TOKEN_TYPE_FALSE },
+    { "and",    TOKEN_TYPE_AND },
+    { "or",     TOKEN_TYPE_OR },
+    { "while",  TOKEN_TYPE_WHILE },
+    { "do",     TOKEN_TYPE_DO },
+    { "for",    TOKEN_TYPE_FOR },
+    { "func",   TOKEN_TYPE_FUNC },
+    { "null",   TOKEN_TYPE_NULL },
+    { "print",  TOKEN_TYPE_PRINT },
+    { "return", TOKEN_TYPE_RETURN },
+};
+
+
 enum
 {
-    BOH_TOKEN_SIZE_IN_BYTES = sizeof(bohToken)
+    BOH_TOKEN_SIZE_IN_BYTES = sizeof(bohToken),
+    BOH_KEY_WORDS_COUNT = sizeof(BOH_KEY_WORDS) / sizeof(BOH_KEY_WORDS[0])
 };
 
 
@@ -47,6 +75,81 @@ static char lexAdvanceCurrPosWhile(bohLexer* pLexer, storAlgorithmDelegate pFunc
 }
 
 
+static bohKeyWordToken lexConvertIdentifierLexemeToKeyWord(const char* pLexemBegin, size_t lexemeLength)
+{ 
+    for (size_t i = 0; i < BOH_KEY_WORDS_COUNT; ++i) {
+        const bohKeyWordToken* pKeyWord = BOH_KEY_WORDS + i;
+
+        if (strncmp(pKeyWord->pLexeme, pLexemBegin, lexemeLength) == 0) {
+            return *pKeyWord;
+        }
+    }
+
+    bohKeyWordToken invalidKeyWordToken = { "unknown", TOKEN_TYPE_UNKNOWN };
+    return invalidKeyWordToken;
+}
+
+
+static const char* lexConvertTokenTypeToStr(bohTokenType type)
+{
+    switch (type) {
+        case TOKEN_TYPE_UNKNOWN: return "TOKEN_TYPE_UNKNOWN";
+        case TOKEN_TYPE_COMMENT: return "TOKEN_TYPE_COMMENT";
+        case TOKEN_TYPE_ASSIGN: return "TOKEN_TYPE_ASSIGN";
+        case TOKEN_TYPE_LPAREN: return "TOKEN_TYPE_LPAREN";
+        case TOKEN_TYPE_RPAREN: return "TOKEN_TYPE_RPAREN";
+        case TOKEN_TYPE_LCURLY: return "TOKEN_TYPE_LCURLY";
+        case TOKEN_TYPE_RCURLY: return "TOKEN_TYPE_RCURLY";
+        case TOKEN_TYPE_LSQUAR: return "TOKEN_TYPE_LSQUAR";
+        case TOKEN_TYPE_RSQUAR: return "TOKEN_TYPE_RSQUAR";
+        case TOKEN_TYPE_COMMA: return "TOKEN_TYPE_COMMA";
+        case TOKEN_TYPE_DOT: return "TOKEN_TYPE_DOT";
+        case TOKEN_TYPE_PLUS: return "TOKEN_TYPE_PLUS";
+        case TOKEN_TYPE_MINUS: return "TOKEN_TYPE_MINUS";
+        case TOKEN_TYPE_MULT: return "TOKEN_TYPE_MULT";
+        case TOKEN_TYPE_DIV: return "TOKEN_TYPE_DIV";
+        case TOKEN_TYPE_MOD: return "TOKEN_TYPE_MOD";
+        case TOKEN_TYPE_CARET: return "TOKEN_TYPE_CARET";
+        case TOKEN_TYPE_COLON: return "TOKEN_TYPE_COLON";
+        case TOKEN_TYPE_SEMICOLON: return "TOKEN_TYPE_SEMICOLON";
+        case TOKEN_TYPE_QUESTION: return "TOKEN_TYPE_QUESTION";
+        case TOKEN_TYPE_BITWISE_NOT: return "TOKEN_TYPE_BITWISE_NOT";
+        case TOKEN_TYPE_NOT: return "TOKEN_TYPE_NOT";
+        case TOKEN_TYPE_GREATER: return "TOKEN_TYPE_GREATER";
+        case TOKEN_TYPE_LESS: return "TOKEN_TYPE_LESS";
+        case TOKEN_TYPE_NOT_EQUAL: return "TOKEN_TYPE_NOT_EQUAL";
+        case TOKEN_TYPE_GEQUAL: return "TOKEN_TYPE_GEQUAL";
+        case TOKEN_TYPE_LEQUAL: return "TOKEN_TYPE_LEQUAL";
+        case TOKEN_TYPE_EQUAL: return "TOKEN_TYPE_EQUAL";
+        case TOKEN_TYPE_RSHIFT: return "TOKEN_TYPE_RSHIFT";
+        case TOKEN_TYPE_LSHIFT: return "TOKEN_TYPE_LSHIFT";
+        case TOKEN_TYPE_IDENTIFIER: return "TOKEN_TYPE_IDENTIFIER";
+        case TOKEN_TYPE_STRING: return "TOKEN_TYPE_STRING";
+        case TOKEN_TYPE_INTEGER: return "TOKEN_TYPE_INTEGER";
+        case TOKEN_TYPE_FLOAT: return "TOKEN_TYPE_FLOAT";
+        case TOKEN_TYPE_IF: return "TOKEN_TYPE_IF";
+        case TOKEN_TYPE_THEN: return "TOKEN_TYPE_THEN";
+        case TOKEN_TYPE_ELSE: return "TOKEN_TYPE_ELSE";
+        case TOKEN_TYPE_END: return "TOKEN_TYPE_END";
+        case TOKEN_TYPE_TRUE: return "TOKEN_TYPE_TRUE";
+        case TOKEN_TYPE_FALSE: return "TOKEN_TYPE_FALSE";
+        case TOKEN_TYPE_AND: return "TOKEN_TYPE_AND";
+        case TOKEN_TYPE_OR: return "TOKEN_TYPE_OR";
+        case TOKEN_TYPE_WHILE: return "TOKEN_TYPE_WHILE";
+        case TOKEN_TYPE_DO: return "TOKEN_TYPE_DO";
+        case TOKEN_TYPE_FOR: return "TOKEN_TYPE_FOR";
+        case TOKEN_TYPE_FUNC: return "TOKEN_TYPE_FUNC";
+        case TOKEN_TYPE_NULL: return "TOKEN_TYPE_NULL";
+        case TOKEN_TYPE_PRINT: return "TOKEN_TYPE_PRINT";
+        case TOKEN_TYPE_RETURN: return "TOKEN_TYPE_RETURN";
+    
+    default: 
+        assert(false && "Invalid token type"); 
+        return "INVALID";
+    }
+}
+
+
 static bool IsEndLineChar(char ch)
 {
     return ch == '\n' || ch == '\0';
@@ -68,6 +171,24 @@ static bool IsNotDoubleQuoteOrEndChar(char ch)
 static bool IsDigitChar(char ch)
 {
     return ch >= '0' && ch <= '9';
+}
+
+
+static bool IsAlphaChar(char ch)
+{
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+}
+
+
+static bool IsUnderscoreChar(char ch)
+{
+    return ch == '_';
+}
+
+
+static bool IsIdentifierAppropriateChar(char ch)
+{
+    return IsAlphaChar(ch) || IsUnderscoreChar(ch) || IsDigitChar(ch);
 }
 
 
@@ -148,8 +269,21 @@ void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
 const bohString* bohTokenGetLexeme(const bohToken* pToken)
 {
     assert(pToken);
-
     return &pToken->lexeme;
+}
+
+
+bohTokenType bohTokenGetType(const bohToken *pToken)
+{
+    assert(pToken);
+    return pToken->type;
+}
+
+
+const char* bohTokenGetTypeStr(const bohToken *pToken)
+{
+    assert(pToken);
+    return lexConvertTokenTypeToStr(pToken->type);
 }
 
 
@@ -457,8 +591,25 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
             }
         }
 
-        const char* pLexemBegin = type != TOKEN_TYPE_UNKNOWN ? pLexer->pData + pLexer->startPos : "unknown";
-        const size_t lexemeLength = type != TOKEN_TYPE_UNKNOWN ? pLexer->currPos - pLexer->startPos : strlen(pLexemBegin);
+        if (type == TOKEN_TYPE_UNKNOWN) {
+            if (IsAlphaChar(ch) || IsUnderscoreChar(ch)) {
+                lexAdvanceCurrPosWhile(pLexer, IsIdentifierAppropriateChar);
+                type = TOKEN_TYPE_IDENTIFIER;
+            }
+        }
+
+        assert(type != TOKEN_TYPE_UNKNOWN && "Undefined token");
+
+        const char* pLexemBegin = pLexer->pData + pLexer->startPos;
+        const size_t lexemeLength = pLexer->currPos - pLexer->startPos;
+
+        if (type == TOKEN_TYPE_IDENTIFIER) {
+            const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(pLexemBegin, lexemeLength);
+
+            if (keyWord.type != TOKEN_TYPE_UNKNOWN) {
+                type = keyWord.type;
+            }
+        }
 
         storTokenStorageEmplaceBack(&tokens, pLexemBegin, lexemeLength, type, pLexer->line, pLexer->column);
     }

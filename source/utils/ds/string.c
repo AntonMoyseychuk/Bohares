@@ -136,14 +136,7 @@ bohString* bohStringAssignCStr(bohString* pDst, const char* pCStr)
 }
 
 
-const char* bohStringGetDataConst(const bohString* pStr)
-{
-    assert(pStr);
-    return pStr->pData;
-}
-
-
-char* bohStringGetData(bohString *pStr)
+const char* bohStringGetCStr(const bohString* pStr)
 {
     assert(pStr);
     return pStr->pData;

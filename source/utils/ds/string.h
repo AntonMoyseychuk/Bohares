@@ -28,8 +28,8 @@ bohString* bohStringAssign(bohString* pDst, const bohString* pSrc);
 bohString* bohStringAssignCStr(bohString* pDst, const char* pCStr);
 
 
-const char* bohStringGetDataConst(const bohString* pStr);
-char* bohStringGetData(bohString* pStr);
+const char* bohStringGetCStr(const bohString* pStr);
+
 
 size_t bohStringGetSize(const bohString* pStr);
 size_t bohStringGetCapacity(const bohString* pStr);

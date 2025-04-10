@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
         const bohToken* pToken = bohTokenStorageAt(&tokens, i);
 
         const bohString* pLexeme = bohTokenGetLexeme(pToken);
-        const char* pLexemeStr = bohStringGetDataConst(pLexeme);
+        const char* pLexemeStr = bohStringGetCStr(pLexeme);
 
         fprintf_s(stdout, "%s\t(line: %u, col: %u): %s\n", bohTokenGetTypeStr(pToken), pToken->line, pToken->column, pLexemeStr);
     }
@@ -45,10 +45,10 @@ int main(int argc, char* argv[])
         const bohToken* pToken = bohTokenStorageAt(&tokens, i);
 
         const bohStringView lexeme = bohTokenGetLexeme(pToken);
-        const bohString lexemeStr = bohStringCreateStringView(&lexeme); // To make lexeme 0 terminated
-        const char* pLexemeStr = bohStringGetDataConst(&lexemeStr);
+        const char* pLexemeStr = bohStringViewGetData(&lexeme);
+        const size_t lexemeSize = bohStringViewGetSize(&lexeme);
 
-        fprintf_s(stdout, "%s\t(line: %u, col: %u): %s\n", bohTokenGetTypeStr(pToken), pToken->line, pToken->column, pLexemeStr);
+        fprintf_s(stdout, "%s\t(line: %u, col: %u): %.*s\n", bohTokenGetTypeStr(pToken), pToken->line, pToken->column, lexemeSize, pLexemeStr);
     }
 
     bohFileContentFree(&fileContent);

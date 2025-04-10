@@ -63,6 +63,8 @@ static char lexAdvanceCurrPos(bohLexer* pLexer)
     const size_t nextCharIdx = pLexer->currPos + 1;
     const size_t dataSize = bohStringViewGetSize(&pLexer->data);
 
+    pLexer->column = nextCharIdx > dataSize ? pLexer->column : pLexer->column + 1;
+
     return nextCharIdx > dataSize ? '\0' : bohStringViewAt(&pLexer->data, pLexer->currPos++);
 }
 
@@ -203,17 +205,175 @@ static bool IsIdentifierAppropriateChar(char ch)
 }
 
 
-static void storTokenStorageEmplaceBack(bohTokenStorage* pStorage, const char* pLexeme, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
+static bohStringView lexGetCurrLexem(bohLexer* pLexer)
 {
-    assert(pStorage);
-
-    bohToken token = bohTokenCreateLexemeSized(pLexeme, lexemeLength, type, line, column);
-
-    bohTokenStoragePushBack(pStorage, &token);
+    const char* pLexemBegin = bohStringViewGetData(&pLexer->data) + pLexer->startPos;
+    const size_t lexemeLength = pLexer->currPos - pLexer->startPos;
+    
+    return bohStringViewCreateCStrSized(pLexemBegin, lexemeLength);
 }
 
 
-bohToken bohTokenCreateDefault(void)
+static bohToken lexGetNextToken(bohLexer* pLexer)
+{
+    assert(pLexer);
+
+    pLexer->startPos = pLexer->currPos;
+
+    const size_t tokenLine = pLexer->line;
+    const size_t tokenColumn = pLexer->column;
+
+    const char ch = lexAdvanceCurrPos(pLexer);
+
+    bohTokenType type = TOKEN_TYPE_UNKNOWN;
+
+    switch (ch) {
+        case '\n':
+            ++pLexer->line;
+            pLexer->column = 0;
+            type = TOKEN_TYPE_DUMMY;
+            break;
+        case '\t': type = TOKEN_TYPE_DUMMY; break;
+        case '\r': type = TOKEN_TYPE_DUMMY; break;
+        case '\0': type = TOKEN_TYPE_DUMMY; break;
+        case ' ': type = TOKEN_TYPE_DUMMY; break;
+        case '(': type = TOKEN_TYPE_LPAREN; break;
+        case ')': type = TOKEN_TYPE_RPAREN; break;
+        case '{': type = TOKEN_TYPE_LCURLY; break;
+        case '}': type = TOKEN_TYPE_RCURLY; break;
+        case '[': type = TOKEN_TYPE_LSQUAR; break;
+        case ']': type = TOKEN_TYPE_RSQUAR; break;
+        case ',': type = TOKEN_TYPE_COMMA; break;
+        case '.': type = TOKEN_TYPE_DOT; break;
+        case '+': type = TOKEN_TYPE_PLUS; break;
+        case '-': type = TOKEN_TYPE_MINUS; break;
+        case '*': type = TOKEN_TYPE_MULT; break;
+        case '/': type = TOKEN_TYPE_DIV; break;
+        case '%': type = TOKEN_TYPE_MOD; break;
+        case '^': type = TOKEN_TYPE_CARET; break;
+        case ':': type = TOKEN_TYPE_COLON; break;
+        case ';': type = TOKEN_TYPE_SEMICOLON; break;
+        case '?': type = TOKEN_TYPE_QUESTION; break;
+        case '~': type = TOKEN_TYPE_BITWISE_NOT; break;
+        case '!': 
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = TOKEN_TYPE_NOT_EQUAL;
+                    break;
+                default: 
+                    type = TOKEN_TYPE_NOT;
+                    break;
+            }
+                
+            break;
+        case '=':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = TOKEN_TYPE_EQUAL;
+                    break;
+                default: 
+                    type = TOKEN_TYPE_ASSIGN;
+                    break;
+            }
+                
+            break;
+        case '>':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = TOKEN_TYPE_GEQUAL;
+                    break;
+                case '>':
+                    lexAdvanceCurrPos(pLexer);
+                    type = TOKEN_TYPE_RSHIFT;
+                    break;
+                default: 
+                    type = TOKEN_TYPE_GREATER;
+                    break;
+            }
+
+            break;
+        case '<':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = TOKEN_TYPE_LEQUAL;
+                    break;
+                case '<':
+                    lexAdvanceCurrPos(pLexer);
+                    type = TOKEN_TYPE_LSHIFT;
+                    break;
+                default: 
+                    type = TOKEN_TYPE_LESS;
+                    break;
+            }
+
+            break;
+        case '\"':
+        {
+            const char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotDoubleQuoteOrEndChar);
+            assert(currCh == '\"' && "Missed closing double quotes. Make it compile error");
+
+            lexAdvanceCurrPos(pLexer); // Consume '"' symbol
+
+            type = TOKEN_TYPE_STRING;
+            break;
+        }
+        case '#':
+            if (lexPickCurrPosChar(pLexer) == '[') {
+                char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotMultilineCommentEndOrEndChar);
+                assert(currCh == ']' && "Missed closing multiline comment symbol ]. Make it compile error");
+
+                lexAdvanceCurrPos(pLexer); // Consume ']' symbol
+                currCh = lexPickCurrPosChar(pLexer);
+                assert(currCh == '#' && "Missed closing multiline comment symbol #. Make it compile error");
+
+                lexAdvanceCurrPos(pLexer); // Consume '#' symbol
+            } else {
+                lexAdvanceCurrPosWhile(pLexer, IsNotEndLineChar);
+            }
+
+            type = TOKEN_TYPE_DUMMY;
+            break;
+        default:
+            break;
+    }
+
+    // Number
+    if (type == TOKEN_TYPE_UNKNOWN && IsDigitChar(ch)) {
+        lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
+
+        type = TOKEN_TYPE_INTEGER;
+
+        if (lexPickCurrPosChar(pLexer) == '.') {
+            const char nextCh = lexPickNextNStepChar(pLexer, 1);
+            assert(IsDigitChar(nextCh) && "Invalid floating point number gramma. Make it compile error");
+            
+            lexAdvanceCurrPos(pLexer); // Consume the '.'
+                
+            lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
+
+            type = TOKEN_TYPE_FLOAT;
+        }
+    }
+
+    // Key word or identifier
+    if (type == TOKEN_TYPE_UNKNOWN && (IsAlphaChar(ch) || IsUnderscoreChar(ch))) {
+        lexAdvanceCurrPosWhile(pLexer, IsIdentifierAppropriateChar);
+        
+        const bohStringView lexeme = lexGetCurrLexem(pLexer);
+        const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(lexeme);
+
+        type = keyWord.type != TOKEN_TYPE_UNKNOWN ? keyWord.type : TOKEN_TYPE_IDENTIFIER;
+    }
+
+    return bohTokenCreateParams(lexGetCurrLexem(pLexer), type, tokenLine, tokenColumn);
+}
+
+
+bohToken bohTokenCreate(void)
 {
     bohToken token;
 
@@ -226,24 +386,11 @@ bohToken bohTokenCreateDefault(void)
 }
 
 
-bohToken bohTokenCreate(const char *pLexeme, bohTokenType type, uint32_t line, uint32_t column)
+bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t line, uint32_t column)
 {
     bohToken token;
 
-    token.lexeme = bohStringViewCreateCStr(pLexeme);
-    token.type = type;
-    token.line = line;
-    token.column = column;
-
-    return token;
-}
-
-
-bohToken bohTokenCreateLexemeSized(const char* pLexemeBegin, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column)
-{
-    bohToken token;
-
-    token.lexeme = bohStringViewCreateCStrSized(pLexemeBegin, lexemeLength);
+    bohStringViewAssign(&token.lexeme, &lexeme);
     token.type = type;
     token.line = line;
     token.column = column;
@@ -370,7 +517,7 @@ void bohTokenStorageResize(bohTokenStorage* pStorage, size_t newSize)
 
     bohTokenStorageReserve(pStorage, newSize);
     for (size_t i = oldSize; i < newSize; ++i) {
-        pStorage->pTokens[i] = bohTokenCreateDefault();
+        pStorage->pTokens[i] = bohTokenCreate();
     }
 
     pStorage->size = newSize;
@@ -469,168 +616,12 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
     const size_t dataSize = bohStringViewGetSize(&pLexer->data);
     
     while (pLexer->currPos < dataSize) {
-        pLexer->startPos = pLexer->currPos;
-        ++pLexer->column;
+        const bohToken token = lexGetNextToken(pLexer);
+        assert(token.type != TOKEN_TYPE_UNKNOWN && "Invalid token type");
 
-        const char ch = lexAdvanceCurrPos(pLexer);
-
-        bohTokenType type = TOKEN_TYPE_UNKNOWN;
-
-        switch (ch) {
-            case '\n':
-                ++pLexer->line;
-                pLexer->column = 1;
-            case '\t':
-            case '\r':
-            case ' ':
-            case '\0':
-                continue;
-
-            case '#':
-                if (lexPickCurrPosChar(pLexer) == '[') {
-                    char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotMultilineCommentEndOrEndChar);
-                    assert(currCh == ']' && "Missed closing multiline comment symbol ]. Make it compile error");
-
-                    lexAdvanceCurrPos(pLexer); // Consume ']' symbol
-                    currCh = lexPickCurrPosChar(pLexer);
-                    assert(currCh == '#' && "Missed closing multiline comment symbol #. Make it compile error");
-
-                    lexAdvanceCurrPos(pLexer); // Consume '#' symbol
-                } else {
-                    lexAdvanceCurrPosWhile(pLexer, IsNotEndLineChar);
-                }
-                continue;
-
-            case '(': type = TOKEN_TYPE_LPAREN; break;
-            case ')': type = TOKEN_TYPE_RPAREN; break;
-            case '{': type = TOKEN_TYPE_LCURLY; break;
-            case '}': type = TOKEN_TYPE_RCURLY; break;
-            case '[': type = TOKEN_TYPE_LSQUAR; break;
-            case ']': type = TOKEN_TYPE_RSQUAR; break;
-            case ',': type = TOKEN_TYPE_COMMA; break;
-            case '.': type = TOKEN_TYPE_DOT; break;
-            case '+': type = TOKEN_TYPE_PLUS; break;
-            case '-': type = TOKEN_TYPE_MINUS; break;
-            case '*': type = TOKEN_TYPE_MULT; break;
-            case '/': type = TOKEN_TYPE_DIV; break;
-            case '%': type = TOKEN_TYPE_MOD; break;
-            case '^': type = TOKEN_TYPE_CARET; break;
-            case ':': type = TOKEN_TYPE_COLON; break;
-            case ';': type = TOKEN_TYPE_SEMICOLON; break;
-            case '?': type = TOKEN_TYPE_QUESTION; break;
-            case '~': type = TOKEN_TYPE_BITWISE_NOT; break;
-            case '!': 
-                switch (lexPickCurrPosChar(pLexer)) {
-                    case '=':
-                        lexAdvanceCurrPos(pLexer);
-                        type = TOKEN_TYPE_NOT_EQUAL;
-                        break;
-                    default: 
-                        type = TOKEN_TYPE_NOT;
-                        break;
-                }
-                
-                break;
-            case '=':
-                switch (lexPickCurrPosChar(pLexer)) {
-                    case '=':
-                        lexAdvanceCurrPos(pLexer);
-                        type = TOKEN_TYPE_EQUAL;
-                        break;
-                    default: 
-                        type = TOKEN_TYPE_ASSIGN;
-                        break;
-                }
-                
-                break;
-            case '>':
-                switch (lexPickCurrPosChar(pLexer)) {
-                    case '=':
-                        lexAdvanceCurrPos(pLexer);
-                        type = TOKEN_TYPE_GEQUAL;
-                        break;
-                    case '>':
-                        lexAdvanceCurrPos(pLexer);
-                        type = TOKEN_TYPE_RSHIFT;
-                        break;
-                    default: 
-                        type = TOKEN_TYPE_GREATER;
-                        break;
-                }
-
-                break;
-            case '<':
-                switch (lexPickCurrPosChar(pLexer)) {
-                    case '=':
-                        lexAdvanceCurrPos(pLexer);
-                        type = TOKEN_TYPE_LEQUAL;
-                        break;
-                    case '<':
-                        lexAdvanceCurrPos(pLexer);
-                        type = TOKEN_TYPE_LSHIFT;
-                        break;
-                    default: 
-                        type = TOKEN_TYPE_LESS;
-                        break;
-                }
-
-                break;
-            case '\"':
-            {
-                const char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotDoubleQuoteOrEndChar);
-                assert(currCh == '\"' && "Missed closing double quotes. Make it compile error");
-
-                lexAdvanceCurrPos(pLexer); // Consume '"' symbol
-
-                type = TOKEN_TYPE_STRING;
-                break;
-            }
-            default:
-                type = TOKEN_TYPE_UNKNOWN;
-                break;
+        if (token.type != TOKEN_TYPE_DUMMY) {
+            bohTokenStoragePushBack(&tokens, &token);
         }
-
-        if (type == TOKEN_TYPE_UNKNOWN) {
-            if (IsDigitChar(ch)) {
-                lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
-
-                type = TOKEN_TYPE_INTEGER;
-
-                if (lexPickCurrPosChar(pLexer) == '.') {
-                    const char nextCh = lexPickNextNStepChar(pLexer, 1);
-                    assert(IsDigitChar(nextCh) && "Invalid floating point number gramma. Make it compile error");
-                    
-                    lexAdvanceCurrPos(pLexer); // Consume the '.'
-                    
-                    lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
-
-                    type = TOKEN_TYPE_FLOAT;
-                }
-            }
-        }
-
-        if (type == TOKEN_TYPE_UNKNOWN) {
-            if (IsAlphaChar(ch) || IsUnderscoreChar(ch)) {
-                lexAdvanceCurrPosWhile(pLexer, IsIdentifierAppropriateChar);
-                type = TOKEN_TYPE_IDENTIFIER;
-            }
-        }
-
-        assert(type != TOKEN_TYPE_UNKNOWN && "Undefined token");
-
-        const char* pLexemBegin = bohStringViewGetData(&pLexer->data) + pLexer->startPos;
-        const size_t lexemeLength = pLexer->currPos - pLexer->startPos;
-
-        if (type == TOKEN_TYPE_IDENTIFIER) {
-            const bohStringView lexemeStrView = bohStringViewCreateCStrSized(pLexemBegin, lexemeLength);
-            const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(lexemeStrView);
-
-            if (keyWord.type != TOKEN_TYPE_UNKNOWN) {
-                type = keyWord.type;
-            }
-        }
-
-        storTokenStorageEmplaceBack(&tokens, pLexemBegin, lexemeLength, type, pLexer->line, pLexer->column);
     }
 
     return tokens;

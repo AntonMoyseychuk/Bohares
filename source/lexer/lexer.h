@@ -59,6 +59,10 @@ typedef enum TokenType
     TOKEN_TYPE_NULL,
     TOKEN_TYPE_PRINT,
     TOKEN_TYPE_RETURN,
+
+    // It is used to indicate that the token is valid, but it does not need to be added to the storage 
+    // For example comments, whitespaces, new line characters, tabs, etc
+    TOKEN_TYPE_DUMMY,
 } bohTokenType;
 
 
@@ -71,9 +75,8 @@ typedef struct Token
 } bohToken;
 
 
-bohToken bohTokenCreateDefault(void);
-bohToken bohTokenCreate(const char* pLexeme, bohTokenType type, uint32_t line, uint32_t column);
-bohToken bohTokenCreateLexemeSized(const char* pLexemeBegin, size_t lexemeLength, bohTokenType type, uint32_t line, uint32_t column);
+bohToken bohTokenCreate(void);
+bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t line, uint32_t column);
 
 void bohTokenDestroy(bohToken* pToken);
 

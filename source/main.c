@@ -42,19 +42,27 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 #else
     if (argc != 2) {
-        fprintf_s(stderr, "Invalid command line arguments count: %d\n", argc);
+        fprintf_s(stderr, BOH_MAKE_COLORED_TEXT("Invalid command line arguments count: %d\n", BOH_OUTPUT_COLOR_RED_ASCII_CODE), argc);
         return EXIT_FAILURE;
     }
 
     bohFileContent fileContent = bohReadTextFile(argv[1]);
-    if (bohFileContentIsError(&fileContent)) {
-        fprintf_s(stderr, "%s\n", fileContent.pErrorMsg);
-        return EXIT_FAILURE;
+    switch (bohFileContentGetErrorCode(&fileContent)) {
+        case BOH_FILE_CONTENT_ERROR_NULL_FILEPATH:
+            fprintf_s(stderr, BOH_MAKE_COLORED_TEXT("Filepath is NULL\n", BOH_OUTPUT_COLOR_RED_ASCII_CODE));
+            return EXIT_FAILURE;
+        case BOH_FILE_CONTENT_ERROR_OPEN_FAILED:
+            fprintf_s(stderr, BOH_MAKE_COLORED_TEXT("Failed to open file: %s\n", BOH_OUTPUT_COLOR_RED_ASCII_CODE), argv[1]);
+            return EXIT_FAILURE;
+        default:
+            break;
     }
 
     bohLexer lexer = bohLexerCreate(fileContent.pData, fileContent.dataSize);
     bohTokenStorage tokens = bohLexerTokenize(&lexer);
 
+    fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("LEXER TOKENS:", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) "\n");
+    
     const size_t tokensCount = bohTokenStorageGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
         const bohToken* pToken = bohTokenStorageAt(&tokens, i);

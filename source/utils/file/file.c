@@ -3,37 +3,23 @@
 #include "file.h"
 
 
-enum
-{
-    MAX_ERROR_MSG_SIZE = 512
-};
-
-
 static bohFileContent ReadFile(const char* pPath, const char* pMode)
 {
-    bohFileContent content = { 0 };
+    bohFileContent content;
+    content.pData = NULL;
+    content.dataSize = 0;
+    content.error = BOH_FILE_CONTENT_ERROR_NONE;
 
     if (!pPath) {
-        const char pErrorMsg[] = "pPath is NULL";
-
-        content.pErrorMsg = (char*)malloc(sizeof(pErrorMsg));
-        strcpy_s(content.pErrorMsg, sizeof(pErrorMsg), pErrorMsg);
-
+        content.error = BOH_FILE_CONTENT_ERROR_NULL_FILEPATH;
         return content;
     }
 
     FILE* pFile = NULL;
     errno_t result = fopen_s(&pFile, pPath, pMode);
 
-    if (result != 0 || !pFile) {
-        char pErrorMsg[MAX_ERROR_MSG_SIZE] = { 0 };
-        sprintf_s(pErrorMsg, MAX_ERROR_MSG_SIZE, "Failed to open file: %s", pPath);
-
-        const uint64_t errorLength = strlen(pErrorMsg) + 1;
-
-        content.pErrorMsg = (char*)malloc(errorLength);
-        strcpy_s(content.pErrorMsg, errorLength, pErrorMsg);
-
+    if (!pFile || result != 0) {
+        content.error = BOH_FILE_CONTENT_ERROR_OPEN_FAILED;
         return content;
     }
 
@@ -70,17 +56,16 @@ bohFileContent bohReadBinaryFile(const char* pPath)
 }
 
 
-bool bohFileContentIsError(const bohFileContent* pContent)
+bohFileContentErrorCode bohFileContentGetErrorCode(const bohFileContent* pContent)
 {
-    return pContent && pContent->pErrorMsg != NULL;
+    assert(pContent);
+    return pContent->error;
 }
 
 
 void bohFileContentFree(bohFileContent *pContent)
 {
-    if (!pContent) {
-        return;
-    }
+    assert(pContent);
 
     if (pContent->dataSize != 0) {
         free(pContent->pData);
@@ -89,6 +74,5 @@ void bohFileContentFree(bohFileContent *pContent)
         pContent->dataSize = 0;
     }
 
-    free(pContent->pErrorMsg);
-    pContent->pErrorMsg = NULL;
+    pContent->error = BOH_FILE_CONTENT_ERROR_NONE;
 }

@@ -27,9 +27,9 @@ int main(int argc, char* argv[])
 
     bohTokenStorage tokens = bohLexerTokenize(&lexer);
 
-    const size_t tokensCount = bohTokenStorageGetSize(&tokens);
+    const size_t tokensCount = bohDynArrayGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
-        const bohToken* pToken = bohTokenStorageAt(&tokens, i);
+        const bohToken* pToken = bohDynArrayAt(&tokens, i);
 
         const bohStringView lexeme = bohTokenGetLexeme(pToken);
         const char* pLexemeStr = bohStringViewGetData(&lexeme);
@@ -63,9 +63,9 @@ int main(int argc, char* argv[])
 
     fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("LEXER TOKENS:", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) "\n");
     
-    const size_t tokensCount = bohTokenStorageGetSize(&tokens);
+    const size_t tokensCount = bohDynArrayGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
-        const bohToken* pToken = bohTokenStorageAt(&tokens, i);
+        const bohToken* pToken = bohDynArrayAt(&tokens, i);
 
         const bohStringView lexeme = bohTokenGetLexeme(pToken);
         const char* pLexemeStr = bohStringViewGetData(&lexeme);

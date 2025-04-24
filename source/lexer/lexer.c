@@ -179,7 +179,7 @@ static const char* lexConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_MULT: return "BOH_TOKEN_TYPE_MULT";
         case BOH_TOKEN_TYPE_DIV: return "BOH_TOKEN_TYPE_DIV";
         case BOH_TOKEN_TYPE_MOD: return "BOH_TOKEN_TYPE_MOD";
-        case BOH_TOKEN_TYPE_CARET: return "BOH_TOKEN_TYPE_CARET";
+        case BOH_TOKEN_TYPE_XOR: return "BOH_TOKEN_TYPE_XOR";
         case BOH_TOKEN_TYPE_COLON: return "BOH_TOKEN_TYPE_COLON";
         case BOH_TOKEN_TYPE_SEMICOLON: return "BOH_TOKEN_TYPE_SEMICOLON";
         case BOH_TOKEN_TYPE_QUESTION: return "BOH_TOKEN_TYPE_QUESTION";
@@ -268,7 +268,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
         case '*': type = BOH_TOKEN_TYPE_MULT; break;
         case '/': type = BOH_TOKEN_TYPE_DIV; break;
         case '%': type = BOH_TOKEN_TYPE_MOD; break;
-        case '^': type = BOH_TOKEN_TYPE_CARET; break;
+        case '^': type = BOH_TOKEN_TYPE_XOR; break;
         case ':': type = BOH_TOKEN_TYPE_COLON; break;
         case ';': type = BOH_TOKEN_TYPE_SEMICOLON; break;
         case '?': type = BOH_TOKEN_TYPE_QUESTION; break;

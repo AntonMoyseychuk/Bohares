@@ -23,7 +23,7 @@ typedef enum TokenType
     BOH_TOKEN_TYPE_MULT,        // *
     BOH_TOKEN_TYPE_DIV,         // /
     BOH_TOKEN_TYPE_MOD,         // %
-    BOH_TOKEN_TYPE_CARET,       // ^
+    BOH_TOKEN_TYPE_XOR,         // ^
     BOH_TOKEN_TYPE_COLON,       // :
     BOH_TOKEN_TYPE_SEMICOLON,   // ;
     BOH_TOKEN_TYPE_QUESTION,    // ?

@@ -45,34 +45,33 @@ static const bohToken* parsGetCurrToken(const bohParser* pParser)
 //     return result;
 // }
 
-
-bohParser bohParserCreate(const bohTokenStorage* pTokenStorage)
+static bohAstNode* parsPrimary(bohParser* pParser)
 {
-    assert(pTokenStorage);
 
-    bohParser parser;
-
-    parser.pTokenStorage = pTokenStorage;
-    parser.currTokenIdx = 0;
-
-    return parser;
 }
 
 
-void bohParserDestroy(bohParser* pParser)
+static bohAstNode* parsUnary(bohParser* pParser)
 {
-    assert(pParser);
 
-    pParser->pTokenStorage = NULL;
-    pParser->currTokenIdx = 0;
 }
 
 
-bohAST bohParserParse(bohParser* pParser)
+static bohAstNode* parsFactor(bohParser* pParser)
 {
-    bohAST ast;
 
-    return ast;
+}
+
+
+static bohAstNode* parsTerm(bohParser* pParser)
+{
+
+}
+
+
+static bohAstNode* parsExpr(bohParser* pParser)
+{
+    
 }
 
 
@@ -143,4 +142,123 @@ void bohNumberSetF32(bohNumber* pNumber, float value)
     
     pNumber->type = BOH_NUMBER_TYPE_FLOAT;
     pNumber->f32 = value;
+}
+
+
+void bohAstNodeDestroy(bohAstNode* pNode)
+{
+    assert(pNode);
+
+    switch (pNode->type) {
+        case BOH_AST_NODE_TYPE_NUMBER:
+            break;
+        case BOH_AST_NODE_TYPE_UNARY:
+            BOH_AST_NODE_DESTROY(pNode->unary.pNode);
+            break;
+        case BOH_AST_NODE_TYPE_BINARY:
+            BOH_AST_NODE_DESTROY(pNode->binary.pLeftNode);
+            BOH_AST_NODE_DESTROY(pNode->binary.pRightNode);
+            break;
+        default:
+            assert(false && "Invalid AST node type");
+            break;
+    }
+
+    free(pNode);
+}
+
+
+bohAstNode* bohAstNodeCreateNumberI32(int32_t value)
+{
+    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
+    assert(pNode);
+
+    bohAstNodeSetNumberI32(pNode, value);
+
+    return pNode;
+}
+
+
+bohAstNode* bohAstNodeCreateNumberF32(float value)
+{
+    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
+    assert(pNode);
+
+    bohAstNodeSetNumberF32(pNode, value);
+
+    return pNode;
+}
+
+
+bool bohAstNodeIsNumber(const bohAstNode* pNode)
+{
+    assert(pNode);
+    return pNode->type == BOH_AST_NODE_TYPE_NUMBER;
+}
+
+
+const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode)
+{
+    assert(pNode);
+    assert(bohAstNodeIsNumber(pNode));
+
+    return &pNode->number;
+}
+
+
+void bohAstNodeSetNumberI32(bohAstNode* pNode, int32_t value)
+{
+    assert(pNode);
+
+    pNode->type = BOH_AST_NODE_TYPE_NUMBER;
+    pNode->number = bohNumberCreateI32(value);
+}
+
+
+void bohAstNodeSetNumberF32(bohAstNode* pNode, float value)
+{
+    assert(pNode);
+    
+    pNode->type = BOH_AST_NODE_TYPE_NUMBER;
+    pNode->number = bohNumberCreateF32(value);
+}
+
+
+void bohAstDestroy(bohAST* pAST)
+{
+    assert(pAST);
+
+    BOH_AST_NODE_DESTROY(pAST->pRoot);
+}
+
+
+bohParser bohParserCreate(const bohTokenStorage *pTokenStorage)
+{
+    assert(pTokenStorage);
+
+    bohParser parser;
+
+    parser.pTokenStorage = pTokenStorage;
+    parser.currTokenIdx = 0;
+
+    return parser;
+}
+
+
+void bohParserDestroy(bohParser* pParser)
+{
+    assert(pParser);
+
+    pParser->pTokenStorage = NULL;
+    pParser->currTokenIdx = 0;
+}
+
+
+bohAST bohParserParse(bohParser* pParser)
+{
+    bohAST ast;
+
+    ast.pRoot = parsExpr(pParser);
+
+    return ast;
 }

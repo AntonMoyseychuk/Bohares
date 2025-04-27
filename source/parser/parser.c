@@ -3,75 +3,172 @@
 #include "parser.h"
 
 
-static const bohToken* parsGetCurrToken(const bohParser* pParser)
+static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
+{
+    switch (tokenType) {
+        case BOH_TOKEN_TYPE_PLUS: return BOH_OP_PLUS;
+        case BOH_TOKEN_TYPE_MINUS: return BOH_OP_MINUS;
+        case BOH_TOKEN_TYPE_MULT: return BOH_OP_MULT;
+        case BOH_TOKEN_TYPE_DIV: return BOH_OP_DIV;
+        case BOH_TOKEN_TYPE_MOD: return BOH_OP_MOD;
+        case BOH_TOKEN_TYPE_XOR: return BOH_OP_XOR;
+        case BOH_TOKEN_TYPE_BITWISE_NOT: return BOH_OP_BITWISE_NOT;
+        case BOH_TOKEN_TYPE_NOT: return BOH_OP_NOT;
+        case BOH_TOKEN_TYPE_GREATER: return BOH_OP_GREATER;
+        case BOH_TOKEN_TYPE_LESS: return BOH_OP_LESS;
+        case BOH_TOKEN_TYPE_NOT_EQUAL: return BOH_OP_NOT_EQUAL;
+        case BOH_TOKEN_TYPE_GEQUAL: return BOH_OP_GEQUAL;
+        case BOH_TOKEN_TYPE_LEQUAL: return BOH_OP_LEQUAL;
+        case BOH_TOKEN_TYPE_EQUAL: return BOH_OP_EQUAL;
+        case BOH_TOKEN_TYPE_RSHIFT: return BOH_OP_RSHIFT;
+        case BOH_TOKEN_TYPE_LSHIFT: return BOH_OP_LSHIFT;
+        default:
+            assert(false && "Error: Failed to convert tokenType to operator");
+            return -1;
+    }
+}
+
+
+static const bohToken* parsPeekCurrToken(const bohParser* pParser)
 {
     assert(pParser);
+    assert(pParser->currTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage));
+
     return bohDynArrayAtConst(pParser->pTokenStorage, pParser->currTokenIdx);
 }
 
 
-// <primary> = <integer> | <float> | '(' <expr> ')'
-// static bohGrouping parsGetPrimary(const bohParser* pParser)
-// {
-//     assert(pParser);
-//
-//     const bohToken* pCurrToken = parsGetCurrToken(pParser);
-//
-//     const bohTokenType tokenType = bohTokenGetType(pCurrToken);
-//     const bohStringView lexeme = bohTokenGetLexeme(pCurrToken);
-//
-//     bohGrouping result;
-//
-//     switch (tokenType) {
-//         case BOH_TOKEN_TYPE_INTEGER:
-//             // result.number = bohNumberCreateI32(atoi(bohStringViewGetData(&lexeme)));
-//             // result.type = BOH_GROUPING_TYPE_NUMBER;
-//             break;
-//         case BOH_TOKEN_TYPE_FLOAT:
-//             // result.number = bohNumberCreateF32((float)atof(bohStringViewGetData(&lexeme)));
-//             // result.type = BOH_GROUPING_TYPE_NUMBER;
-//             break;
-//         case BOH_TOKEN_TYPE_LPAREN:
-//             // expression = bohGetExpression();
-//             // assert(bohTokenGetType(parsGetCurrToken(pParser)) == BOH_TOKEN_TYPE_RPAREN);
-//             // result.expression = expression;
-//             // result.type = BOH_GROUPING_TYPE_EXPRESSION;
-//             break;
-//         default:
-//             assert(false && "Invalid primary token type");
-//             break;
-//     }
-//
-//     return result;
-// }
+static const bohToken* parsPeekPrevToken(const bohParser* pParser)
+{
+    assert(pParser);
+    assert(pParser->currTokenIdx > 0);
+
+    const size_t prevTokenIdx = pParser->currTokenIdx - 1;
+    assert(prevTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage));
+
+    return bohDynArrayAtConst(pParser->pTokenStorage, prevTokenIdx);
+}
+
+
+static const bohToken* parsAdvanceToken(bohParser* pParser)
+{
+    assert(pParser);
+
+    ++pParser->currTokenIdx;
+    return parsPeekPrevToken(pParser);
+}
+
+
+static bool parsIsCurrTokenMatch(bohParser* pParser, bohTokenType type)
+{
+    assert(pParser);
+
+    if (pParser->currTokenIdx >= bohDynArrayGetSize(pParser->pTokenStorage)) {
+        return false;
+    }
+
+    if (parsPeekCurrToken(pParser)->type != type) {
+        return false;
+    }
+
+    parsAdvanceToken(pParser);
+    return true;
+}
+
+
+static bohAstNode* parsExpr(bohParser* pParser);
+
 
 static bohAstNode* parsPrimary(bohParser* pParser)
 {
+    assert(pParser);
 
+    if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
+        const int32_t value = atoi(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
+        return bohAstNodeCreateNumberI32(value);
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
+        const float value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
+        return bohAstNodeCreateNumberF32(value);
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
+        bohAstNode* pExpr = parsExpr(pParser);
+        
+        if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN)) {
+            assert(false && "Syntax error: ')' expected");
+        }
+
+        return pExpr;
+    }
+
+    assert(false && "Invalid primary token type");
+    return NULL;
 }
 
 
 static bohAstNode* parsUnary(bohParser* pParser)
 {
+    assert(pParser);
 
+    if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MINUS) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PLUS) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_NOT) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_NOT)
+    ) {
+        const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
+        bohAstNode* pOperand = parsUnary(pParser);
+
+        return bohAstNodeCreateUnary(parsTokenTypeToOperator(pOperatorToken->type), pOperand);
+    }
+
+    return parsPrimary(pParser);
 }
 
 
 static bohAstNode* parsFactor(bohParser* pParser)
 {
-
+    assert(pParser);
+    return parsUnary(pParser);
 }
 
 
 static bohAstNode* parsTerm(bohParser* pParser)
 {
+    assert(pParser);
 
+    bohAstNode* pExpr = parsFactor(pParser);
+
+    while (
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MULT) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_DIV) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MOD) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_XOR)
+    ) {
+        const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
+        bohAstNode* pRightArg = parsFactor(pParser);
+
+        pExpr = bohAstNodeCreateBinary(parsTokenTypeToOperator(pOperatorToken->type), pExpr, pRightArg);
+    }
+
+    return pExpr;
 }
 
 
 static bohAstNode* parsExpr(bohParser* pParser)
 {
-    
+    assert(pParser);
+
+    bohAstNode* pExpr = parsTerm(pParser);
+
+    while (
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PLUS) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MINUS)
+    ) {
+        const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
+        bohAstNode* pRightArg = parsTerm(pParser);
+
+        pExpr = bohAstNodeCreateBinary(parsTokenTypeToOperator(pOperatorToken->type), pExpr, pRightArg);
+    }
+
+    return pExpr;
 }
 
 
@@ -190,10 +287,51 @@ bohAstNode* bohAstNodeCreateNumberF32(float value)
 }
 
 
+bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg)
+{
+    assert(pArg);
+
+    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
+    assert(pNode);
+
+    bohAstNodeSetUnary(pNode, op, pArg);
+
+    return pNode;
+}
+
+
+bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg)
+{
+    assert(pLeftArg);
+    assert(pRightArg);
+
+    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
+    assert(pNode);
+
+    bohAstNodeSetBinary(pNode, op, pLeftArg, pRightArg);
+
+    return pNode;
+}
+
+
 bool bohAstNodeIsNumber(const bohAstNode* pNode)
 {
     assert(pNode);
     return pNode->type == BOH_AST_NODE_TYPE_NUMBER;
+}
+
+
+bool bohAstNodeIsUnary(const bohAstNode *pNode)
+{
+    assert(pNode);
+    return pNode->type == BOH_AST_NODE_TYPE_UNARY;
+}
+
+
+bool bohAstNodeIsBinary(const bohAstNode *pNode)
+{
+    assert(pNode);
+    return pNode->type == BOH_AST_NODE_TYPE_BINARY;
 }
 
 
@@ -203,6 +341,24 @@ const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode)
     assert(bohAstNodeIsNumber(pNode));
 
     return &pNode->number;
+}
+
+
+const bohAstNodeUnary* bohAstNodeGetUnary(const bohAstNode* pNode)
+{
+    assert(pNode);
+    assert(bohAstNodeIsUnary(pNode));
+
+    return &pNode->unary;
+}
+
+
+const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode)
+{
+    assert(pNode);
+    assert(bohAstNodeIsBinary(pNode));
+
+    return &pNode->binary;
 }
 
 
@@ -224,10 +380,33 @@ void bohAstNodeSetNumberF32(bohAstNode* pNode, float value)
 }
 
 
+bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg)
+{
+    assert(pNode);
+    assert(pArg);
+    
+    pNode->type = BOH_AST_NODE_TYPE_UNARY;
+    pNode->unary.op = op;
+    pNode->unary.pNode = pArg;
+}
+
+
+bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg)
+{
+    assert(pNode);
+    assert(pLeftArg);
+    assert(pRightArg);
+    
+    pNode->type = BOH_AST_NODE_TYPE_BINARY;
+    pNode->binary.op = op;
+    pNode->binary.pLeftNode = pLeftArg;
+    pNode->binary.pRightNode = pRightArg;
+}
+
+
 void bohAstDestroy(bohAST* pAST)
 {
     assert(pAST);
-
     BOH_AST_NODE_DESTROY(pAST->pRoot);
 }
 

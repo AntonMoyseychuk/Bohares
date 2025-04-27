@@ -65,25 +65,30 @@ typedef enum AstNodeType
 
 typedef struct AstNode bohAstNode;
 
+
+typedef struct AstNodeUnary
+{
+    bohOperator op;
+    bohAstNode* pNode;
+} bohAstNodeUnary;
+
+
+typedef struct AstNodeBinary
+{
+    bohOperator op;
+    bohAstNode* pLeftNode;
+    bohAstNode* pRightNode;
+} bohAstNodeBinary;
+
+
 struct AstNode
 {
     bohAstNodeType type;
 
     union 
     {
-        struct Unary
-        {
-            bohOperator op;
-            bohAstNode* pNode;
-        } unary;
-
-        struct Binary
-        {
-            bohOperator op;
-            bohAstNode* pLeftNode;
-            bohAstNode* pRightNode;
-        } binary;
-
+        bohAstNodeUnary unary;
+        bohAstNodeBinary binary;
         bohNumber number;
     };
 };
@@ -93,13 +98,21 @@ void bohAstNodeDestroy(bohAstNode* pNode);
 
 bohAstNode* bohAstNodeCreateNumberI32(int32_t value);
 bohAstNode* bohAstNodeCreateNumberF32(float value);
+bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg);
+bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 
 bool bohAstNodeIsNumber(const bohAstNode* pNode);
+bool bohAstNodeIsUnary(const bohAstNode* pNode);
+bool bohAstNodeIsBinary(const bohAstNode* pNode);
 
 const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode);
+const bohAstNodeUnary* bohAstNodeGetUnary(const bohAstNode* pNode);
+const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode);
 
 void bohAstNodeSetNumberI32(bohAstNode* pNode, int32_t value);
 void bohAstNodeSetNumberF32(bohAstNode* pNode, float value);
+bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg);
+bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 
 #define BOH_AST_NODE_DESTROY(NODE_PTR) { bohAstNodeDestroy(NODE_PTR); NODE_PTR = NULL; }
 

@@ -29,7 +29,11 @@ void bohDynArrayDestroy(bohDynArray* pArray);
 void bohDynArrayReserve(bohDynArray* pArray, size_t newCapacity);
 void bohDynArrayResize(bohDynArray* pArray, size_t newSize);
 
-void bohDynArrayPushBack(bohDynArray* pArray, const void* pData);
+void bohDynArrayClear(bohDynArray* pArray);
+
+// Push back empty slot at the end of array and return pointer to it
+void* bohDynArrayPushBackDummy(bohDynArray* pArray);
+void* bohDynArrayPushBack(bohDynArray* pArray, const void* pData);
 
 void* bohDynArrayAt(bohDynArray* pArray, size_t index);
 const void* bohDynArrayAtConst(const bohDynArray* pArray, size_t index);

@@ -388,6 +388,8 @@ bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pA
     pNode->type = BOH_AST_NODE_TYPE_UNARY;
     pNode->unary.op = op;
     pNode->unary.pNode = pArg;
+
+    return pNode;
 }
 
 
@@ -401,6 +403,8 @@ bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* p
     pNode->binary.op = op;
     pNode->binary.pLeftNode = pLeftArg;
     pNode->binary.pRightNode = pRightArg;
+
+    return pNode;
 }
 
 

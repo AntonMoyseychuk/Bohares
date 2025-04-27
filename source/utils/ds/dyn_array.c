@@ -117,13 +117,19 @@ void bohDynArrayResize(bohDynArray* pArray, size_t newSize)
 }
 
 
-void bohDynArrayPushBack(bohDynArray* pArray, const void* pData)
+void bohDynArrayClear(bohDynArray* pArray)
 {
     assert(bohDynArrayIsValid(pArray));
-    assert(pData);
+    bohDynArrayResize(pArray, 0);
+}
 
-    const size_t currSize = bohDynArrayGetSize(pArray); 
-    const size_t currCapacity = bohDynArrayGetCapacity(pArray); 
+
+void* bohDynArrayPushBackDummy(bohDynArray *pArray)
+{
+    assert(bohDynArrayIsValid(pArray));
+
+    const size_t currSize = pArray->size; 
+    const size_t currCapacity = pArray->capacity; 
 
     if (currSize + 1 > currCapacity) {
         const bool isZeroSized = currSize == 0;
@@ -132,11 +138,21 @@ void bohDynArrayPushBack(bohDynArray* pArray, const void* pData)
         bohDynArrayReserve(pArray, newSize);
     }
 
-    const bohDynArrElemCopyFunc ElemCopyFunc = pArray->pElemCopyFunc;
-
-    ElemCopyFunc(BOH_GET_DYN_ARRAY_ELEMENT_PTR(pArray->pData, currSize, pArray->elementSize), pData);
-    
     ++pArray->size;
+
+    return bohDynArrayAt(pArray, pArray->size - 1);
+}
+
+
+void* bohDynArrayPushBack(bohDynArray* pArray, const void *pData)
+{
+    assert(bohDynArrayIsValid(pArray));
+    assert(pData);
+
+    void* pLastElem = bohDynArrayPushBackDummy(pArray);
+    pArray->pElemCopyFunc(pLastElem, pData);
+
+    return pLastElem;
 }
 
 

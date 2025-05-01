@@ -1,30 +1,42 @@
 #include "pch.h"
 
 #include "parser.h"
+#include "utils/message/message.h"
+
+
+#define BOH_THROW_PARSER_ERROR(LINE, COLUMN, FMT, ...)                                                                          \
+{                                                                                                                               \
+    char pFmtBuffer0[1024] = { 0 };                                                                                             \
+    sprintf_s(pFmtBuffer0, sizeof(pFmtBuffer0), "[BOH PARSER ERROR] (%u, %u): %s", (uint64_t)(LINE), (uint64_t)(COLUMN), FMT);  \
+    BOH_THROW_ERROR_FMT(pFmtBuffer0, __VA_ARGS__);                                                                              \
+}
+
+#define BOH_CHECK_PARSER_COND(COND, LINE, COLUMN, FMT, ...)     \
+    if (!(COND)) {                                              \
+        BOH_THROW_PARSER_ERROR(LINE, COLUMN, FMT, __VA_ARGS__); \
+    }
 
 
 static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
 {
     switch (tokenType) {
-        case BOH_TOKEN_TYPE_PLUS: return BOH_OP_PLUS;
-        case BOH_TOKEN_TYPE_MINUS: return BOH_OP_MINUS;
-        case BOH_TOKEN_TYPE_MULT: return BOH_OP_MULT;
-        case BOH_TOKEN_TYPE_DIV: return BOH_OP_DIV;
-        case BOH_TOKEN_TYPE_MOD: return BOH_OP_MOD;
-        case BOH_TOKEN_TYPE_XOR: return BOH_OP_XOR;
+        case BOH_TOKEN_TYPE_PLUS:       return BOH_OP_PLUS;
+        case BOH_TOKEN_TYPE_MINUS:      return BOH_OP_MINUS;
+        case BOH_TOKEN_TYPE_MULT:       return BOH_OP_MULT;
+        case BOH_TOKEN_TYPE_DIV:        return BOH_OP_DIV;
+        case BOH_TOKEN_TYPE_MOD:        return BOH_OP_MOD;
+        case BOH_TOKEN_TYPE_XOR:        return BOH_OP_XOR;
         case BOH_TOKEN_TYPE_BITWISE_NOT: return BOH_OP_BITWISE_NOT;
-        case BOH_TOKEN_TYPE_NOT: return BOH_OP_NOT;
-        case BOH_TOKEN_TYPE_GREATER: return BOH_OP_GREATER;
-        case BOH_TOKEN_TYPE_LESS: return BOH_OP_LESS;
-        case BOH_TOKEN_TYPE_NOT_EQUAL: return BOH_OP_NOT_EQUAL;
-        case BOH_TOKEN_TYPE_GEQUAL: return BOH_OP_GEQUAL;
-        case BOH_TOKEN_TYPE_LEQUAL: return BOH_OP_LEQUAL;
-        case BOH_TOKEN_TYPE_EQUAL: return BOH_OP_EQUAL;
-        case BOH_TOKEN_TYPE_RSHIFT: return BOH_OP_RSHIFT;
-        case BOH_TOKEN_TYPE_LSHIFT: return BOH_OP_LSHIFT;
-        default:
-            assert(false && "Error: Failed to convert tokenType to operator");
-            return -1;
+        case BOH_TOKEN_TYPE_NOT:        return BOH_OP_NOT;
+        case BOH_TOKEN_TYPE_GREATER:    return BOH_OP_GREATER;
+        case BOH_TOKEN_TYPE_LESS:       return BOH_OP_LESS;
+        case BOH_TOKEN_TYPE_NOT_EQUAL:  return BOH_OP_NOT_EQUAL;
+        case BOH_TOKEN_TYPE_GEQUAL:     return BOH_OP_GEQUAL;
+        case BOH_TOKEN_TYPE_LEQUAL:     return BOH_OP_LEQUAL;
+        case BOH_TOKEN_TYPE_EQUAL:      return BOH_OP_EQUAL;
+        case BOH_TOKEN_TYPE_RSHIFT:     return BOH_OP_RSHIFT;
+        case BOH_TOKEN_TYPE_LSHIFT:     return BOH_OP_LSHIFT;
+        default:                        return BOH_OP_UNKNOWN;
     }
 }
 
@@ -93,13 +105,16 @@ static bohAstNode* parsPrimary(bohParser* pParser)
         bohAstNode* pExpr = parsExpr(pParser);
         
         if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN)) {
-            assert(false && "Syntax error: ')' expected");
+            const bohToken* pPrevToken = parsPeekPrevToken(pParser);
+            BOH_CHECK_PARSER_COND(false, pPrevToken->line, pPrevToken->column, "\')\' expected");
         }
 
         return pExpr;
     }
 
-    assert(false && "Invalid primary token type");
+    const bohToken* pCurrToken = parsPeekPrevToken(pParser);
+    BOH_CHECK_PARSER_COND(false, pCurrToken->line, pCurrToken->column, "unknown primary token type: %s", bohTokenGetTypeStr(pCurrToken));
+    
     return NULL;
 }
 
@@ -116,7 +131,11 @@ static bohAstNode* parsUnary(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pOperand = parsUnary(pParser);
 
-        return bohAstNodeCreateUnary(parsTokenTypeToOperator(pOperatorToken->type), pOperand);
+        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown unary operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+
+        return bohAstNodeCreateUnary(op, pOperand);
     }
 
     return parsPrimary(pParser);
@@ -145,7 +164,11 @@ static bohAstNode* parsTerm(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsFactor(pParser);
 
-        pExpr = bohAstNodeCreateBinary(parsTokenTypeToOperator(pOperatorToken->type), pExpr, pRightArg);
+        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown term operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+
+        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg);
     }
 
     return pExpr;
@@ -165,7 +188,11 @@ static bohAstNode* parsExpr(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsTerm(pParser);
 
-        pExpr = bohAstNodeCreateBinary(parsTokenTypeToOperator(pOperatorToken->type), pExpr, pRightArg);
+        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+
+        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg);
     }
 
     return pExpr;
@@ -244,7 +271,9 @@ void bohNumberSetF32(bohNumber* pNumber, float value)
 
 void bohAstNodeDestroy(bohAstNode* pNode)
 {
-    assert(pNode);
+    if (!pNode) {
+        return;
+    }
 
     switch (pNode->type) {
         case BOH_AST_NODE_TYPE_NUMBER:
@@ -415,6 +444,13 @@ void bohAstDestroy(bohAST* pAST)
 }
 
 
+bool bohAstIsEmpty(const bohAST* pAST)
+{
+    assert(pAST);
+    return pAST->pRoot == NULL;
+}
+
+
 bohParser bohParserCreate(const bohTokenStorage *pTokenStorage)
 {
     assert(pTokenStorage);
@@ -439,9 +475,11 @@ void bohParserDestroy(bohParser* pParser)
 
 bohAST bohParserParse(bohParser* pParser)
 {
-    bohAST ast;
+    bohAST ast = { NULL };
 
-    ast.pRoot = parsExpr(pParser);
+    if (!bohDynArrayIsEmpty(pParser->pTokenStorage)) {
+        ast.pRoot = parsExpr(pParser);
+    }
 
     return ast;
 }

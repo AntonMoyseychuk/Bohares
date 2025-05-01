@@ -47,7 +47,9 @@ static const char* OperatorToStr(bohOperator op)
 
 static void PrintAstNode(const bohAstNode* pNode)
 {
-    assert(pNode);
+    if (!pNode) {
+        return;
+    }
     
     switch (pNode->type) {
         case BOH_AST_NODE_TYPE_NUMBER:

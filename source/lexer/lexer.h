@@ -107,3 +107,6 @@ typedef bohDynArray bohTokenStorage;
 bohTokenStorage bohLexerTokenize(bohLexer* pLexer);
 
 bool bohLexerIsValid(bohLexer* pLexer);
+
+
+const char* bohLexerConvertTokenTypeToStr(bohTokenType type);

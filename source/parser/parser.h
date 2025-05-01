@@ -5,6 +5,8 @@
 
 typedef enum Operator
 {
+    BOH_OP_UNKNOWN,
+
     BOH_OP_PLUS,
     BOH_OP_MINUS,
     BOH_OP_MULT,
@@ -124,6 +126,8 @@ typedef struct AST
 
 
 void bohAstDestroy(bohAST* pAST);
+
+bool bohAstIsEmpty(const bohAST* pAST);
 
 
 typedef struct Parser

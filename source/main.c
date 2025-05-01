@@ -53,11 +53,15 @@ static void PrintAstNode(const bohAstNode* pNode)
     
     switch (pNode->type) {
         case BOH_AST_NODE_TYPE_NUMBER:
+        {
             if (bohNumberIsI32(&pNode->number)) {
                 fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("%d", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetI32(&pNode->number));
             } else {
                 fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("%f", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetF32(&pNode->number));
             }
+
+            fflush(stdout);
+        }
             break;
         case BOH_AST_NODE_TYPE_UNARY:
         {

@@ -23,6 +23,7 @@ void bohThrowCompileError(const char* pMsg, ...)
     va_start(args, pMsg);
     
     vfprintf_s(stderr, message, args);
+    fflush(stderr);
     
     va_end(args);
 

@@ -45,7 +45,15 @@ static const char* OperatorToStr(bohOperator op)
 }
 
 
-static void PrintAstNode(const bohAstNode* pNode)
+static void PrintOffset(FILE* pStream, uint64_t length)
+{
+    for (uint64_t i = 0; i < length; ++i) {
+        fputc(' ', pStream);
+    }
+}
+
+
+static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 {
     if (!pNode) {
         return;
@@ -55,12 +63,10 @@ static void PrintAstNode(const bohAstNode* pNode)
         case BOH_AST_NODE_TYPE_NUMBER:
         {
             if (bohNumberIsI32(&pNode->number)) {
-                fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("%d", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetI32(&pNode->number));
+                fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("Int32[%d]", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetI32(&pNode->number));
             } else {
-                fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("%f", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetF32(&pNode->number));
+                fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("Float[%f]", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetF32(&pNode->number));
             }
-
-            fflush(stdout);
         }
             break;
         case BOH_AST_NODE_TYPE_UNARY:
@@ -68,7 +74,9 @@ static void PrintAstNode(const bohAstNode* pNode)
             const bohAstNodeUnary* pUnary = bohAstNodeGetUnary(pNode);
 
             fprintf_s(stdout, "UnOp(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ", ", OperatorToStr(pUnary->op));
-            PrintAstNode(pUnary->pNode);
+
+            PrintAstNode(pUnary->pNode, offsetLen + sizeof("UnOp(") - 1);
+            
             fputc(')', stdout);
         }
             break;
@@ -76,11 +84,21 @@ static void PrintAstNode(const bohAstNode* pNode)
         {
             const bohAstNodeBinary* pBinary = bohAstNodeGetBinary(pNode);
             
-            fprintf_s(stdout, "BinOp(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ", ", OperatorToStr(pBinary->op));
-            PrintAstNode(pBinary->pLeftNode);
-            fputs(", ", stdout);
-            PrintAstNode(pBinary->pRightNode);
-            fputc(')', stdout);
+            fprintf_s(stdout, "BinOp(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ",\n", OperatorToStr(pBinary->op));
+
+            const uint64_t nextlevelOffsetLen = offsetLen + sizeof("BinOp(") - 1;
+
+            PrintOffset(stdout, nextlevelOffsetLen);
+            PrintAstNode(pBinary->pLeftNode, nextlevelOffsetLen);
+            
+            fputs(",\n", stdout);
+
+            PrintOffset(stdout, nextlevelOffsetLen);
+            PrintAstNode(pBinary->pRightNode, nextlevelOffsetLen);
+            
+            fputc('\n', stdout);
+            PrintOffset(stdout, offsetLen);
+            fputs(")", stdout);
         }
             break;
         default:
@@ -112,7 +130,7 @@ int main(int argc, char* argv[])
 // "    print(\"x is negative\n\")\n"
 // "end\n";
 
-    const char* str = "2 + 42 * 2 + (47 * -21) % 33";
+    const char* str = "42 * 2 + (47 * +-33.301) % (~33 ^ 77)";
 
     bohLexer lexer = bohLexerCreate(str, strlen(str) + 1);
 
@@ -136,8 +154,7 @@ int main(int argc, char* argv[])
     bohAST ast = bohParserParse(&parser);
 
     fprintf_s(stdout, "\n" BOH_MAKE_COLORED_TEXT("AST:", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) "\n");
-    PrintAstNode(ast.pRoot);
-    fputc('\n', stdout);
+    PrintAstNode(ast.pRoot, 0);
 
     bohAstDestroy(&ast);
     bohParserDestroy(&parser);

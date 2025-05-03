@@ -4,19 +4,7 @@
 #include "parser/parser.h"
 
 #include "utils/file/file.h"
-
-
-#define BOH_OUTPUT_COLOR_RESET_ASCII_CODE      "\033[0m"
-#define BOH_OUTPUT_COLOR_BLACK_ASCII_CODE      "\033[30m"
-#define BOH_OUTPUT_COLOR_RED_ASCII_CODE        "\033[31m"
-#define BOH_OUTPUT_COLOR_GREEN_ASCII_CODE      "\033[32m"
-#define BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE     "\033[33m"
-#define BOH_OUTPUT_COLOR_BLUE_ASCII_CODE       "\033[34m"
-#define BOH_OUTPUT_COLOR_MAGENTA_ASCII_CODE    "\033[35m"
-#define BOH_OUTPUT_COLOR_CYAN_ASCII_CODE       "\033[36m"
-#define BOH_OUTPUT_COLOR_WHITE_ASCII_CODE      "\033[37m"
-
-#define BOH_MAKE_COLORED_TEXT(text, color) color text BOH_OUTPUT_COLOR_RESET_ASCII_CODE
+#include "utils/message/message.h"
 
 
 static const char* OperatorToStr(bohOperator op)
@@ -63,9 +51,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         case BOH_AST_NODE_TYPE_NUMBER:
         {
             if (bohNumberIsI32(&pNode->number)) {
-                fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("Int32[%d]", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetI32(&pNode->number));
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Int32[%d]", bohNumberGetI32(&pNode->number));
             } else {
-                fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("Float[%f]", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE), bohNumberGetF32(&pNode->number));
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Float[%f]", bohNumberGetF32(&pNode->number));
             }
         }
             break;
@@ -73,7 +61,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         {
             const bohAstNodeUnary* pUnary = bohAstNodeGetUnary(pNode);
 
-            fprintf_s(stdout, "UnOp(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ", ", OperatorToStr(pUnary->op));
+            fputs("UnOp(", stdout);
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pUnary->op));
+            fputs(", ", stdout);
 
             PrintAstNode(pUnary->pNode, offsetLen + sizeof("UnOp(") - 1);
             
@@ -84,7 +74,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         {
             const bohAstNodeBinary* pBinary = bohAstNodeGetBinary(pNode);
             
-            fprintf_s(stdout, "BinOp(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ",\n", OperatorToStr(pBinary->op));
+            fputs("BinOp(", stdout);
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pBinary->op));
+            fputs(",\n", stdout);
 
             const uint64_t nextlevelOffsetLen = offsetLen + sizeof("BinOp(") - 1;
 
@@ -111,32 +103,53 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 int main(int argc, char* argv[])
 {
 #define DEBUG_NO_ARGS
-#ifdef DEBUG_NO_ARGS
-//     const char* str =
-// "# Initialize constants\n"
+#ifndef DEBUG_NO_ARGS
+    if (argc != 2) {
+        bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Invalid command line arguments count: %d\n", argc);
+        return EXIT_FAILURE;
+    }
 
-// "M3D_PI = 3.141592\n"
-// "M3D_G = 9.81\n"
+    bohFileContent fileContent = bohReadTextFile(argv[1]);
+    switch (bohFileContentGetErrorCode(&fileContent)) {
+        case BOH_FILE_CONTENT_ERROR_NULL_FILEPATH:
+            bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Filepath is NULL\n");
+            return EXIT_FAILURE;
+        case BOH_FILE_CONTENT_ERROR_OPEN_FAILED:
+            bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Failed to open file: %s\n", argv[1]);
+            return EXIT_FAILURE;
+        default:
+            break;
+    }
+
+    const char* pSourceCode = (const char*)fileContent.pData;
+    const size_t sourceCodeSize = fileContent.dataSize;
+#else
+    //     const char* str =
+    // "# Initialize constants\n"
+
+    // "M3D_PI = 3.141592\n"
+    // "M3D_G = 9.81\n"
 
 
-// "# Initialize vars\n"
+    // "# Initialize vars\n"
 
-// "x = 8\n"
+    // "x = 8\n"
 
 
-// "if x >= 0 then\n"
-// "    print(\"x is positive\n\")\n"
-// "else\n"
-// "    print(\"x is negative\n\")\n"
-// "end\n";
+    // "if x >= 0 then\n"
+    // "    print(\"x is positive\n\")\n"
+    // "else\n"
+    // "    print(\"x is negative\n\")\n"
+    // "end\n";
 
-    const char* str = "42 * 2 + (47 * +-33.301) % (~33 ^ 77)";
+    const char* pSourceCode = "42 * 2 + (47 * +-33.301) % (~33 ^ 77)";
+    const size_t sourceCodeSize = strlen(pSourceCode) + 1;
+#endif
 
-    bohLexer lexer = bohLexerCreate(str, strlen(str) + 1);
-
+    bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
     bohTokenStorage tokens = bohLexerTokenize(&lexer);
 
-    fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("LEXER TOKENS:", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) "\n");
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "LEXER TOKENS: \n");
 
     const size_t tokensCount = bohDynArrayGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
@@ -146,14 +159,17 @@ int main(int argc, char* argv[])
         const char* pLexemeStr = bohStringViewGetData(&lexeme);
         const size_t lexemeSize = bohStringViewGetSize(&lexeme);
 
-        fprintf_s(stdout, "(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE) ", " BOH_MAKE_COLORED_TEXT("%.*s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ", %u, %u)\n", 
-            bohTokenGetTypeStr(pToken), lexemeSize, pLexemeStr, pToken->line, pToken->column);
+        fputs("(", stdout);
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "%s", bohTokenGetTypeStr(pToken));
+        fputs(", ", stdout);
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%.*s", lexemeSize, pLexemeStr);
+        fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
     }
 
     bohParser parser = bohParserCreate(&tokens);
     bohAST ast = bohParserParse(&parser);
 
-    fprintf_s(stdout, "\n" BOH_MAKE_COLORED_TEXT("AST:", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) "\n");
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nAST: \n");
     PrintAstNode(ast.pRoot, 0);
 
     bohAstDestroy(&ast);
@@ -161,44 +177,4 @@ int main(int argc, char* argv[])
     bohLexerDestroy(&lexer);
 
     return EXIT_SUCCESS;
-#else
-    if (argc != 2) {
-        fprintf_s(stderr, BOH_MAKE_COLORED_TEXT("Invalid command line arguments count: %d\n", BOH_OUTPUT_COLOR_RED_ASCII_CODE), argc);
-        return EXIT_FAILURE;
-    }
-
-    bohFileContent fileContent = bohReadTextFile(argv[1]);
-    switch (bohFileContentGetErrorCode(&fileContent)) {
-        case BOH_FILE_CONTENT_ERROR_NULL_FILEPATH:
-            fprintf_s(stderr, BOH_MAKE_COLORED_TEXT("Filepath is NULL\n", BOH_OUTPUT_COLOR_RED_ASCII_CODE));
-            return EXIT_FAILURE;
-        case BOH_FILE_CONTENT_ERROR_OPEN_FAILED:
-            fprintf_s(stderr, BOH_MAKE_COLORED_TEXT("Failed to open file: %s\n", BOH_OUTPUT_COLOR_RED_ASCII_CODE), argv[1]);
-            return EXIT_FAILURE;
-        default:
-            break;
-    }
-
-    bohLexer lexer = bohLexerCreate(fileContent.pData, fileContent.dataSize);
-    bohTokenStorage tokens = bohLexerTokenize(&lexer);
-
-    fprintf_s(stdout, BOH_MAKE_COLORED_TEXT("LEXER TOKENS:", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) "\n");
-    
-    const size_t tokensCount = bohDynArrayGetSize(&tokens);
-    for (size_t i = 0; i < tokensCount; ++i) {
-        const bohToken* pToken = bohDynArrayAt(&tokens, i);
-
-        const bohStringView lexeme = bohTokenGetLexeme(pToken);
-        const char* pLexemeStr = bohStringViewGetData(&lexeme);
-        const size_t lexemeSize = bohStringViewGetSize(&lexeme);
-
-        fprintf_s(stdout, "(" BOH_MAKE_COLORED_TEXT("%s", BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE) ", " BOH_MAKE_COLORED_TEXT("%.*s", BOH_OUTPUT_COLOR_GREEN_ASCII_CODE) ", %u, %u)\n", 
-            bohTokenGetTypeStr(pToken), lexemeSize, pLexemeStr, pToken->line, pToken->column);
-    }
-
-    bohLexerDestroy(&lexer);
-    bohFileContentFree(&fileContent);
-
-    return EXIT_SUCCESS;
-#endif
 }

@@ -3,29 +3,38 @@
 #include "message.h"
 
 
-#define BOH_OUTPUT_COLOR_RESET_ASCII_CODE   "\033[0m"
-#define BOH_OUTPUT_COLOR_BLACK_ASCII_CODE   "\033[30m"
-#define BOH_OUTPUT_COLOR_RED_ASCII_CODE     "\033[31m"
-#define BOH_OUTPUT_COLOR_GREEN_ASCII_CODE   "\033[32m"
-#define BOH_OUTPUT_COLOR_YELLOW_ASCII_CODE  "\033[33m"
-#define BOH_OUTPUT_COLOR_BLUE_ASCII_CODE    "\033[34m"
-#define BOH_OUTPUT_COLOR_MAGENTA_ASCII_CODE "\033[35m"
-#define BOH_OUTPUT_COLOR_CYAN_ASCII_CODE    "\033[36m"
-#define BOH_OUTPUT_COLOR_WHITE_ASCII_CODE   "\033[37m"
+static const char* BOH_OUTPUT_COLOR_STRS[] = {
+    "\033[30m",
+    "\033[31m",
+    "\033[32m",
+    "\033[33m",
+    "\033[34m",
+    "\033[35m",
+    "\033[36m",
+    "\033[37m"
+};
+
+static const char* BOH_OUTPUT_COLOR_RESET_STR = "\033[0m";
 
 
-void bohThrowCompileError(const char* pMsg, ...)
+static const char* bohOutputColorToStr(bohOutputColor color)
 {
-    char message[2048] = { 0 };
-    sprintf_s(message, sizeof(message), "%s%s%s", BOH_OUTPUT_COLOR_RED_ASCII_CODE, pMsg, BOH_OUTPUT_COLOR_RESET_ASCII_CODE);
+    assert(color < BOH_OUTPUT_COLOR_COUNT && "Invalid output color code");
+    return BOH_OUTPUT_COLOR_STRS[color];
+}
+
+
+void bohColorPrintf(FILE* const pStream, bohOutputColor color, const char* pFmt, ...)
+{
+    assert(pFmt);
+
+    char fmt[1024] = {0};
+    sprintf_s(fmt, sizeof(fmt), "%s%s%s", bohOutputColorToStr(color), pFmt, BOH_OUTPUT_COLOR_RESET_STR);
 
     va_list args;
-    va_start(args, pMsg);
-    
-    vfprintf_s(stderr, message, args);
-    fflush(stderr);
+    va_start(args, pFmt);
+
+    vfprintf_s(pStream, fmt, args);
     
     va_end(args);
-
-    exit(-1);
 }

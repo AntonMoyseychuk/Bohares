@@ -4,11 +4,10 @@
 #include "utils/message/message.h"
 
 
-#define BOH_THROW_LEXER_ERROR(LINE, COLUMN, FMT, ...)                                                                            \
-{                                                                                                                                \
-    char pFmtBuffer0[1024] = { 0 };                                                                                              \
-    sprintf_s(pFmtBuffer0, sizeof(pFmtBuffer0), "[BOH LEXER ERROR] (%u, %u): %s", (uint64_t)(LINE), (uint64_t)(COLUMN), FMT);    \
-    BOH_THROW_ERROR_FMT(pFmtBuffer0, __VA_ARGS__);                                                                               \
+#define BOH_THROW_LEXER_ERROR(LINE, COLUMN, FMT, ...)                                           \
+{                                                                                               \
+    fprintf_s(stderr, "[BOH LEXER ERROR] (%u, %u): ", (uint64_t)(LINE), (uint64_t)(COLUMN));    \
+    BOH_THROW_ERROR_FMT(FMT, __VA_ARGS__);                                                      \
 }
 
 #define BOH_CHECK_LEXER_COND(COND, LINE, COLUMN, FMT, ...)     \

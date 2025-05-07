@@ -99,11 +99,13 @@ static bohAstNode* parsPrimary(bohParser* pParser)
         const float value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
         return bohAstNodeCreateNumberF32(value);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
+        const uint32_t line = parsPeekCurrToken(pParser)->line;
+        const uint32_t column = parsPeekCurrToken(pParser)->column;
+
         bohAstNode* pExpr = parsAddition(pParser);
         
         if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN)) {
-            const bohToken* pPrevToken = parsPeekPrevToken(pParser);
-            BOH_CHECK_PARSER_COND(false, pPrevToken->line, pPrevToken->column, "\')\' expected");
+            BOH_CHECK_PARSER_COND(false, line, column, "missed closing \')\'");
         }
 
         return pExpr;

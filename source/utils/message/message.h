@@ -24,5 +24,6 @@ void bohColorPrintf(FILE* const pStream, bohOutputColor color, const char* pFmt,
 #define BOH_THROW_ERROR_FMT(FMT, ...)                               \
 {                                                                   \
     bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, FMT, __VA_ARGS__); \
+    fputc('\n', stderr);                                            \
     exit(-1);                                                       \
 }

@@ -123,13 +123,18 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    bohFileContent fileContent = bohReadTextFile(argv[1]);
+    const char* pFilePath = argv[1];
+#else
+    const char* pFilePath = "../test/test.boh";
+#endif
+
+    bohFileContent fileContent = bohReadTextFile(pFilePath);
     switch (bohFileContentGetErrorCode(&fileContent)) {
         case BOH_FILE_CONTENT_ERROR_NULL_FILEPATH:
             bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Filepath is NULL\n");
             return EXIT_FAILURE;
         case BOH_FILE_CONTENT_ERROR_OPEN_FAILED:
-            bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Failed to open file: %s\n", argv[1]);
+            bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Failed to open file: %s\n", pFilePath);
             return EXIT_FAILURE;
         default:
             break;
@@ -137,28 +142,6 @@ int main(int argc, char* argv[])
 
     const char* pSourceCode = (const char*)fileContent.pData;
     const size_t sourceCodeSize = fileContent.dataSize;
-#else
-    //     const char* str =
-    // "# Initialize constants\n"
-
-    // "M3D_PI = 3.141592\n"
-    // "M3D_G = 9.81\n"
-
-
-    // "# Initialize vars\n"
-
-    // "x = 8\n"
-
-
-    // "if x >= 0 then\n"
-    // "    print(\"x is positive\n\")\n"
-    // "else\n"
-    // "    print(\"x is negative\n\")\n"
-    // "end\n";
-
-    const char* pSourceCode = "42 * 2 + (47 * +-33.301) % (~33 ^ 77)";
-    const size_t sourceCodeSize = strlen(pSourceCode) + 1;
-#endif
 
     bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
     bohTokenStorage tokens = bohLexerTokenize(&lexer);

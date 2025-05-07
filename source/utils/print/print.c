@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "message.h"
+#include "print.h"
 
 
 static const char* BOH_OUTPUT_COLOR_STRS[] = {
@@ -17,6 +17,11 @@ static const char* BOH_OUTPUT_COLOR_STRS[] = {
 static const char* BOH_OUTPUT_COLOR_RESET_STR = "\033[0m";
 
 
+enum {
+    BOH_MAX_FMT_LENGTH = 2047
+};
+
+
 static const char* bohOutputColorToStr(bohOutputColor color)
 {
     assert(color < BOH_OUTPUT_COLOR_COUNT && "Invalid output color code");
@@ -26,10 +31,13 @@ static const char* bohOutputColorToStr(bohOutputColor color)
 
 void bohColorPrintf(FILE* const pStream, bohOutputColor color, const char* pFmt, ...)
 {
+    assert(pStream);
     assert(pFmt);
 
-    char fmt[1024] = {0};
-    sprintf_s(fmt, sizeof(fmt), "%s%s%s", bohOutputColorToStr(color), pFmt, BOH_OUTPUT_COLOR_RESET_STR);
+    assert(strlen(pFmt) <= BOH_MAX_FMT_LENGTH);
+
+    char fmt[BOH_MAX_FMT_LENGTH + 1] = {0};
+    sprintf_s(fmt, BOH_MAX_FMT_LENGTH, "%s%s%s", bohOutputColorToStr(color), pFmt, BOH_OUTPUT_COLOR_RESET_STR);
 
     va_list args;
     va_start(args, pFmt);

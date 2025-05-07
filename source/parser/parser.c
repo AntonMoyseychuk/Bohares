@@ -1,19 +1,16 @@
 #include "pch.h"
 
 #include "parser.h"
-#include "utils/message/message.h"
+#include "state/boh_state.h"
+
+#include "utils/print/print.h"
 
 
-#define BOH_THROW_PARSER_ERROR(LINE, COLUMN, FMT, ...)                                          \
-{                                                                                               \
-    fprintf_s(stderr, "[BOH PARSER ERROR] (%u, %u): ", (uint64_t)(LINE), (uint64_t)(COLUMN));   \
-    BOH_THROW_ERROR_FMT(FMT, __VA_ARGS__);                                                      \
-}
-
-
-#define BOH_CHECK_PARSER_COND(COND, LINE, COLUMN, FMT, ...)     \
-    if (!(COND)) {                                              \
-        BOH_THROW_PARSER_ERROR(LINE, COLUMN, FMT, __VA_ARGS__); \
+#define BOH_CHECK_PARSER_COND(COND, LINE, COLUMN, FMT, ...)                 \
+    if (!(COND)) {                                                          \
+        char msg[1024] = {0};                                               \
+        sprintf_s(msg, sizeof(msg) - 1, FMT, __VA_ARGS__);                  \
+        bohStateEmplaceParserError(bohGlobalStateGet(), LINE, COLUMN, msg); \
     }
 
 
@@ -112,8 +109,9 @@ static bohAstNode* parsPrimary(bohParser* pParser)
         return pExpr;
     }
 
-    const bohToken* pCurrToken = parsPeekPrevToken(pParser);
-    BOH_CHECK_PARSER_COND(false, pCurrToken->line, pCurrToken->column, "unknown primary token type: %s", bohTokenGetTypeStr(pCurrToken));
+    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+    BOH_CHECK_PARSER_COND(false, pCurrToken->line, pCurrToken->column, "unknown primary token type: %.*s", 
+        bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
     
     return NULL;
 }

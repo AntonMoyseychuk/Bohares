@@ -1,10 +1,12 @@
 #include "pch.h"
 
+#include "state/boh_state.h"
+
 #include "lexer/lexer.h"
 #include "parser/parser.h"
 
 #include "utils/file/file.h"
-#include "utils/message/message.h"
+#include "utils/print/print.h"
 
 
 static const char* OperatorToStr(bohOperator op)
@@ -29,6 +31,56 @@ static const char* OperatorToStr(bohOperator op)
         default:
             assert(false && "Error: Failed to convert operator to string");
             return NULL;
+    }
+}
+
+
+static void PrintLexerError(const bohLexerError* pError)
+{
+    assert(pError);
+
+    fprintf_s(stderr, "[LEXER ERROR]: %.*s (%u, %u): ", 
+        bohStringViewGetSize(&pError->filepath), bohStringViewGetData(&pError->filepath), pError->line, pError->column);
+    
+    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message));
+    fputc('\n', stderr);
+}
+
+
+static void PrintLexerErrors(const bohState* pState)
+{
+    assert(pState);
+
+    const size_t lexerErrorsCount = bohStateGetLexerErrorsCount(pState);
+        
+    for (size_t i = 0; i < lexerErrorsCount; ++i) {
+        const bohLexerError* pError = bohStateLexerErrorAt(pState, i);
+        PrintLexerError(pError);
+    }
+}
+
+
+static void PrintParserError(const bohParserError* pError)
+{
+    assert(pError);
+
+    fprintf_s(stderr, "[PARSER ERROR]: %.*s (%u, %u): ", 
+        bohStringViewGetSize(&pError->filepath), bohStringViewGetData(&pError->filepath), pError->line, pError->column);
+    
+    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message));
+    fputc('\n', stderr);
+}
+
+
+static void PrintParserErrors(const bohState* pState)
+{
+    assert(pState);
+
+    const size_t parserErrorsCount = bohStateGetParserErrorsCount(pState);
+        
+    for (size_t i = 0; i < parserErrorsCount; ++i) {
+        const bohParserError* pError = bohStateParserErrorAt(pState, i);
+        PrintParserError(pError);
     }
 }
 
@@ -116,7 +168,10 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 
 int main(int argc, char* argv[])
 {
-// #define DEBUG_NO_ARGS
+    bohGlobalStateInit();
+    bohState* pState = bohGlobalStateGet();
+
+#define DEBUG_NO_ARGS
 #ifndef DEBUG_NO_ARGS
     if (argc != 2) {
         bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Invalid command line arguments count: %d\n", argc);
@@ -125,8 +180,13 @@ int main(int argc, char* argv[])
 
     const char* pFilePath = argv[1];
 #else
+    (void)argc;
+    (void)argv;
+
     const char* pFilePath = "../test/test.boh";
 #endif
+
+    bohStateSetCurrProcessingFile(pState, bohStringViewCreateCStr(pFilePath));
 
     bohFileContent fileContent = bohReadTextFile(pFilePath);
     switch (bohFileContentGetErrorCode(&fileContent)) {
@@ -146,7 +206,13 @@ int main(int argc, char* argv[])
     bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
     bohTokenStorage tokens = bohLexerTokenize(&lexer);
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "LEXER TOKENS: \n");
+    if (bohStateHasLexerErrors(pState)) {
+        PrintLexerErrors(pState);        
+        exit(-1);
+    }
+
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "LEXER TOKENS:");
+    fputc('\n', stdout);
 
     const size_t tokensCount = bohDynArrayGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
@@ -166,12 +232,19 @@ int main(int argc, char* argv[])
     bohParser parser = bohParserCreate(&tokens);
     bohAST ast = bohParserParse(&parser);
 
+    if (bohStateHasParserErrors(pState)) {
+        PrintParserErrors(pState);        
+        exit(-2);
+    }
+
     bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nAST: \n");
     PrintAstNode(ast.pRoot, 0);
 
     bohAstDestroy(&ast);
     bohParserDestroy(&parser);
     bohLexerDestroy(&lexer);
+
+    bohGlobalStateDestroy();
 
     return EXIT_SUCCESS;
 }

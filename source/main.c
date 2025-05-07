@@ -61,11 +61,14 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         {
             const bohAstNodeUnary* pUnary = bohAstNodeGetUnary(pNode);
 
+            // const uint64_t nextlevelOffsetLen = offsetLen + sizeof("UnOp(") - 1;
+            const uint64_t nextlevelOffsetLen = offsetLen + 4;
+
             fputs("UnOp(", stdout);
             bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pUnary->op));
             fputs(", ", stdout);
 
-            PrintAstNode(pUnary->pNode, offsetLen + sizeof("UnOp(") - 1);
+            PrintAstNode(pUnary->pNode, nextlevelOffsetLen);
             
             fputc(')', stdout);
         }
@@ -73,24 +76,35 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         case BOH_AST_NODE_TYPE_BINARY:
         {
             const bohAstNodeBinary* pBinary = bohAstNodeGetBinary(pNode);
+
+            // const uint64_t nextlevelOffsetLen = offsetLen + sizeof("BinOp(") - 1;
+            const uint64_t nextlevelOffsetLen = offsetLen + 4;
+
+            const bool areLeftAndRightNodesNumbers = bohAstNodeIsNumber(pBinary->pLeftNode) && bohAstNodeIsNumber(pBinary->pRightNode);
             
             fputs("BinOp(", stdout);
             bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pBinary->op));
-            fputs(",\n", stdout);
+            fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
-            const uint64_t nextlevelOffsetLen = offsetLen + sizeof("BinOp(") - 1;
+            if (!areLeftAndRightNodesNumbers) {
+                PrintOffset(stdout, nextlevelOffsetLen);
+            }
 
-            PrintOffset(stdout, nextlevelOffsetLen);
             PrintAstNode(pBinary->pLeftNode, nextlevelOffsetLen);
             
-            fputs(",\n", stdout);
+            fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
-            PrintOffset(stdout, nextlevelOffsetLen);
+            if (!areLeftAndRightNodesNumbers) {
+                PrintOffset(stdout, nextlevelOffsetLen);
+            }
+
             PrintAstNode(pBinary->pRightNode, nextlevelOffsetLen);
             
-            fputc('\n', stdout);
-            PrintOffset(stdout, offsetLen);
-            fputs(")", stdout);
+            if (!areLeftAndRightNodesNumbers) {
+                fputc('\n', stdout);
+                PrintOffset(stdout, offsetLen);
+            }
+            fputc(')', stdout);
         }
             break;
         default:
@@ -102,7 +116,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 
 int main(int argc, char* argv[])
 {
-#define DEBUG_NO_ARGS
+// #define DEBUG_NO_ARGS
 #ifndef DEBUG_NO_ARGS
     if (argc != 2) {
         bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Invalid command line arguments count: %d\n", argc);

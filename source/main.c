@@ -1,12 +1,9 @@
 #include "pch.h"
 
-#include "state/boh_state.h"
+#include "state.h"
 
 #include "lexer/lexer.h"
 #include "parser/parser.h"
-
-#include "utils/file/file.h"
-#include "utils/print/print.h"
 
 
 static const char* OperatorToStr(bohOperator op)
@@ -102,10 +99,10 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
     switch (pNode->type) {
         case BOH_AST_NODE_TYPE_NUMBER:
         {
-            if (bohNumberIsI32(&pNode->number)) {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Int32[%d]", bohNumberGetI32(&pNode->number));
+            if (bohNumberIsI64(&pNode->number)) {
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Int32[%d]", bohNumberGetI64(&pNode->number));
             } else {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Float[%f]", bohNumberGetF32(&pNode->number));
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Float[%f]", bohNumberGetF64(&pNode->number));
             }
         }
             break;
@@ -113,15 +110,23 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         {
             const bohAstNodeUnary* pUnary = bohAstNodeGetUnary(pNode);
 
-            // const uint64_t nextlevelOffsetLen = offsetLen + sizeof("UnOp(") - 1;
             const uint64_t nextlevelOffsetLen = offsetLen + 4;
+            const bool isOperandNumber = bohAstNodeIsNumber(pUnary->pNode);
 
             fputs("UnOp(", stdout);
             bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pUnary->op));
-            fputs(", ", stdout);
+            fputs(isOperandNumber ? ", " : ",\n", stdout);
+
+            if (!isOperandNumber) {
+                PrintOffset(stdout, nextlevelOffsetLen);
+            }
 
             PrintAstNode(pUnary->pNode, nextlevelOffsetLen);
             
+            if (!isOperandNumber) {
+                fputc('\n', stdout);
+                PrintOffset(stdout, offsetLen);
+            }
             fputc(')', stdout);
         }
             break;
@@ -129,9 +134,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         {
             const bohAstNodeBinary* pBinary = bohAstNodeGetBinary(pNode);
 
-            // const uint64_t nextlevelOffsetLen = offsetLen + sizeof("BinOp(") - 1;
             const uint64_t nextlevelOffsetLen = offsetLen + 4;
-
             const bool areLeftAndRightNodesNumbers = bohAstNodeIsNumber(pBinary->pLeftNode) && bohAstNodeIsNumber(pBinary->pRightNode);
             
             fputs("BinOp(", stdout);
@@ -237,8 +240,12 @@ int main(int argc, char* argv[])
         exit(-2);
     }
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nAST: \n");
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nAST:");
+    fputc('\n', stdout);
     PrintAstNode(ast.pRoot, 0);
+
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\n\nINTERPRETER:");
+    fputc('\n', stdout);
 
     bohAstDestroy(&ast);
     bohParserDestroy(&parser);

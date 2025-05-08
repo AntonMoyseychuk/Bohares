@@ -1,9 +1,7 @@
 #include "pch.h"
 
 #include "lexer.h"
-#include "state/boh_state.h"
-
-#include "utils/print/print.h"
+#include "state.h"
 
 
 #define BOH_CHECK_LEXER_COND(COND, LINE, COLUMN, FMT, ...)                  \

@@ -1,9 +1,7 @@
 #include "pch.h"
 
 #include "parser.h"
-#include "state/boh_state.h"
-
-#include "utils/print/print.h"
+#include "state.h"
 
 
 #define BOH_CHECK_PARSER_COND(COND, LINE, COLUMN, FMT, ...)                 \
@@ -93,11 +91,11 @@ static bohAstNode* parsPrimary(bohParser* pParser)
     assert(pParser);
 
     if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
-        const int32_t value = atoi(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        return bohAstNodeCreateNumberI32(value);
+        const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
+        return bohAstNodeCreateNumberI64(value);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
-        const float value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        return bohAstNodeCreateNumberF32(value);
+        const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
+        return bohAstNodeCreateNumberF64(value);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
@@ -198,76 +196,6 @@ static bohAstNode* parsExpr(bohParser* pParser)
 }
 
 
-bohNumber bohNumberCreateI32(int32_t value)
-{
-    bohNumber number;
-
-    bohNumberSetI32(&number, value);
-
-    return number;
-}
-
-
-bohNumber bohNumberCreateF32(float value)
-{
-    bohNumber number;
-
-    bohNumberSetF32(&number, value);
-
-    return number;
-}
-
-
-bool bohNumberIsI32(const bohNumber* pNumber)
-{
-    assert(pNumber);
-    return pNumber->type == BOH_NUMBER_TYPE_INTEGER;
-}
-
-
-bool bohNumberIsF32(const bohNumber* pNumber)
-{
-    assert(pNumber);
-    return pNumber->type == BOH_NUMBER_TYPE_FLOAT;
-}
-
-
-int32_t bohNumberGetI32(const bohNumber* pNumber)
-{
-    assert(pNumber);
-    assert(bohNumberIsI32(pNumber));
-    
-    return pNumber->i32;
-}
-
-
-float bohNumberGetF32(const bohNumber* pNumber)
-{
-    assert(pNumber);
-    assert(bohNumberIsF32(pNumber));
-    
-    return pNumber->f32;
-}
-
-
-void bohNumberSetI32(bohNumber* pNumber, int32_t value)
-{
-    assert(pNumber);
-    
-    pNumber->type = BOH_NUMBER_TYPE_INTEGER;
-    pNumber->i32 = value;
-}
-
-
-void bohNumberSetF32(bohNumber* pNumber, float value)
-{
-    assert(pNumber);
-    
-    pNumber->type = BOH_NUMBER_TYPE_FLOAT;
-    pNumber->f32 = value;
-}
-
-
 void bohAstNodeDestroy(bohAstNode* pNode)
 {
     if (!pNode) {
@@ -293,23 +221,23 @@ void bohAstNodeDestroy(bohAstNode* pNode)
 }
 
 
-bohAstNode* bohAstNodeCreateNumberI32(int32_t value)
+bohAstNode* bohAstNodeCreateNumberI64(int64_t value)
 {
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
-    bohAstNodeSetNumberI32(pNode, value);
+    bohAstNodeSetNumberI64(pNode, value);
 
     return pNode;
 }
 
 
-bohAstNode* bohAstNodeCreateNumberF32(float value)
+bohAstNode* bohAstNodeCreateNumberF64(double value)
 {
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
-    bohAstNodeSetNumberF32(pNode, value);
+    bohAstNodeSetNumberF64(pNode, value);
 
     return pNode;
 }
@@ -390,21 +318,21 @@ const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode)
 }
 
 
-void bohAstNodeSetNumberI32(bohAstNode* pNode, int32_t value)
+void bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value)
 {
     assert(pNode);
 
     pNode->type = BOH_AST_NODE_TYPE_NUMBER;
-    pNode->number = bohNumberCreateI32(value);
+    pNode->number = bohNumberCreateI64(value);
 }
 
 
-void bohAstNodeSetNumberF32(bohAstNode* pNode, float value)
+void bohAstNodeSetNumberF64(bohAstNode* pNode, double value)
 {
     assert(pNode);
     
     pNode->type = BOH_AST_NODE_TYPE_NUMBER;
-    pNode->number = bohNumberCreateF32(value);
+    pNode->number = bohNumberCreateF64(value);
 }
 
 

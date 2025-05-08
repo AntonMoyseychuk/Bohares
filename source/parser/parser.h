@@ -4,6 +4,29 @@
 #include "model.h"
 
 
+typedef enum Operator
+{
+    BOH_OP_UNKNOWN,
+
+    BOH_OP_PLUS,
+    BOH_OP_MINUS,
+    BOH_OP_MULT,
+    BOH_OP_DIV,
+    BOH_OP_MOD,
+    BOH_OP_XOR,
+    BOH_OP_BITWISE_NOT,
+    BOH_OP_NOT,
+    BOH_OP_GREATER,
+    BOH_OP_LESS,
+    BOH_OP_NOT_EQUAL,
+    BOH_OP_GEQUAL,
+    BOH_OP_LEQUAL,
+    BOH_OP_EQUAL,
+    BOH_OP_RSHIFT,
+    BOH_OP_LSHIFT
+} bohOperator;
+
+
 typedef enum AstNodeType
 {
     BOH_AST_NODE_TYPE_NUMBER,

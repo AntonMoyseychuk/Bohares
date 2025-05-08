@@ -4,6 +4,7 @@
 
 #include "lexer/lexer.h"
 #include "parser/parser.h"
+#include "interpreter/interpreter.h"
 
 
 static const char* OperatorToStr(bohOperator op)
@@ -244,8 +245,19 @@ int main(int argc, char* argv[])
     fputc('\n', stdout);
     PrintAstNode(ast.pRoot, 0);
 
+    bohInterpreter interp = bohInterpCreate(&ast);
+    bohNumber number = bohInterpInterpret(&interp);
+
     bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\n\nINTERPRETER:");
     fputc('\n', stdout);
+    
+    if (bohNumberIsF64(&number)) {
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f", number.f64);
+        fputc('\n', stdout);
+    } else {
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d", number.i64);
+        fputc('\n', stdout);
+    }
 
     bohAstDestroy(&ast);
     bohParserDestroy(&parser);

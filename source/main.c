@@ -83,6 +83,31 @@ static void PrintParserErrors(const bohState* pState)
 }
 
 
+static void PrintInterpreterError(const bohInterpreterError* pError)
+{
+    assert(pError);
+
+    fprintf_s(stderr, "\n[INTERPRETER ERROR]: %.*s (%u, %u): ", 
+        bohStringViewGetSize(&pError->filepath), bohStringViewGetData(&pError->filepath), pError->line, pError->column);
+    
+    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message));
+    fputc('\n', stderr);
+}
+
+
+static void PrintInterpreterErrors(const bohState* pState)
+{
+    assert(pState);
+
+    const size_t interpErrorsCount = bohStateGetInterpreterErrorsCount(pState);
+        
+    for (size_t i = 0; i < interpErrorsCount; ++i) {
+        const bohInterpreterError* pError = bohStateInterpreterErrorAt(pState, i);
+        PrintInterpreterError(pError);
+    }
+}
+
+
 static void PrintOffset(FILE* pStream, uint64_t length)
 {
     for (uint64_t i = 0; i < length; ++i) {
@@ -170,6 +195,14 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 }
 
 
+static void PrintAst(const bohAST* pAST)
+{
+    assert(pAST);
+    PrintAstNode(pAST->pRoot, 0);
+    fputc('\n', stdout);
+}
+
+
 int main(int argc, char* argv[])
 {
     bohGlobalStateInit();
@@ -243,12 +276,17 @@ int main(int argc, char* argv[])
 
     bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nAST:");
     fputc('\n', stdout);
-    PrintAstNode(ast.pRoot, 0);
+    PrintAst(&ast);
 
     bohInterpreter interp = bohInterpCreate(&ast);
     bohNumber number = bohInterpInterpret(&interp);
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\n\nINTERPRETER:");
+    if (bohStateHasInterpreterErrors(pState)) {
+        PrintInterpreterErrors(pState);        
+        exit(-3);
+    }
+
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nINTERPRETER:");
     fputc('\n', stdout);
     
     if (bohNumberIsF64(&number)) {

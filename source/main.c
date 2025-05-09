@@ -22,6 +22,8 @@ static const char* OperatorToStr(bohOperator op)
         case BOH_OP_GEQUAL: return ">=";
         case BOH_OP_LEQUAL: return "<=";
         case BOH_OP_EQUAL: return "==";
+        case BOH_OP_BITWISE_AND: return "&";
+        case BOH_OP_BITWISE_OR: return "|";
         case BOH_OP_BITWISE_XOR: return "^";
         case BOH_OP_BITWISE_NOT: return "~";
         case BOH_OP_BITWISE_RSHIFT: return ">>";

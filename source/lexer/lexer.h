@@ -33,6 +33,8 @@ typedef enum TokenType
     BOH_TOKEN_TYPE_GEQUAL,      // >=
     BOH_TOKEN_TYPE_LEQUAL,      // <=
     BOH_TOKEN_TYPE_EQUAL,       // ==
+    BOH_TOKEN_TYPE_BITWISE_AND, // &
+    BOH_TOKEN_TYPE_BITWISE_OR,  // |
     BOH_TOKEN_TYPE_BITWISE_XOR, // ^
     BOH_TOKEN_TYPE_BITWISE_NOT, // ~
     BOH_TOKEN_TYPE_BITWISE_RSHIFT, // >>

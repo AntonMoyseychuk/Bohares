@@ -50,9 +50,6 @@ bohNumber* bohNumberMakeOpposite(bohNumber* pNumber);
 bohNumber  bohNumberGetNegation(const bohNumber* pNumber);
 bohNumber* bohNumberMakeNegation(bohNumber* pNumber);
 
-bohNumber  bohNumberGetBitwiseNegation(const bohNumber* pNumber);
-bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber);
-
 bohNumber  bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight);
 bohNumber* bohNumberAddAssign(bohNumber* pDst, const bohNumber* pValue);
 
@@ -68,14 +65,23 @@ bohNumber* bohNumberDivAssign(bohNumber* pDst, const bohNumber* pValue);
 bohNumber  bohNumberMod(const bohNumber* pLeft, const bohNumber* pRight);
 bohNumber* bohNumberModAssign(bohNumber* pDst, const bohNumber* pValue);
 
-bohNumber  bohNumberXor(const bohNumber* pValue, const bohNumber* pBits);
-bohNumber* bohNumberXorAssign(bohNumber* pDst, const bohNumber* pBits);
+bohNumber  bohNumberGetBitwiseNegation(const bohNumber* pNumber);
+bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber);
 
-bohNumber  bohNumberLShift(const bohNumber* pValue, const bohNumber* pBits);
-bohNumber* bohNumberLShiftAssign(bohNumber* pDst, const bohNumber* pBits);
+bohNumber  bohNumberBitwiseAnd(const bohNumber* pLeft, const bohNumber* pRight);
+bohNumber* bohNumberBitwiseAndAssign(bohNumber* pDst, const bohNumber* pValue);
 
-bohNumber  bohNumberRShift(const bohNumber* pValue, const bohNumber* pBits);
-bohNumber* bohNumberRShiftAssign(bohNumber* pDst, const bohNumber* pBits);
+bohNumber  bohNumberBitwiseOr(const bohNumber* pLeft, const bohNumber* pRight);
+bohNumber* bohNumberBitwiseOrAssign(bohNumber* pDst, const bohNumber* pValue);
+
+bohNumber  bohNumberBitwiseXor(const bohNumber* pValue, const bohNumber* pBits);
+bohNumber* bohNumberBitwiseXorAssign(bohNumber* pDst, const bohNumber* pBits);
+
+bohNumber  bohNumberBitwiseLShift(const bohNumber* pValue, const bohNumber* pBits);
+bohNumber* bohNumberBitwiseLShiftAssign(bohNumber* pDst, const bohNumber* pBits);
+
+bohNumber  bohNumberBitwiseRShift(const bohNumber* pValue, const bohNumber* pBits);
+bohNumber* bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits);
 
 
 #define BOH_NUMBER_GET_UNDERLYING_VALUE(NUMBER) (bohNumberIsI64(&(NUMBER)) ? bohNumberGetI64(&(NUMBER)) : bohNumberGetF64(&(NUMBER)))

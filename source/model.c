@@ -168,22 +168,6 @@ bohNumber* bohNumberMakeNegation(bohNumber* pNumber)
 }
 
 
-bohNumber bohNumberGetBitwiseNegation(const bohNumber* pNumber)
-{
-    assert(pNumber);
-    assert(bohNumberIsI64(pNumber));
-
-    return bohNumberCreateI64(~bohNumberGetI64(pNumber));
-}
-
-
-bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber)
-{
-    *pNumber = bohNumberGetBitwiseNegation(pNumber);
-    return pNumber;
-}
-
-
 bohNumber bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight)
 {
     assert(pLeft);
@@ -294,7 +278,59 @@ bohNumber* bohNumberModAssign(bohNumber* pDst, const bohNumber* pValue)
 }
 
 
-bohNumber bohNumberXor(const bohNumber* pLeft, const bohNumber* pRight)
+bohNumber bohNumberGetBitwiseNegation(const bohNumber* pNumber)
+{
+    assert(pNumber);
+    assert(bohNumberIsI64(pNumber));
+
+    return bohNumberCreateI64(~bohNumberGetI64(pNumber));
+}
+
+
+bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber)
+{
+    *pNumber = bohNumberGetBitwiseNegation(pNumber);
+    return pNumber;
+}
+
+
+bohNumber bohNumberBitwiseAnd(const bohNumber* pLeft, const bohNumber* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+    assert(bohNumberIsI64(pLeft));
+    assert(bohNumberIsI64(pRight));
+
+    return bohNumberCreateI64(bohNumberGetI64(pLeft) & bohNumberGetI64(pRight));
+}
+
+
+bohNumber* bohNumberBitwiseAndAssign(bohNumber* pDst, const bohNumber* pValue)
+{
+    *pDst = bohNumberBitwiseAnd(pDst, pValue);
+    return pDst;
+}
+
+
+bohNumber bohNumberBitwiseOr(const bohNumber* pLeft, const bohNumber* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+    assert(bohNumberIsI64(pLeft));
+    assert(bohNumberIsI64(pRight));
+
+    return bohNumberCreateI64(bohNumberGetI64(pLeft) | bohNumberGetI64(pRight));
+}
+
+
+bohNumber* bohNumberBitwiseOrAssign(bohNumber* pDst, const bohNumber* pValue)
+{
+    *pDst = bohNumberBitwiseOr(pDst, pValue);
+    return pDst;
+}
+
+
+bohNumber bohNumberBitwiseXor(const bohNumber* pLeft, const bohNumber* pRight)
 {
     assert(pLeft);
     assert(pRight);
@@ -305,14 +341,14 @@ bohNumber bohNumberXor(const bohNumber* pLeft, const bohNumber* pRight)
 }
 
 
-bohNumber* bohNumberXorAssign(bohNumber* pDst, const bohNumber* pValue)
+bohNumber* bohNumberBitwiseXorAssign(bohNumber* pDst, const bohNumber* pValue)
 {
-    *pDst = bohNumberXor(pDst, pValue);
+    *pDst = bohNumberBitwiseXor(pDst, pValue);
     return pDst;
 }
 
 
-bohNumber bohNumberLShift(const bohNumber* pValue, const bohNumber* pBits)
+bohNumber bohNumberBitwiseLShift(const bohNumber* pValue, const bohNumber* pBits)
 {
     assert(pValue);
     assert(pBits);
@@ -323,14 +359,14 @@ bohNumber bohNumberLShift(const bohNumber* pValue, const bohNumber* pBits)
 }
 
 
-bohNumber* bohNumberLShiftAssign(bohNumber* pDst, const bohNumber* pBits)
+bohNumber* bohNumberBitwiseLShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 {
-    *pDst = bohNumberLShift(pDst, pBits);
+    *pDst = bohNumberBitwiseLShift(pDst, pBits);
     return pDst;
 }
 
 
-bohNumber bohNumberRShift(const bohNumber* pValue, const bohNumber* pBits)
+bohNumber bohNumberBitwiseRShift(const bohNumber* pValue, const bohNumber* pBits)
 {
     assert(pValue);
     assert(pBits);
@@ -341,8 +377,8 @@ bohNumber bohNumberRShift(const bohNumber* pValue, const bohNumber* pBits)
 }
 
 
-bohNumber *bohNumberRShiftAssign(bohNumber* pDst, const bohNumber* pBits)
+bohNumber *bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 {
-    *pDst = bohNumberRShift(pDst, pBits);
+    *pDst = bohNumberBitwiseRShift(pDst, pBits);
     return pDst;
 }

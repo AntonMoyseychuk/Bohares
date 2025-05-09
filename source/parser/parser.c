@@ -27,6 +27,8 @@ static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
         case BOH_TOKEN_TYPE_GEQUAL:         return BOH_OP_GEQUAL;
         case BOH_TOKEN_TYPE_LEQUAL:         return BOH_OP_LEQUAL;
         case BOH_TOKEN_TYPE_EQUAL:          return BOH_OP_EQUAL;
+        case BOH_TOKEN_TYPE_BITWISE_AND:    return BOH_OP_BITWISE_AND;
+        case BOH_TOKEN_TYPE_BITWISE_OR:     return BOH_OP_BITWISE_OR;
         case BOH_TOKEN_TYPE_BITWISE_XOR:    return BOH_OP_BITWISE_XOR;
         case BOH_TOKEN_TYPE_BITWISE_NOT:    return BOH_OP_BITWISE_NOT;
         case BOH_TOKEN_TYPE_BITWISE_RSHIFT: return BOH_OP_BITWISE_RSHIFT;
@@ -150,6 +152,8 @@ static bohAstNode* parsMultiplication(bohParser* pParser)
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MULT) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_DIV) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MOD) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_AND) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_OR) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_XOR)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);

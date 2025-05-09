@@ -59,18 +59,26 @@ static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
             BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
                 "it is not possible to take the remainder of the division by 0"); // TODO: pass line and column inside bohAstNode
             return bohNumberMod(&left, &right);
+        case BOH_OP_BITWISE_AND:
+            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
+                "can't use & operator with non integer types"); // TODO: pass line and column inside bohAstNode
+            return bohNumberBitwiseAnd(&left, &right);
+        case BOH_OP_BITWISE_OR:
+            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
+                "can't use | operator with non integer types"); // TODO: pass line and column inside bohAstNode
+            return bohNumberBitwiseOr(&left, &right);
         case BOH_OP_BITWISE_XOR:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
                 "can't use ^ operator with non integer types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberXor(&left, &right);
+            return bohNumberBitwiseXor(&left, &right);
         case BOH_OP_BITWISE_RSHIFT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
                 "can't use >> operator with non integer types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberRShift(&left, &right);
+            return bohNumberBitwiseRShift(&left, &right);
         case BOH_OP_BITWISE_LSHIFT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
                 "can't use << operator with non integer types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberLShift(&left, &right);    
+            return bohNumberBitwiseLShift(&left, &right);    
         default:
             assert(false && "Not implemented yet");
             return bohNumberCreateI64(0);

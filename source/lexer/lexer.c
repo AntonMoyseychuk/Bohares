@@ -390,10 +390,10 @@ void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
 }
 
 
-bohStringView bohTokenGetLexeme(const bohToken* pToken)
+const bohStringView* bohTokenGetLexeme(const bohToken* pToken)
 {
     assert(pToken);
-    return pToken->lexeme;
+    return &pToken->lexeme;
 }
 
 

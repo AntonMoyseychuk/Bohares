@@ -255,14 +255,12 @@ int main(int argc, char* argv[])
     for (size_t i = 0; i < tokensCount; ++i) {
         const bohToken* pToken = bohDynArrayAt(&tokens, i);
 
-        const bohStringView lexeme = bohTokenGetLexeme(pToken);
-        const char* pLexemeStr = bohStringViewGetData(&lexeme);
-        const size_t lexemeSize = bohStringViewGetSize(&lexeme);
+        const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
 
         fputs("(", stdout);
         bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "%s", bohTokenGetTypeStr(pToken));
         fputs(", ", stdout);
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%.*s", lexemeSize, pLexemeStr);
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%.*s", bohStringViewGetSize(pLexeme), bohStringViewGetData(pLexeme));
         fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
     }
 

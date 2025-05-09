@@ -83,7 +83,7 @@ void bohTokenDestroy(bohToken* pToken);
 
 void bohTokenAssign(bohToken* pDst, const bohToken* pSrc);
 
-bohStringView bohTokenGetLexeme(const bohToken* pToken);
+const bohStringView* bohTokenGetLexeme(const bohToken* pToken);
 bohTokenType bohTokenGetType(const bohToken* pToken);
 const char* bohTokenGetTypeStr(const bohToken* pToken);
 

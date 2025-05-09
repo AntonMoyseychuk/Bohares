@@ -47,11 +47,11 @@ bool bohNumberIsZero(const bohNumber* pNumber);
 bohNumber  bohNumberGetOpposite(const bohNumber* pNumber);
 bohNumber* bohNumberMakeOpposite(bohNumber* pNumber);
 
-bohNumber  bohNumberGetInverted(const bohNumber* pNumber);  // operator: !number
-bohNumber* bohNumberMakeInverted(bohNumber* pNumber);
+bohNumber  bohNumberGetNegation(const bohNumber* pNumber);
+bohNumber* bohNumberMakeNegation(bohNumber* pNumber);
 
-bohNumber  bohNumberGetBitInverted(const bohNumber* pNumber);  // operator: ~number
-bohNumber* bohNumberMakeBitInverted(bohNumber* pNumber);
+bohNumber  bohNumberGetBitwiseNegation(const bohNumber* pNumber);
+bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber);
 
 bohNumber  bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight);
 bohNumber* bohNumberAddAssign(bohNumber* pDst, const bohNumber* pValue);
@@ -76,3 +76,6 @@ bohNumber* bohNumberLShiftAssign(bohNumber* pDst, const bohNumber* pBits);
 
 bohNumber  bohNumberRShift(const bohNumber* pValue, const bohNumber* pBits);
 bohNumber* bohNumberRShiftAssign(bohNumber* pDst, const bohNumber* pBits);
+
+
+#define BOH_NUMBER_GET_UNDERLYING_VALUE(NUMBER) (bohNumberIsI64(&(NUMBER)) ? bohNumberGetI64(&(NUMBER)) : bohNumberGetF64(&(NUMBER)))

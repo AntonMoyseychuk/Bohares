@@ -15,7 +15,7 @@ static const char* OperatorToStr(bohOperator op)
         case BOH_OP_MULT: return "*";
         case BOH_OP_DIV: return "/";
         case BOH_OP_MOD: return "%";
-        case BOH_OP_XOR: return "^";
+        case BOH_OP_BITWISE_XOR: return "^";
         case BOH_OP_BITWISE_NOT: return "~";
         case BOH_OP_NOT: return "!";
         case BOH_OP_GREATER: return ">";
@@ -24,8 +24,8 @@ static const char* OperatorToStr(bohOperator op)
         case BOH_OP_GEQUAL: return ">=";
         case BOH_OP_LEQUAL: return "<=";
         case BOH_OP_EQUAL: return "==";
-        case BOH_OP_RSHIFT: return ">>";
-        case BOH_OP_LSHIFT: return "<<";
+        case BOH_OP_BITWISE_RSHIFT: return ">>";
+        case BOH_OP_BITWISE_LSHIFT: return "<<";
         default:
             assert(false && "Error: Failed to convert operator to string");
             return NULL;
@@ -290,11 +290,9 @@ int main(int argc, char* argv[])
     fputc('\n', stdout);
     
     if (bohNumberIsF64(&number)) {
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f", number.f64);
-        fputc('\n', stdout);
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f\n", bohNumberGetF64(&number));
     } else {
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d", number.i64);
-        fputc('\n', stdout);
+        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d\n", bohNumberGetI64(&number));
     }
 
     bohAstDestroy(&ast);

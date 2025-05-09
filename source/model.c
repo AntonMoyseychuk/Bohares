@@ -75,11 +75,12 @@ bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight, double prec
 {
     assert(pLeft);
     assert(pRight);
+
+    if (bohNumberIsI64(pLeft) && bohNumberIsI64(pRight)) {
+        return bohNumberGetI64(pLeft) == bohNumberGetI64(pRight);
+    }
     
-    return fabs(
-        (bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) - 
-        (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight))
-    ) < precision;
+    return fabs(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) - BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight)) < precision;
 }
 
 
@@ -89,23 +90,21 @@ bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight, double p
 }
 
 
-bool bohNumberLess(const bohNumber *pLeft, const bohNumber *pRight)
+bool bohNumberLess(const bohNumber* pLeft, const bohNumber* pRight)
 {
     assert(pLeft);
     assert(pRight);
     
-    return  (bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) <
-            (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight));
+    return BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) < BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight);
 }
 
 
-bool bohNumberGreater(const bohNumber *pLeft, const bohNumber *pRight)
+bool bohNumberGreater(const bohNumber* pLeft, const bohNumber* pRight)
 {
     assert(pLeft);
     assert(pRight);
     
-    return  (bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) >
-            (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight));
+    return BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) > BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight);
 }
 
 
@@ -126,16 +125,16 @@ bool bohNumberIsZero(const bohNumber* pNumber)
     assert(pNumber);
     
     if (bohNumberIsF64(pNumber)) {
-        const bohNumber zero = bohNumberCreateF64(0.0);
-        return bohNumberEqual(pNumber, &zero, __DBL_EPSILON__);
+        const bohNumber zeroF64 = bohNumberCreateF64(0.0);
+        return bohNumberEqual(pNumber, &zeroF64, __DBL_EPSILON__);
     } else {
-        const bohNumber zero = bohNumberCreateI64(0);
-        return bohNumberEqual(pNumber, &zero, 0.0);
+        const bohNumber zeroI64 = bohNumberCreateI64(0);
+        return bohNumberEqual(pNumber, &zeroI64, 0.0);
     }
 }
 
 
-bohNumber bohNumberGetOpposite(const bohNumber *pNumber)
+bohNumber bohNumberGetOpposite(const bohNumber* pNumber)
 {
     assert(pNumber);
     
@@ -154,7 +153,7 @@ bohNumber* bohNumberMakeOpposite(bohNumber* pNumber)
 }
 
 
-bohNumber bohNumberGetInverted(const bohNumber* pNumber)
+bohNumber bohNumberGetNegation(const bohNumber* pNumber)
 {
     assert(pNumber);
     
@@ -166,14 +165,14 @@ bohNumber bohNumberGetInverted(const bohNumber* pNumber)
 }
 
 
-bohNumber* bohNumberMakeInverted(bohNumber* pNumber)
+bohNumber* bohNumberMakeNegation(bohNumber* pNumber)
 {
-    *pNumber = bohNumberGetInverted(pNumber);
+    *pNumber = bohNumberGetNegation(pNumber);
     return pNumber;
 }
 
 
-bohNumber bohNumberGetBitInverted(const bohNumber* pNumber)
+bohNumber bohNumberGetBitwiseNegation(const bohNumber* pNumber)
 {
     assert(pNumber);
     assert(bohNumberIsI64(pNumber));
@@ -182,9 +181,9 @@ bohNumber bohNumberGetBitInverted(const bohNumber* pNumber)
 }
 
 
-bohNumber* bohNumberMakeBitInverted(bohNumber* pNumber)
+bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber)
 {
-    *pNumber = bohNumberGetBitInverted(pNumber);
+    *pNumber = bohNumberGetBitwiseNegation(pNumber);
     return pNumber;
 }
 
@@ -195,9 +194,9 @@ bohNumber bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) + (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight)));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) + BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64((bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) + bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) + bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) + bohNumberGetI64(pRight));
@@ -217,9 +216,9 @@ bohNumber bohNumberSub(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) - (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight)));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) - BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64((bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) - bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) - bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) - bohNumberGetI64(pRight));
@@ -239,9 +238,9 @@ bohNumber bohNumberMult(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) * (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight)));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) * BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64((bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) * bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) * bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) * bohNumberGetI64(pRight));
@@ -261,9 +260,9 @@ bohNumber bohNumberDiv(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) / (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight)));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) / BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64((bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)) / bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) / bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) / bohNumberGetI64(pRight));
@@ -283,9 +282,9 @@ bohNumber bohNumberMod(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(fmod(bohNumberGetF64(pLeft), (bohNumberIsF64(pRight) ? bohNumberGetF64(pRight) : bohNumberGetI64(pRight))));
+        return bohNumberCreateF64(fmod(bohNumberGetF64(pLeft), BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight)));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64(fmod((bohNumberIsF64(pLeft) ? bohNumberGetF64(pLeft) : bohNumberGetI64(pLeft)), bohNumberGetF64(pRight)));
+        return bohNumberCreateF64(fmod(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft), bohNumberGetF64(pRight)));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) % bohNumberGetI64(pRight));
@@ -346,7 +345,7 @@ bohNumber bohNumberRShift(const bohNumber* pValue, const bohNumber* pBits)
 }
 
 
-bohNumber *bohNumberRShiftAssign(bohNumber *pDst, const bohNumber *pBits)
+bohNumber *bohNumberRShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 {
     *pDst = bohNumberRShift(pDst, pBits);
     return pDst;

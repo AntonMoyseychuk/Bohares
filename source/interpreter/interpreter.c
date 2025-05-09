@@ -42,15 +42,15 @@ static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
     const bohNumber right = interpInterpretAstNode(pNode->pRightNode);
 
     switch (pNode->op) {
-        case BOH_OP_PLUS:       return bohNumberAdd(&left, &right);
-        case BOH_OP_MINUS:      return bohNumberSub(&left, &right);
-        case BOH_OP_MULT:       return bohNumberMult(&left, &right);
-        case BOH_OP_GREATER:    return bohNumberCreateI64(bohNumberGreater(&left, &right));
-        case BOH_OP_LESS:       return bohNumberCreateI64(bohNumberLess(&left, &right));
-        case BOH_OP_NOT_EQUAL:  return bohNumberCreateI64(bohNumberNotEqual(&left, &right, __DBL_EPSILON__));
-        case BOH_OP_GEQUAL:     return bohNumberCreateI64(bohNumberGreaterEqual(&left, &right));
-        case BOH_OP_LEQUAL:     return bohNumberCreateI64(bohNumberLessEqual(&left, &right));
-        case BOH_OP_EQUAL:      return bohNumberCreateI64(bohNumberEqual(&left, &right, __DBL_EPSILON__));
+        case BOH_OP_PLUS:      return bohNumberAdd(&left, &right);
+        case BOH_OP_MINUS:     return bohNumberSub(&left, &right);
+        case BOH_OP_MULT:      return bohNumberMult(&left, &right);
+        case BOH_OP_GREATER:   return bohNumberCreateI64(bohNumberGreater(&left, &right));
+        case BOH_OP_LESS:      return bohNumberCreateI64(bohNumberLess(&left, &right));
+        case BOH_OP_NOT_EQUAL: return bohNumberCreateI64(bohNumberNotEqual(&left, &right, __DBL_EPSILON__));
+        case BOH_OP_GEQUAL:    return bohNumberCreateI64(bohNumberGreaterEqual(&left, &right));
+        case BOH_OP_LEQUAL:    return bohNumberCreateI64(bohNumberLessEqual(&left, &right));
+        case BOH_OP_EQUAL:     return bohNumberCreateI64(bohNumberEqual(&left, &right, __DBL_EPSILON__));
         case BOH_OP_DIV:
             BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
                 "it is not possible to divide by 0"); // TODO: pass line and column inside bohAstNode
@@ -59,15 +59,15 @@ static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
             BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
                 "it is not possible to take the remainder of the division by 0"); // TODO: pass line and column inside bohAstNode
             return bohNumberMod(&left, &right);
-        case BOH_OP_XOR:
+        case BOH_OP_BITWISE_XOR:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
                 "can't use ^ operator with non integer types"); // TODO: pass line and column inside bohAstNode
             return bohNumberXor(&left, &right);
-        case BOH_OP_RSHIFT:
+        case BOH_OP_BITWISE_RSHIFT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
                 "can't use >> operator with non integer types"); // TODO: pass line and column inside bohAstNode
             return bohNumberRShift(&left, &right);
-        case BOH_OP_LSHIFT:
+        case BOH_OP_BITWISE_LSHIFT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
                 "can't use << operator with non integer types"); // TODO: pass line and column inside bohAstNode
             return bohNumberLShift(&left, &right);    
@@ -86,10 +86,10 @@ static bohNumber interpInterpretUnaryAstNode(const bohAstNodeUnary* pNode)
     {
         case BOH_OP_PLUS:           return value;
         case BOH_OP_MINUS:          return bohNumberGetOpposite(&value);
-        case BOH_OP_NOT:            return bohNumberGetInverted(&value);
+        case BOH_OP_NOT:            return bohNumberGetNegation(&value);
         case BOH_OP_BITWISE_NOT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&value), 0, 0, "can't use ~ operator with non integer type");  // TODO: pass line and column inside bohAstNode
-            return bohNumberGetBitInverted(&value);
+            return bohNumberGetBitwiseNegation(&value);
     
         default:
             assert(false && "Not implemented yet");
@@ -123,9 +123,5 @@ bohNumber bohInterpInterpret(bohInterpreter* pInterp)
     const bohAST* pAst = pInterp->pAst;
     assert(pAst);
 
-    if (bohAstIsEmpty(pAst)) {
-        return bohNumberCreateI64(0);
-    }
-
-    return interpInterpretAstNode(pAst->pRoot);
+    return bohAstIsEmpty(pAst) ? bohNumberCreateI64(0) : interpInterpretAstNode(pAst->pRoot);
 }

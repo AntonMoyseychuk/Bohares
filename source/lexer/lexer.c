@@ -45,51 +45,51 @@ static const bohKeyWordToken BOH_KEY_WORDS[] = {
 static const size_t BOH_KEY_WORDS_COUNT = sizeof(BOH_KEY_WORDS) / sizeof(BOH_KEY_WORDS[0]);
 
 
-static bool IsEndLineChar(char ch)
+static bool lexIsEndLineChar(char ch)
 {
     return ch == '\n' || ch == '\0';
 }
 
 
-static bool IsNotEndLineChar(char ch)
+static bool lexIsNotEndLineChar(char ch)
 {
-    return !IsEndLineChar(ch);
+    return !lexIsEndLineChar(ch);
 }
 
 
-static bool IsNotDoubleQuoteOrEndChar(char ch)
+static bool lexIsNotDoubleQuoteOrEndChar(char ch)
 {
     return ch != '\"' && ch != '\0';
 }
 
 
-static bool IsNotMultilineCommentEndOrEndChar(char ch)
+static bool lexIsNotMultilineCommentEndOrEndChar(char ch)
 {
     return ch != ']' && ch != '\0';
 }
 
 
-static bool IsDigitChar(char ch)
+static bool lexIsDigitChar(char ch)
 {
     return ch >= '0' && ch <= '9';
 }
 
 
-static bool IsAlphaChar(char ch)
+static bool lexIsAlphaChar(char ch)
 {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
 }
 
 
-static bool IsUnderscoreChar(char ch)
+static bool lexIsUnderscoreChar(char ch)
 {
     return ch == '_';
 }
 
 
-static bool IsIdentifierAppropriateChar(char ch)
+static bool lexIsIdentifierAppropriateChar(char ch)
 {
-    return IsAlphaChar(ch) || IsUnderscoreChar(ch) || IsDigitChar(ch);
+    return lexIsAlphaChar(ch) || lexIsUnderscoreChar(ch) || lexIsDigitChar(ch);
 }
 
 
@@ -217,7 +217,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
         case '*': type = BOH_TOKEN_TYPE_MULT; break;
         case '/': type = BOH_TOKEN_TYPE_DIV; break;
         case '%': type = BOH_TOKEN_TYPE_MOD; break;
-        case '^': type = BOH_TOKEN_TYPE_XOR; break;
+        case '^': type = BOH_TOKEN_TYPE_BITWISE_XOR; break;
         case ':': type = BOH_TOKEN_TYPE_COLON; break;
         case ';': type = BOH_TOKEN_TYPE_SEMICOLON; break;
         case '?': type = BOH_TOKEN_TYPE_QUESTION; break;
@@ -254,7 +254,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                     break;
                 case '>':
                     lexAdvanceCurrPos(pLexer);
-                    type = BOH_TOKEN_TYPE_RSHIFT;
+                    type = BOH_TOKEN_TYPE_BITWISE_RSHIFT;
                     break;
                 default: 
                     type = BOH_TOKEN_TYPE_GREATER;
@@ -270,7 +270,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                     break;
                 case '<':
                     lexAdvanceCurrPos(pLexer);
-                    type = BOH_TOKEN_TYPE_LSHIFT;
+                    type = BOH_TOKEN_TYPE_BITWISE_LSHIFT;
                     break;
                 default: 
                     type = BOH_TOKEN_TYPE_LESS;
@@ -280,7 +280,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
             break;
         case '\"':
         {
-            const char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotDoubleQuoteOrEndChar);
+            const char currCh = lexAdvanceCurrPosWhile(pLexer, lexIsNotDoubleQuoteOrEndChar);
             BOH_CHECK_LEXER_COND(currCh == '\"', pLexer->line, pLexer->column, "missed closing double quotes");
 
             lexAdvanceCurrPos(pLexer); // Consume '"' symbol
@@ -290,7 +290,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
         }
         case '#':
             if (lexPickCurrPosChar(pLexer) == '[') {
-                char currCh = lexAdvanceCurrPosWhile(pLexer, IsNotMultilineCommentEndOrEndChar);
+                char currCh = lexAdvanceCurrPosWhile(pLexer, lexIsNotMultilineCommentEndOrEndChar);
                 BOH_CHECK_LEXER_COND(currCh == ']', pLexer->line, pLexer->column, "missed closing multiline comment symbol, expected \']#\'");
 
                 lexAdvanceCurrPos(pLexer); // Consume ']' symbol
@@ -300,7 +300,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
 
                 lexAdvanceCurrPos(pLexer); // Consume '#' symbol
             } else {
-                lexAdvanceCurrPosWhile(pLexer, IsNotEndLineChar);
+                lexAdvanceCurrPosWhile(pLexer, lexIsNotEndLineChar);
             }
 
             type = BOH_TOKEN_TYPE_DUMMY;
@@ -310,26 +310,26 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
     }
 
     // Number
-    if (type == BOH_TOKEN_TYPE_UNKNOWN && IsDigitChar(ch)) {
-        lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
+    if (type == BOH_TOKEN_TYPE_UNKNOWN && lexIsDigitChar(ch)) {
+        lexAdvanceCurrPosWhile(pLexer, lexIsDigitChar);
 
         type = BOH_TOKEN_TYPE_INTEGER;
 
         if (lexPickCurrPosChar(pLexer) == '.') {
             const char nextCh = lexPickNextNStepChar(pLexer, 1);
-            BOH_CHECK_LEXER_COND(IsDigitChar(nextCh), pLexer->line, pLexer->column, "invalid floating point number grammar");
+            BOH_CHECK_LEXER_COND(lexIsDigitChar(nextCh), pLexer->line, pLexer->column, "invalid floating point number grammar");
             
             lexAdvanceCurrPos(pLexer); // Consume the '.'
                 
-            lexAdvanceCurrPosWhile(pLexer, IsDigitChar);
+            lexAdvanceCurrPosWhile(pLexer, lexIsDigitChar);
 
             type = BOH_TOKEN_TYPE_FLOAT;
         }
     }
 
     // Key word or identifier
-    if (type == BOH_TOKEN_TYPE_UNKNOWN && (IsAlphaChar(ch) || IsUnderscoreChar(ch))) {
-        lexAdvanceCurrPosWhile(pLexer, IsIdentifierAppropriateChar);
+    if (type == BOH_TOKEN_TYPE_UNKNOWN && (lexIsAlphaChar(ch) || lexIsUnderscoreChar(ch))) {
+        lexAdvanceCurrPosWhile(pLexer, lexIsIdentifierAppropriateChar);
         
         const bohStringView lexeme = lexGetCurrLexem(pLexer);
         const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(lexeme);
@@ -491,7 +491,7 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_MULT: return "BOH_TOKEN_TYPE_MULT";
         case BOH_TOKEN_TYPE_DIV: return "BOH_TOKEN_TYPE_DIV";
         case BOH_TOKEN_TYPE_MOD: return "BOH_TOKEN_TYPE_MOD";
-        case BOH_TOKEN_TYPE_XOR: return "BOH_TOKEN_TYPE_XOR";
+        case BOH_TOKEN_TYPE_BITWISE_XOR: return "BOH_TOKEN_TYPE_BITWISE_XOR";
         case BOH_TOKEN_TYPE_COLON: return "BOH_TOKEN_TYPE_COLON";
         case BOH_TOKEN_TYPE_SEMICOLON: return "BOH_TOKEN_TYPE_SEMICOLON";
         case BOH_TOKEN_TYPE_QUESTION: return "BOH_TOKEN_TYPE_QUESTION";
@@ -503,8 +503,8 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_GEQUAL: return "BOH_TOKEN_TYPE_GEQUAL";
         case BOH_TOKEN_TYPE_LEQUAL: return "BOH_TOKEN_TYPE_LEQUAL";
         case BOH_TOKEN_TYPE_EQUAL: return "BOH_TOKEN_TYPE_EQUAL";
-        case BOH_TOKEN_TYPE_RSHIFT: return "BOH_TOKEN_TYPE_RSHIFT";
-        case BOH_TOKEN_TYPE_LSHIFT: return "BOH_TOKEN_TYPE_LSHIFT";
+        case BOH_TOKEN_TYPE_BITWISE_RSHIFT: return "BOH_TOKEN_TYPE_BITWISE_RSHIFT";
+        case BOH_TOKEN_TYPE_BITWISE_LSHIFT: return "BOH_TOKEN_TYPE_BITWISE_LSHIFT";
         case BOH_TOKEN_TYPE_IDENTIFIER: return "BOH_TOKEN_TYPE_IDENTIFIER";
         case BOH_TOKEN_TYPE_STRING: return "BOH_TOKEN_TYPE_STRING";
         case BOH_TOKEN_TYPE_INTEGER: return "BOH_TOKEN_TYPE_INTEGER";

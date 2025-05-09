@@ -1,0 +1,20 @@
+#[ # Initialize constants
+
+M3D_PI = 3.141592
+M3D_G = 9.81
+
+
+# Initialize vars
+
+x = 8
+
+
+if x >= 0 then
+    print("x is positive\n")
+else
+    print("x is negative\n")
+end ]#
+
+
+
+42 * 2 + 47 * +-(33.301 / 2) % (~33 ^ 77)

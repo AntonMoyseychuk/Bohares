@@ -47,10 +47,10 @@ static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
         case BOH_OP_MULT:      return bohNumberMult(&left, &right);
         case BOH_OP_GREATER:   return bohNumberCreateI64(bohNumberGreater(&left, &right));
         case BOH_OP_LESS:      return bohNumberCreateI64(bohNumberLess(&left, &right));
-        case BOH_OP_NOT_EQUAL: return bohNumberCreateI64(bohNumberNotEqual(&left, &right, __DBL_EPSILON__));
+        case BOH_OP_NOT_EQUAL: return bohNumberCreateI64(bohNumberNotEqual(&left, &right));
         case BOH_OP_GEQUAL:    return bohNumberCreateI64(bohNumberGreaterEqual(&left, &right));
         case BOH_OP_LEQUAL:    return bohNumberCreateI64(bohNumberLessEqual(&left, &right));
-        case BOH_OP_EQUAL:     return bohNumberCreateI64(bohNumberEqual(&left, &right, __DBL_EPSILON__));
+        case BOH_OP_EQUAL:     return bohNumberCreateI64(bohNumberEqual(&left, &right));
         case BOH_OP_DIV:
             BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
                 "it is not possible to divide by 0"); // TODO: pass line and column inside bohAstNode

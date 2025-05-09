@@ -20,8 +20,6 @@ static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
         case BOH_TOKEN_TYPE_MULT:           return BOH_OP_MULT;
         case BOH_TOKEN_TYPE_DIV:            return BOH_OP_DIV;
         case BOH_TOKEN_TYPE_MOD:            return BOH_OP_MOD;
-        case BOH_TOKEN_TYPE_BITWISE_XOR:    return BOH_OP_BITWISE_XOR;
-        case BOH_TOKEN_TYPE_BITWISE_NOT:    return BOH_OP_BITWISE_NOT;
         case BOH_TOKEN_TYPE_NOT:            return BOH_OP_NOT;
         case BOH_TOKEN_TYPE_GREATER:        return BOH_OP_GREATER;
         case BOH_TOKEN_TYPE_LESS:           return BOH_OP_LESS;
@@ -29,6 +27,8 @@ static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
         case BOH_TOKEN_TYPE_GEQUAL:         return BOH_OP_GEQUAL;
         case BOH_TOKEN_TYPE_LEQUAL:         return BOH_OP_LEQUAL;
         case BOH_TOKEN_TYPE_EQUAL:          return BOH_OP_EQUAL;
+        case BOH_TOKEN_TYPE_BITWISE_XOR:    return BOH_OP_BITWISE_XOR;
+        case BOH_TOKEN_TYPE_BITWISE_NOT:    return BOH_OP_BITWISE_NOT;
         case BOH_TOKEN_TYPE_BITWISE_RSHIFT: return BOH_OP_BITWISE_RSHIFT;
         case BOH_TOKEN_TYPE_BITWISE_LSHIFT: return BOH_OP_BITWISE_LSHIFT;
         default:                            return BOH_OP_UNKNOWN;

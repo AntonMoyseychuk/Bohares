@@ -26,9 +26,7 @@ typedef bool (*storAlgorithmDelegate)(char ch);
 
 static const bohKeyWordToken BOH_KEY_WORDS[] = {
     BOH_CREATE_KEY_WORD_TOKEN("if",     BOH_TOKEN_TYPE_IF),
-    BOH_CREATE_KEY_WORD_TOKEN("then",   BOH_TOKEN_TYPE_THEN),
     BOH_CREATE_KEY_WORD_TOKEN("else",   BOH_TOKEN_TYPE_ELSE),
-    BOH_CREATE_KEY_WORD_TOKEN("end",    BOH_TOKEN_TYPE_END),
     BOH_CREATE_KEY_WORD_TOKEN("true",   BOH_TOKEN_TYPE_TRUE),
     BOH_CREATE_KEY_WORD_TOKEN("false",  BOH_TOKEN_TYPE_FALSE),
     BOH_CREATE_KEY_WORD_TOKEN("and",    BOH_TOKEN_TYPE_AND),
@@ -154,18 +152,19 @@ static char lexAdvanceCurrPosWhile(bohLexer* pLexer, storAlgorithmDelegate pFunc
 }
 
 
-static bohKeyWordToken lexConvertIdentifierLexemeToKeyWord(bohStringView tokenLexeme)
+static const bohKeyWordToken* lexConvertIdentifierLexemeToKeyWord(bohStringView tokenLexeme)
 { 
+    static const bohKeyWordToken INVALID_KEY_WORD_TOKEN = BOH_CREATE_KEY_WORD_TOKEN("unknown", BOH_TOKEN_TYPE_UNKNOWN);
+
     for (size_t i = 0; i < BOH_KEY_WORDS_COUNT; ++i) {
         const bohKeyWordToken* pKeyWord = BOH_KEY_WORDS + i;
 
         if (bohStringViewEqual(&pKeyWord->lexeme, &tokenLexeme)) {
-            return *pKeyWord;
+            return pKeyWord;
         }
     }
 
-    bohKeyWordToken invalidKeyWordToken = BOH_CREATE_KEY_WORD_TOKEN("unknown", BOH_TOKEN_TYPE_UNKNOWN);
-    return invalidKeyWordToken;
+    return &INVALID_KEY_WORD_TOKEN;
 }
 
 
@@ -332,9 +331,9 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
         lexAdvanceCurrPosWhile(pLexer, lexIsIdentifierAppropriateChar);
         
         const bohStringView lexeme = lexGetCurrLexem(pLexer);
-        const bohKeyWordToken keyWord = lexConvertIdentifierLexemeToKeyWord(lexeme);
+        const bohKeyWordToken* pKeyWord = lexConvertIdentifierLexemeToKeyWord(lexeme);
 
-        type = keyWord.type != BOH_TOKEN_TYPE_UNKNOWN ? keyWord.type : BOH_TOKEN_TYPE_IDENTIFIER;
+        type = pKeyWord->type != BOH_TOKEN_TYPE_UNKNOWN ? pKeyWord->type : BOH_TOKEN_TYPE_IDENTIFIER;
     }
 
     return bohTokenCreateParams(lexGetCurrLexem(pLexer), type, tokenLine, tokenColumn);
@@ -510,9 +509,7 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_INTEGER: return "BOH_TOKEN_TYPE_INTEGER";
         case BOH_TOKEN_TYPE_FLOAT: return "BOH_TOKEN_TYPE_FLOAT";
         case BOH_TOKEN_TYPE_IF: return "BOH_TOKEN_TYPE_IF";
-        case BOH_TOKEN_TYPE_THEN: return "BOH_TOKEN_TYPE_THEN";
         case BOH_TOKEN_TYPE_ELSE: return "BOH_TOKEN_TYPE_ELSE";
-        case BOH_TOKEN_TYPE_END: return "BOH_TOKEN_TYPE_END";
         case BOH_TOKEN_TYPE_TRUE: return "BOH_TOKEN_TYPE_TRUE";
         case BOH_TOKEN_TYPE_FALSE: return "BOH_TOKEN_TYPE_FALSE";
         case BOH_TOKEN_TYPE_AND: return "BOH_TOKEN_TYPE_AND";

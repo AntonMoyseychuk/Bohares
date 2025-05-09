@@ -71,22 +71,18 @@ void bohNumberSetF64(bohNumber* pNumber, double value)
 }
 
 
-bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight, double precision)
+bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight)
 {
     assert(pLeft);
     assert(pRight);
-
-    if (bohNumberIsI64(pLeft) && bohNumberIsI64(pRight)) {
-        return bohNumberGetI64(pLeft) == bohNumberGetI64(pRight);
-    }
     
-    return fabs(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) - BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight)) < precision;
+    return BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) == BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight);
 }
 
 
-bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight, double precision)
+bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    return !bohNumberEqual(pLeft, pRight, precision);
+    return !bohNumberEqual(pLeft, pRight);
 }
 
 
@@ -126,10 +122,10 @@ bool bohNumberIsZero(const bohNumber* pNumber)
     
     if (bohNumberIsF64(pNumber)) {
         const bohNumber zeroF64 = bohNumberCreateF64(0.0);
-        return bohNumberEqual(pNumber, &zeroF64, __DBL_EPSILON__);
+        return bohNumberEqual(pNumber, &zeroF64);
     } else {
         const bohNumber zeroI64 = bohNumberCreateI64(0);
-        return bohNumberEqual(pNumber, &zeroI64, 0.0);
+        return bohNumberEqual(pNumber, &zeroI64);
     }
 }
 

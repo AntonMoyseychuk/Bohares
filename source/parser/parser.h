@@ -13,8 +13,6 @@ typedef enum Operator
     BOH_OP_MULT,
     BOH_OP_DIV,
     BOH_OP_MOD,
-    BOH_OP_BITWISE_XOR,
-    BOH_OP_BITWISE_NOT,
     BOH_OP_NOT,
     BOH_OP_GREATER,
     BOH_OP_LESS,
@@ -22,6 +20,8 @@ typedef enum Operator
     BOH_OP_GEQUAL,
     BOH_OP_LEQUAL,
     BOH_OP_EQUAL,
+    BOH_OP_BITWISE_XOR,
+    BOH_OP_BITWISE_NOT,
     BOH_OP_BITWISE_RSHIFT,
     BOH_OP_BITWISE_LSHIFT
 } bohOperator;

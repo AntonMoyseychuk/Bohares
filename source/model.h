@@ -33,8 +33,8 @@ double bohNumberGetF64(const bohNumber* pNumber);
 void bohNumberSetI64(bohNumber* pNumber, int64_t value);
 void bohNumberSetF64(bohNumber* pNumber, double value);
 
-bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight, double precision);
-bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight, double precision);
+bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight);
+bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight);
 
 bool bohNumberLess(const bohNumber* pLeft, const bohNumber* pRight);
 bool bohNumberGreater(const bohNumber* pLeft, const bohNumber* pRight);

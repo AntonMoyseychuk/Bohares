@@ -23,11 +23,9 @@ typedef enum TokenType
     BOH_TOKEN_TYPE_MULT,        // *
     BOH_TOKEN_TYPE_DIV,         // /
     BOH_TOKEN_TYPE_MOD,         // %
-    BOH_TOKEN_TYPE_BITWISE_XOR, // ^
     BOH_TOKEN_TYPE_COLON,       // :
     BOH_TOKEN_TYPE_SEMICOLON,   // ;
     BOH_TOKEN_TYPE_QUESTION,    // ?
-    BOH_TOKEN_TYPE_BITWISE_NOT, // ~
     BOH_TOKEN_TYPE_NOT,         // !
     BOH_TOKEN_TYPE_GREATER,     // >
     BOH_TOKEN_TYPE_LESS,        // <
@@ -35,6 +33,8 @@ typedef enum TokenType
     BOH_TOKEN_TYPE_GEQUAL,      // >=
     BOH_TOKEN_TYPE_LEQUAL,      // <=
     BOH_TOKEN_TYPE_EQUAL,       // ==
+    BOH_TOKEN_TYPE_BITWISE_XOR, // ^
+    BOH_TOKEN_TYPE_BITWISE_NOT, // ~
     BOH_TOKEN_TYPE_BITWISE_RSHIFT, // >>
     BOH_TOKEN_TYPE_BITWISE_LSHIFT, // <<
 
@@ -46,9 +46,7 @@ typedef enum TokenType
     
     // Keywords
     BOH_TOKEN_TYPE_IF,
-    BOH_TOKEN_TYPE_THEN,
     BOH_TOKEN_TYPE_ELSE,
-    BOH_TOKEN_TYPE_END,
     BOH_TOKEN_TYPE_TRUE,
     BOH_TOKEN_TYPE_FALSE,
     BOH_TOKEN_TYPE_AND,

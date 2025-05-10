@@ -1,6 +1,8 @@
 #include "pch.h"
 
 #include "parser.h"
+#include "lexer/lexer.h"
+
 #include "state.h"
 
 
@@ -15,25 +17,36 @@
 static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
 {
     switch (tokenType) {
-        case BOH_TOKEN_TYPE_PLUS:           return BOH_OP_PLUS;
-        case BOH_TOKEN_TYPE_MINUS:          return BOH_OP_MINUS;
-        case BOH_TOKEN_TYPE_MULT:           return BOH_OP_MULT;
-        case BOH_TOKEN_TYPE_DIV:            return BOH_OP_DIV;
-        case BOH_TOKEN_TYPE_MOD:            return BOH_OP_MOD;
-        case BOH_TOKEN_TYPE_NOT:            return BOH_OP_NOT;
-        case BOH_TOKEN_TYPE_GREATER:        return BOH_OP_GREATER;
-        case BOH_TOKEN_TYPE_LESS:           return BOH_OP_LESS;
-        case BOH_TOKEN_TYPE_NOT_EQUAL:      return BOH_OP_NOT_EQUAL;
-        case BOH_TOKEN_TYPE_GEQUAL:         return BOH_OP_GEQUAL;
-        case BOH_TOKEN_TYPE_LEQUAL:         return BOH_OP_LEQUAL;
-        case BOH_TOKEN_TYPE_EQUAL:          return BOH_OP_EQUAL;
-        case BOH_TOKEN_TYPE_BITWISE_AND:    return BOH_OP_BITWISE_AND;
-        case BOH_TOKEN_TYPE_BITWISE_OR:     return BOH_OP_BITWISE_OR;
-        case BOH_TOKEN_TYPE_BITWISE_XOR:    return BOH_OP_BITWISE_XOR;
-        case BOH_TOKEN_TYPE_BITWISE_NOT:    return BOH_OP_BITWISE_NOT;
-        case BOH_TOKEN_TYPE_BITWISE_RSHIFT: return BOH_OP_BITWISE_RSHIFT;
-        case BOH_TOKEN_TYPE_BITWISE_LSHIFT: return BOH_OP_BITWISE_LSHIFT;
-        default:                            return BOH_OP_UNKNOWN;
+        case BOH_TOKEN_TYPE_PLUS:                   return BOH_OP_PLUS;
+        case BOH_TOKEN_TYPE_PLUS_ASSIGN:            return BOH_OP_PLUS_ASSIGN;
+        case BOH_TOKEN_TYPE_MINUS:                  return BOH_OP_MINUS;
+        case BOH_TOKEN_TYPE_MINUS_ASSIGN:           return BOH_OP_MINUS_ASSIGN;
+        case BOH_TOKEN_TYPE_MULT:                   return BOH_OP_MULT;
+        case BOH_TOKEN_TYPE_MULT_ASSIGN:            return BOH_OP_MULT_ASSIGN;
+        case BOH_TOKEN_TYPE_DIV:                    return BOH_OP_DIV;
+        case BOH_TOKEN_TYPE_DIV_ASSIGN:             return BOH_OP_DIV_ASSIGN;
+        case BOH_TOKEN_TYPE_MOD:                    return BOH_OP_MOD;
+        case BOH_TOKEN_TYPE_MOD_ASSIGN:             return BOH_OP_MOD_ASSIGN;
+        case BOH_TOKEN_TYPE_NOT:                    return BOH_OP_NOT;
+        case BOH_TOKEN_TYPE_GREATER:                return BOH_OP_GREATER;
+        case BOH_TOKEN_TYPE_LESS:                   return BOH_OP_LESS;
+        case BOH_TOKEN_TYPE_NOT_EQUAL:              return BOH_OP_NOT_EQUAL;
+        case BOH_TOKEN_TYPE_GEQUAL:                 return BOH_OP_GEQUAL;
+        case BOH_TOKEN_TYPE_LEQUAL:                 return BOH_OP_LEQUAL;
+        case BOH_TOKEN_TYPE_EQUAL:                  return BOH_OP_EQUAL;
+        case BOH_TOKEN_TYPE_BITWISE_AND:            return BOH_OP_BITWISE_AND;
+        case BOH_TOKEN_TYPE_BITWISE_AND_ASSIGN:     return BOH_OP_BITWISE_AND_ASSIGN;
+        case BOH_TOKEN_TYPE_BITWISE_OR:             return BOH_OP_BITWISE_OR;
+        case BOH_TOKEN_TYPE_BITWISE_OR_ASSIGN:      return BOH_OP_BITWISE_OR_ASSIGN;
+        case BOH_TOKEN_TYPE_BITWISE_XOR:            return BOH_OP_BITWISE_XOR;
+        case BOH_TOKEN_TYPE_BITWISE_XOR_ASSIGN:     return BOH_OP_BITWISE_XOR_ASSIGN;
+        case BOH_TOKEN_TYPE_BITWISE_NOT:            return BOH_OP_BITWISE_NOT;
+        case BOH_TOKEN_TYPE_BITWISE_NOT_ASSIGN:     return BOH_OP_BITWISE_NOT_ASSIGN;
+        case BOH_TOKEN_TYPE_BITWISE_RSHIFT:         return BOH_OP_BITWISE_RSHIFT;
+        case BOH_TOKEN_TYPE_BITWISE_RSHIFT_ASSIGN:  return BOH_OP_BITWISE_RSHIFT_ASSIGN;
+        case BOH_TOKEN_TYPE_BITWISE_LSHIFT:         return BOH_OP_BITWISE_LSHIFT;
+        case BOH_TOKEN_TYPE_BITWISE_LSHIFT_ASSIGN:  return BOH_OP_BITWISE_LSHIFT_ASSIGN;
+        default:                                    return BOH_OP_UNKNOWN;
     }
 }
 
@@ -153,7 +166,6 @@ static bohAstNode* parsMultiplication(bohParser* pParser)
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_DIV) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MOD) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_AND) ||
-        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_OR) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_XOR)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
@@ -178,7 +190,8 @@ static bohAstNode* parsAddition(bohParser* pParser)
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PLUS) ||
-        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MINUS)
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MINUS) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_OR)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsMultiplication(pParser);

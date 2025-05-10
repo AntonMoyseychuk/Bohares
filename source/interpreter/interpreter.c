@@ -3,7 +3,7 @@
 #include "interpreter.h"
 #include "parser/parser.h"
 
-#include "model.h"
+#include "types.h"
 #include "state.h"
 
 

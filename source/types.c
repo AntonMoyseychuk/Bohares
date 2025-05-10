@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "model.h"
+#include "types.h"
 
 
 bohNumber bohNumberCreateI64(int64_t value)
@@ -76,7 +76,7 @@ bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pLeft);
     assert(pRight);
     
-    return BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) == BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight);
+    return BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) == BOH_NUMBER_GET_UNDERLYING_VALUE(pRight);
 }
 
 
@@ -91,7 +91,7 @@ bool bohNumberLess(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pLeft);
     assert(pRight);
     
-    return BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) < BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight);
+    return BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) < BOH_NUMBER_GET_UNDERLYING_VALUE(pRight);
 }
 
 
@@ -100,7 +100,7 @@ bool bohNumberGreater(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pLeft);
     assert(pRight);
     
-    return BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) > BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight);
+    return BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) > BOH_NUMBER_GET_UNDERLYING_VALUE(pRight);
 }
 
 
@@ -144,6 +144,8 @@ bohNumber bohNumberGetOpposite(const bohNumber* pNumber)
 
 bohNumber* bohNumberMakeOpposite(bohNumber* pNumber)
 {
+    assert(pNumber);
+
     *pNumber = bohNumberGetOpposite(pNumber);
     return pNumber;
 }
@@ -174,9 +176,9 @@ bohNumber bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) + BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) + BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) + bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) + bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) + bohNumberGetI64(pRight));
@@ -196,9 +198,9 @@ bohNumber bohNumberSub(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) - BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) - BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) - bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) - bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) - bohNumberGetI64(pRight));
@@ -218,9 +220,9 @@ bohNumber bohNumberMult(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) * BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) * BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) * bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) * bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) * bohNumberGetI64(pRight));
@@ -240,9 +242,9 @@ bohNumber bohNumberDiv(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(bohNumberGetF64(pLeft) / BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight));
+        return bohNumberCreateF64(bohNumberGetF64(pLeft) / BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft) / bohNumberGetF64(pRight));
+        return bohNumberCreateF64(BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) / bohNumberGetF64(pRight));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) / bohNumberGetI64(pRight));
@@ -262,9 +264,9 @@ bohNumber bohNumberMod(const bohNumber* pLeft, const bohNumber* pRight)
     assert(pRight);
 
     if (bohNumberIsF64(pLeft)) {
-        return bohNumberCreateF64(fmod(bohNumberGetF64(pLeft), BOH_NUMBER_GET_UNDERLYING_VALUE(*pRight)));
+        return bohNumberCreateF64(fmod(bohNumberGetF64(pLeft), BOH_NUMBER_GET_UNDERLYING_VALUE(pRight)));
     } else if (bohNumberIsF64(pRight)) {
-        return bohNumberCreateF64(fmod(BOH_NUMBER_GET_UNDERLYING_VALUE(*pLeft), bohNumberGetF64(pRight)));
+        return bohNumberCreateF64(fmod(BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft), bohNumberGetF64(pRight)));
     }
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) % bohNumberGetI64(pRight));

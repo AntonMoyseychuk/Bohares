@@ -1,7 +1,6 @@
 #pragma once
 
-#include "lexer/lexer.h"
-#include "model.h"
+#include "types.h"
 
 
 typedef enum Operator
@@ -9,10 +8,15 @@ typedef enum Operator
     BOH_OP_UNKNOWN,
 
     BOH_OP_PLUS,
+    BOH_OP_PLUS_ASSIGN,
     BOH_OP_MINUS,
+    BOH_OP_MINUS_ASSIGN,
     BOH_OP_MULT,
+    BOH_OP_MULT_ASSIGN,
     BOH_OP_DIV,
+    BOH_OP_DIV_ASSIGN,
     BOH_OP_MOD,
+    BOH_OP_MOD_ASSIGN,
     BOH_OP_NOT,
     BOH_OP_GREATER,
     BOH_OP_LESS,
@@ -21,11 +25,17 @@ typedef enum Operator
     BOH_OP_LEQUAL,
     BOH_OP_EQUAL,
     BOH_OP_BITWISE_AND,
+    BOH_OP_BITWISE_AND_ASSIGN,
     BOH_OP_BITWISE_OR,
+    BOH_OP_BITWISE_OR_ASSIGN,
     BOH_OP_BITWISE_XOR,
+    BOH_OP_BITWISE_XOR_ASSIGN,
     BOH_OP_BITWISE_NOT,
+    BOH_OP_BITWISE_NOT_ASSIGN,
     BOH_OP_BITWISE_RSHIFT,
-    BOH_OP_BITWISE_LSHIFT
+    BOH_OP_BITWISE_RSHIFT_ASSIGN,
+    BOH_OP_BITWISE_LSHIFT,
+    BOH_OP_BITWISE_LSHIFT_ASSIGN
 } bohOperator;
 
 
@@ -101,6 +111,7 @@ void bohAstDestroy(bohAST* pAST);
 
 bool bohAstIsEmpty(const bohAST* pAST);
 
+typedef bohDynArray bohTokenStorage;
 
 typedef struct Parser
 {

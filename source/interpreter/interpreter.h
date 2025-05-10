@@ -1,6 +1,6 @@
 #pragma once
 
-#include "model.h"
+#include "types.h"
 
 
 typedef struct AST bohAST;

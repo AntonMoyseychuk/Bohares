@@ -211,18 +211,108 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
         case ']': type = BOH_TOKEN_TYPE_RSQUAR; break;
         case ',': type = BOH_TOKEN_TYPE_COMMA; break;
         case '.': type = BOH_TOKEN_TYPE_DOT; break;
-        case '+': type = BOH_TOKEN_TYPE_PLUS; break;
-        case '-': type = BOH_TOKEN_TYPE_MINUS; break;
-        case '*': type = BOH_TOKEN_TYPE_MULT; break;
-        case '/': type = BOH_TOKEN_TYPE_DIV; break;
-        case '%': type = BOH_TOKEN_TYPE_MOD; break;
-        case '&': type = BOH_TOKEN_TYPE_BITWISE_AND; break;
-        case '|': type = BOH_TOKEN_TYPE_BITWISE_OR; break;
-        case '^': type = BOH_TOKEN_TYPE_BITWISE_XOR; break;
         case ':': type = BOH_TOKEN_TYPE_COLON; break;
         case ';': type = BOH_TOKEN_TYPE_SEMICOLON; break;
         case '?': type = BOH_TOKEN_TYPE_QUESTION; break;
-        case '~': type = BOH_TOKEN_TYPE_BITWISE_NOT; break;
+        case '+':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_PLUS_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_PLUS;
+                    break;
+            }
+            break;
+        case '-':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_MINUS_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_MINUS;
+                    break;
+            }
+            break;
+        case '*': 
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_MULT_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_MULT;
+                    break;
+            }
+            break;
+        case '/':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_DIV_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_DIV;
+                    break;
+            }
+            break;
+        case '%':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_MOD_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_MOD;
+                    break;
+            }
+            break;
+        case '&':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_BITWISE_AND_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_BITWISE_AND;
+                    break;
+            }
+            break;
+        case '|': 
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_BITWISE_OR_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_BITWISE_OR;
+                    break;
+            }
+            break;
+        case '^':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_BITWISE_XOR_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_BITWISE_XOR;
+                    break;
+            }
+            break;
+        case '~':
+            switch (lexPickCurrPosChar(pLexer)) {
+                case '=':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_BITWISE_NOT_ASSIGN;
+                    break;
+                default: 
+                    type = BOH_TOKEN_TYPE_BITWISE_NOT;
+                    break;
+            }
+            break;
         case '!': 
             switch (lexPickCurrPosChar(pLexer)) {
                 case '=':
@@ -255,7 +345,15 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                     break;
                 case '>':
                     lexAdvanceCurrPos(pLexer);
-                    type = BOH_TOKEN_TYPE_BITWISE_RSHIFT;
+                    switch (lexPickCurrPosChar(pLexer)) {
+                        case '=':
+                            lexAdvanceCurrPos(pLexer);
+                            type = BOH_TOKEN_TYPE_BITWISE_RSHIFT_ASSIGN;
+                            break;
+                        default: 
+                            type = BOH_TOKEN_TYPE_BITWISE_RSHIFT;
+                            break;
+                    }
                     break;
                 default: 
                     type = BOH_TOKEN_TYPE_GREATER;
@@ -271,7 +369,15 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                     break;
                 case '<':
                     lexAdvanceCurrPos(pLexer);
-                    type = BOH_TOKEN_TYPE_BITWISE_LSHIFT;
+                    switch (lexPickCurrPosChar(pLexer)) {
+                        case '=':
+                            lexAdvanceCurrPos(pLexer);
+                            type = BOH_TOKEN_TYPE_BITWISE_LSHIFT_ASSIGN;
+                            break;
+                        default: 
+                            type = BOH_TOKEN_TYPE_BITWISE_LSHIFT;
+                            break;
+                    }
                     break;
                 default: 
                     type = BOH_TOKEN_TYPE_LESS;
@@ -488,17 +594,26 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_COMMA: return "BOH_TOKEN_TYPE_COMMA";
         case BOH_TOKEN_TYPE_DOT: return "BOH_TOKEN_TYPE_DOT";
         case BOH_TOKEN_TYPE_PLUS: return "BOH_TOKEN_TYPE_PLUS";
+        case BOH_TOKEN_TYPE_PLUS_ASSIGN: return "BOH_TOKEN_TYPE_PLUS_ASSIGN";
         case BOH_TOKEN_TYPE_MINUS: return "BOH_TOKEN_TYPE_MINUS";
+        case BOH_TOKEN_TYPE_MINUS_ASSIGN: return "BOH_TOKEN_TYPE_MINUS_ASSIGN";
         case BOH_TOKEN_TYPE_MULT: return "BOH_TOKEN_TYPE_MULT";
+        case BOH_TOKEN_TYPE_MULT_ASSIGN: return "BOH_TOKEN_TYPE_MULT_ASSIGN";
         case BOH_TOKEN_TYPE_DIV: return "BOH_TOKEN_TYPE_DIV";
+        case BOH_TOKEN_TYPE_DIV_ASSIGN: return "BOH_TOKEN_TYPE_DIV_ASSIGN";
         case BOH_TOKEN_TYPE_MOD: return "BOH_TOKEN_TYPE_MOD";
+        case BOH_TOKEN_TYPE_MOD_ASSIGN: return "BOH_TOKEN_TYPE_MOD_ASSIGN";
         case BOH_TOKEN_TYPE_BITWISE_AND: return "BOH_TOKEN_TYPE_BITWISE_AND";
+        case BOH_TOKEN_TYPE_BITWISE_AND_ASSIGN: return "BOH_TOKEN_TYPE_BITWISE_AND_ASSIGN";
         case BOH_TOKEN_TYPE_BITWISE_OR: return "BOH_TOKEN_TYPE_BITWISE_OR";
+        case BOH_TOKEN_TYPE_BITWISE_OR_ASSIGN: return "BOH_TOKEN_TYPE_BITWISE_OR_ASSIGN";
         case BOH_TOKEN_TYPE_BITWISE_XOR: return "BOH_TOKEN_TYPE_BITWISE_XOR";
+        case BOH_TOKEN_TYPE_BITWISE_XOR_ASSIGN: return "BOH_TOKEN_TYPE_BITWISE_XOR_ASSIGN";
         case BOH_TOKEN_TYPE_COLON: return "BOH_TOKEN_TYPE_COLON";
         case BOH_TOKEN_TYPE_SEMICOLON: return "BOH_TOKEN_TYPE_SEMICOLON";
         case BOH_TOKEN_TYPE_QUESTION: return "BOH_TOKEN_TYPE_QUESTION";
         case BOH_TOKEN_TYPE_BITWISE_NOT: return "BOH_TOKEN_TYPE_BITWISE_NOT";
+        case BOH_TOKEN_TYPE_BITWISE_NOT_ASSIGN: return "BOH_TOKEN_TYPE_BITWISE_NOT_ASSIGN";
         case BOH_TOKEN_TYPE_NOT: return "BOH_TOKEN_TYPE_NOT";
         case BOH_TOKEN_TYPE_GREATER: return "BOH_TOKEN_TYPE_GREATER";
         case BOH_TOKEN_TYPE_LESS: return "BOH_TOKEN_TYPE_LESS";
@@ -507,7 +622,9 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_LEQUAL: return "BOH_TOKEN_TYPE_LEQUAL";
         case BOH_TOKEN_TYPE_EQUAL: return "BOH_TOKEN_TYPE_EQUAL";
         case BOH_TOKEN_TYPE_BITWISE_RSHIFT: return "BOH_TOKEN_TYPE_BITWISE_RSHIFT";
+        case BOH_TOKEN_TYPE_BITWISE_RSHIFT_ASSIGN: return "BOH_TOKEN_TYPE_BITWISE_RSHIFT_ASSIGN";
         case BOH_TOKEN_TYPE_BITWISE_LSHIFT: return "BOH_TOKEN_TYPE_BITWISE_LSHIFT";
+        case BOH_TOKEN_TYPE_BITWISE_LSHIFT_ASSIGN: return "BOH_TOKEN_TYPE_BITWISE_LSHIFT_ASSIGN";
         case BOH_TOKEN_TYPE_IDENTIFIER: return "BOH_TOKEN_TYPE_IDENTIFIER";
         case BOH_TOKEN_TYPE_STRING: return "BOH_TOKEN_TYPE_STRING";
         case BOH_TOKEN_TYPE_INTEGER: return "BOH_TOKEN_TYPE_INTEGER";

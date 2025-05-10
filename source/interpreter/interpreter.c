@@ -53,31 +53,31 @@ static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
         case BOH_OP_EQUAL:     return bohNumberCreateI64(bohNumberEqual(&left, &right));
         case BOH_OP_DIV:
             BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
-                "it is not possible to divide by 0"); // TODO: pass line and column inside bohAstNode
+                "right operand of / is zero"); // TODO: pass line and column inside bohAstNode
             return bohNumberDiv(&left, &right);
         case BOH_OP_MOD:
             BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
-                "it is not possible to take the remainder of the division by 0"); // TODO: pass line and column inside bohAstNode
+                "right operand of % is zero"); // TODO: pass line and column inside bohAstNode
             return bohNumberMod(&left, &right);
         case BOH_OP_BITWISE_AND:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use & operator with non integer types"); // TODO: pass line and column inside bohAstNode
+                "can't use & operator with non integral types"); // TODO: pass line and column inside bohAstNode
             return bohNumberBitwiseAnd(&left, &right);
         case BOH_OP_BITWISE_OR:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use | operator with non integer types"); // TODO: pass line and column inside bohAstNode
+                "can't use | operator with non integral types"); // TODO: pass line and column inside bohAstNode
             return bohNumberBitwiseOr(&left, &right);
         case BOH_OP_BITWISE_XOR:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use ^ operator with non integer types"); // TODO: pass line and column inside bohAstNode
+                "can't use ^ operator with non integral types"); // TODO: pass line and column inside bohAstNode
             return bohNumberBitwiseXor(&left, &right);
         case BOH_OP_BITWISE_RSHIFT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use >> operator with non integer types"); // TODO: pass line and column inside bohAstNode
+                "can't use >> operator with non integral types"); // TODO: pass line and column inside bohAstNode
             return bohNumberBitwiseRShift(&left, &right);
         case BOH_OP_BITWISE_LSHIFT:
             BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use << operator with non integer types"); // TODO: pass line and column inside bohAstNode
+                "can't use << operator with non integral types"); // TODO: pass line and column inside bohAstNode
             return bohNumberBitwiseLShift(&left, &right);    
         default:
             assert(false && "Not implemented yet");
@@ -96,7 +96,7 @@ static bohNumber interpInterpretUnaryAstNode(const bohAstNodeUnary* pNode)
         case BOH_OP_MINUS:          return bohNumberGetOpposite(&value);
         case BOH_OP_NOT:            return bohNumberGetNegation(&value);
         case BOH_OP_BITWISE_NOT:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&value), 0, 0, "can't use ~ operator with non integer type");  // TODO: pass line and column inside bohAstNode
+            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&value), 0, 0, "can't use ~ operator with non integral type");  // TODO: pass line and column inside bohAstNode
             return bohNumberGetBitwiseNegation(&value);
     
         default:

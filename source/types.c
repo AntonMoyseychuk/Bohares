@@ -44,6 +44,20 @@ int64_t bohNumberGetI64(const bohNumber* pNumber)
 }
 
 
+bool bohNumberIsIntegral(const bohNumber* pNumber)
+{
+    assert(pNumber);
+    return bohNumberIsI64(pNumber);
+}
+
+
+bool bohNumberIsFloatingPoint(const bohNumber *pNumber)
+{
+    assert(pNumber);
+    return bohNumberIsF64(pNumber);
+}
+
+
 double bohNumberGetF64(const bohNumber* pNumber)
 {
     assert(pNumber);
@@ -68,6 +82,21 @@ void bohNumberSetF64(bohNumber* pNumber, double value)
     
     pNumber->type = BOH_NUMBER_TYPE_FLOAT;
     pNumber->f64 = value;
+}
+
+
+bohNumber* bohNumberAssign(bohNumber* pDst, const bohNumber* pNumber)
+{
+    assert(pDst);
+    assert(pNumber);
+
+    if (bohNumberIsI64(pDst)) {
+        bohNumberSetI64(pDst, BOH_NUMBER_GET_UNDERLYING_VALUE(pNumber));
+    } else {
+        bohNumberSetF64(pDst, BOH_NUMBER_GET_UNDERLYING_VALUE(pNumber));
+    }
+
+    return pDst;
 }
 
 
@@ -144,9 +173,9 @@ bohNumber bohNumberGetOpposite(const bohNumber* pNumber)
 
 bohNumber* bohNumberMakeOpposite(bohNumber* pNumber)
 {
-    assert(pNumber);
-
-    *pNumber = bohNumberGetOpposite(pNumber);
+    const bohNumber newValue = bohNumberGetOpposite(pNumber);
+    bohNumberAssign(pNumber, &newValue);
+    
     return pNumber;
 }
 
@@ -165,7 +194,9 @@ bohNumber bohNumberGetNegation(const bohNumber* pNumber)
 
 bohNumber* bohNumberMakeNegation(bohNumber* pNumber)
 {
-    *pNumber = bohNumberGetNegation(pNumber);
+    const bohNumber newValue = bohNumberGetNegation(pNumber);
+    bohNumberAssign(pNumber, &newValue);
+
     return pNumber;
 }
 
@@ -187,7 +218,9 @@ bohNumber bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight)
 
 bohNumber* bohNumberAddAssign(bohNumber* pDst, const bohNumber* pValue)
 {
-    *pDst = bohNumberAdd(pDst, pValue);
+    const bohNumber newValue = bohNumberAdd(pDst, pValue);
+    bohNumberAssign(pDst, &newValue);
+
     return pDst;
 }
 
@@ -209,7 +242,9 @@ bohNumber bohNumberSub(const bohNumber* pLeft, const bohNumber* pRight)
 
 bohNumber* bohNumberSubAssign(bohNumber* pDst, const bohNumber* pValue)
 {
-    *pDst = bohNumberSub(pDst, pValue);
+    const bohNumber newValue = bohNumberSub(pDst, pValue);
+    bohNumberAssign(pDst, &newValue);
+    
     return pDst;
 }
 
@@ -231,7 +266,9 @@ bohNumber bohNumberMult(const bohNumber* pLeft, const bohNumber* pRight)
 
 bohNumber* bohNumberMultAssign(bohNumber* pDst, const bohNumber* pValue)
 {
-    *pDst = bohNumberMult(pDst, pValue);
+    const bohNumber newValue = bohNumberMult(pDst, pValue);
+    bohNumberAssign(pDst, &newValue);
+
     return pDst;
 }
 
@@ -253,7 +290,9 @@ bohNumber bohNumberDiv(const bohNumber* pLeft, const bohNumber* pRight)
 
 bohNumber* bohNumberDivAssign(bohNumber* pDst, const bohNumber* pValue)
 {
-    *pDst = bohNumberDiv(pDst, pValue);
+    const bohNumber newValue = bohNumberDiv(pDst, pValue);
+    bohNumberAssign(pDst, &newValue);
+    
     return pDst;
 }
 
@@ -275,7 +314,9 @@ bohNumber bohNumberMod(const bohNumber* pLeft, const bohNumber* pRight)
 
 bohNumber* bohNumberModAssign(bohNumber* pDst, const bohNumber* pValue)
 {
-    *pDst = bohNumberMod(pDst, pValue);
+    const bohNumber newValue = bohNumberMod(pDst, pValue);
+    bohNumberAssign(pDst, &newValue);
+    
     return pDst;
 }
 
@@ -383,4 +424,15 @@ bohNumber *bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 {
     *pDst = bohNumberBitwiseRShift(pDst, pBits);
     return pDst;
+}
+
+
+bohString bohNumberToString(const bohNumber* pNumber)
+{
+    assert(pNumber);
+
+    char buff[256] = { 0 };
+    sprintf_s(buff, sizeof(buff) - 1, bohNumberIsF64(pNumber) ? "%.10f" : "%lld", BOH_NUMBER_GET_UNDERLYING_VALUE(pNumber));
+
+    return bohStringCreateCStr(buff);
 }

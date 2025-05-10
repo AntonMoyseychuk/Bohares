@@ -19,19 +19,7 @@ bohString bohStringCreate(void)
 bohString bohStringCreateCStr(const char* pCStr)
 {
     assert(pCStr);
-
-    bohString str;
-
-    str.pData = "";
-    str.size = strlen(pCStr);
-    str.capacity = str.size > 0 ? str.size + 1 : 0;
-
-    if (str.capacity > 0) {
-        str.pData = (char*)malloc(str.capacity);
-        strcpy_s(str.pData, str.capacity * sizeof(char), pCStr);
-    }
-
-    return str;
+    return bohStringCreateFromTo(pCStr, pCStr + strlen(pCStr));
 }
 
 
@@ -64,7 +52,13 @@ bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd)
 }
 
 
-bohString bohStringCreateStringView(const bohStringView* pStrView)
+bohString bohStringCreateStringView(bohStringView strView)
+{
+    return bohStringCreateStringViewPtr(&strView);
+}
+
+
+bohString bohStringCreateStringViewPtr(const bohStringView* pStrView)
 {
     assert(pStrView);
 
@@ -83,6 +77,7 @@ void bohStringDestroy(bohString* pStr)
         free(pStr->pData);
     }
 
+    pStr->pData = NULL;
     pStr->size = 0;
     pStr->capacity = 0;
 }
@@ -100,37 +95,117 @@ bohString* bohStringAssign(bohString* pDst, const bohString* pSrc)
         return pDst;
     }
 
-    pDst->pData = (char*)malloc(pSrc->capacity);
-    strcpy_s(pDst->pData, pSrc->capacity, pSrc->pData);
-
     pDst->size = pSrc->size;
     pDst->capacity = pSrc->capacity;
 
+    pDst->pData = (char*)malloc(pDst->capacity);
+    strcpy_s(pDst->pData, pDst->capacity, pSrc->pData);
+
+    return pDst;
+}
+
+
+bohString* bohStringAssignSizedCStr(bohString* pDst, const char* pCStr, size_t length)
+{
+    assert(pDst);
+
+    const size_t cStrCapacity = length + 1;
+
+    if (pDst->capacity >= cStrCapacity) {
+        memset(pDst->pData, 0, pDst->capacity);
+        strcpy_s(pDst->pData, pDst->capacity, pCStr);
+        pDst->size = length;
+
+        return pDst;
+    }
+
+    bohStringDestroy(pDst);
+
+    if (!pCStr || length == 0) {
+        *pDst = bohStringCreate();
+        return pDst;
+    }
+
+    bohStringDestroy(pDst);
+    *pDst = bohStringCreateCStr(pCStr);
     return pDst;
 }
 
 
 bohString* bohStringAssignCStr(bohString* pDst, const char* pCStr)
 {
+    return bohStringAssignSizedCStr(pDst, pCStr, strlen(pCStr));
+}
+
+
+bohString* bohStringAssignStringView(bohString* pDst, bohStringView strView)
+{
+    return bohStringAssignStringViewPtr(pDst, &strView);
+}
+
+
+bohString* bohStringAssignStringViewPtr(bohString* pDst, const bohStringView* pStrView)
+{
+    return bohStringAssignSizedCStr(pDst, bohStringViewGetData(pStrView), bohStringViewGetSize(pStrView));
+}
+
+
+bohString* bohStringReserve(bohString* pStr, size_t newCapacity)
+{
+    assert(pStr);
+
+    if (newCapacity <= pStr->capacity) {
+        return pStr;
+    }
+
+    char* pNewBuff = (char*)malloc(newCapacity);
+    strcpy_s(pNewBuff, newCapacity * sizeof(char), pStr->pData);
+
+    free(pStr->pData);
+    pStr->capacity = newCapacity;
+    pStr->pData = pNewBuff;
+
+    pNewBuff = NULL;
+
+    return pStr;
+}
+
+
+bohString* bohStringResize(bohString* pStr, size_t newLength)
+{
+    assert(pStr);
+
+    if (newLength == pStr->size) {
+        return pStr;
+    }
+
+    const size_t oldCapacity = pStr->capacity;
+
+    if (newLength >= oldCapacity) {
+        const size_t newCapacity = newLength + 1;
+        bohStringReserve(pStr, newCapacity);
+    }
+
+    pStr->size = newLength;
+
+    return pStr;
+}
+
+
+bohString* bohStringMove(bohString* pDst, bohString* pSrc)
+{
     assert(pDst);
+    assert(pSrc);
 
-    if (!pCStr || strlen(pCStr) == 0) {
-        *pDst = bohStringCreate();
-        return pDst;
-    }
+    bohStringDestroy(pDst);
 
-    const size_t cStrLength = strlen(pCStr);
-    const size_t cStrCapacity = cStrLength + 1;
+    pDst->pData = pSrc->pData;
+    pDst->size = pSrc->size;
+    pDst->capacity = pSrc->capacity;
 
-    if (pDst->capacity < cStrCapacity) {
-        bohStringDestroy(pDst);
-        *pDst = bohStringCreateCStr(pCStr);
-        return pDst;
-    }
-
-    memset(pDst->pData, 0, pDst->capacity);
-    strcpy_s(pDst->pData, pDst->capacity, pCStr);
-    pDst->size = cStrLength;
+    pSrc->pData = NULL;
+    pSrc->size = 0;
+    pSrc->capacity = 0;
 
     return pDst;
 }
@@ -182,7 +257,13 @@ bool bohStringEqual(const bohString* pLeft, const bohString* pRight)
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
 
-    return bohStringViewEqual(&left, &right);
+    return bohStringViewEqualPtr(&left, &right);
+}
+
+
+bool bohStringNotEqual(const bohString* pLeft, const bohString* pRight)
+{
+    return !bohStringEqual(pLeft, pRight);
 }
 
 
@@ -194,7 +275,19 @@ bool bohStringLess(const bohString* pLeft, const bohString* pRight)
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
 
-    return bohStringViewLess(&left, &right);
+    return bohStringViewLessPtr(&left, &right);
+}
+
+
+bool bohStringLessEqual(const bohString* pLeft, const bohString* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+
+    bohStringView left = bohStringViewCreateString(pLeft);
+    bohStringView right = bohStringViewCreateString(pRight);
+
+    return bohStringViewLessEqualPtr(&left, &right);
 }
 
 
@@ -206,5 +299,40 @@ bool bohStringGreater(const bohString* pLeft, const bohString* pRight)
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
 
-    return bohStringViewGreater(&left, &right);
+    return bohStringViewGreaterPtr(&left, &right);
+}
+
+
+bool bohStringGreaterEqual(const bohString* pLeft, const bohString* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+
+    bohStringView left = bohStringViewCreateString(pLeft);
+    bohStringView right = bohStringViewCreateString(pRight);
+
+    return bohStringViewGreaterEqualPtr(&left, &right);
+}
+
+
+bohString bohStringAdd(const bohString* pLeft, const bohString* pRight)
+{
+    assert(pLeft);
+    assert(pRight);
+
+    const size_t leftStringSize = bohStringGetSize(pLeft);
+    const size_t rightStringSize = bohStringGetSize(pRight);
+    const size_t newStringSize = leftStringSize + rightStringSize;
+    const size_t newStringCapacity = newStringSize + 1;
+
+    bohString newString = bohStringCreate();
+    
+    newString.pData = (char*)malloc(newStringSize);
+    strcpy_s(newString.pData, newStringCapacity, pLeft->pData);
+    strcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pRight->pData);
+
+    newString.size = newStringSize;
+    newString.capacity = newStringCapacity;
+
+    return newString;
 }

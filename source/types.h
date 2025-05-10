@@ -1,6 +1,12 @@
 #pragma once
 
+#include "utils/ds/string.h"
+#include "utils/ds/string_view.h"
+
 #include <stdint.h>
+
+
+typedef struct Number bohNumber;
 
 
 typedef enum NumberType
@@ -27,11 +33,16 @@ bohNumber bohNumberCreateF64(double value);
 bool bohNumberIsI64(const bohNumber* pNumber);
 bool bohNumberIsF64(const bohNumber* pNumber);
 
+bool bohNumberIsIntegral(const bohNumber* pNumber);
+bool bohNumberIsFloatingPoint(const bohNumber* pNumber);
+
 int64_t bohNumberGetI64(const bohNumber* pNumber);
 double bohNumberGetF64(const bohNumber* pNumber);
 
 void bohNumberSetI64(bohNumber* pNumber, int64_t value);
 void bohNumberSetF64(bohNumber* pNumber, double value);
+
+bohNumber* bohNumberAssign(bohNumber* pDst, const bohNumber* pNumber);
 
 bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight);
 bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight);
@@ -82,6 +93,8 @@ bohNumber* bohNumberBitwiseLShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 
 bohNumber  bohNumberBitwiseRShift(const bohNumber* pValue, const bohNumber* pBits);
 bohNumber* bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits);
+
+bohString bohNumberToString(const bohNumber* pNumber);
 
 
 #define BOH_NUMBER_GET_UNDERLYING_VALUE(NUMBER_PTR) (bohNumberIsI64(NUMBER_PTR) ? (NUMBER_PTR)->i64 : (NUMBER_PTR)->f64)

@@ -2,6 +2,9 @@
 
 #include "types.h"
 
+#include "utils/ds/string.h"
+#include "utils/ds/string_view.h"
+
 
 typedef enum Operator
 {
@@ -80,6 +83,9 @@ struct AstNode
 
 void bohAstNodeDestroy(bohAstNode* pNode);
 
+// Calls bohAstNodeDestroy and frees *ppNode
+void bohAstNodeFree(bohAstNode** ppNode);
+
 bohAstNode* bohAstNodeCreateNumberI64(int64_t value);
 bohAstNode* bohAstNodeCreateNumberF64(double value);
 bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg);
@@ -93,12 +99,10 @@ const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode);
 const bohAstNodeUnary* bohAstNodeGetUnary(const bohAstNode* pNode);
 const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode);
 
-void bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value);
-void bohAstNodeSetNumberF64(bohAstNode* pNode, double value);
+bohAstNode* bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value);
+bohAstNode* bohAstNodeSetNumberF64(bohAstNode* pNode, double value);
 bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg);
 bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
-
-#define BOH_AST_NODE_DESTROY(NODE_PTR) { bohAstNodeDestroy(NODE_PTR); NODE_PTR = NULL; }
 
 
 typedef struct AST

@@ -159,7 +159,7 @@ static const bohKeyWordToken* lexConvertIdentifierLexemeToKeyWord(bohStringView 
     for (size_t i = 0; i < BOH_KEY_WORDS_COUNT; ++i) {
         const bohKeyWordToken* pKeyWord = BOH_KEY_WORDS + i;
 
-        if (bohStringViewEqual(&pKeyWord->lexeme, &tokenLexeme)) {
+        if (bohStringViewEqualPtr(&pKeyWord->lexeme, &tokenLexeme)) {
             return pKeyWord;
         }
     }
@@ -465,7 +465,7 @@ bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t 
 {
     bohToken token;
 
-    bohStringViewAssign(&token.lexeme, &lexeme);
+    bohStringViewAssignPtr(&token.lexeme, &lexeme);
     token.type = type;
     token.line = line;
     token.column = column;
@@ -490,7 +490,7 @@ void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
     assert(pDst);
     assert(pSrc);
 
-    bohStringViewAssign(&pDst->lexeme, &pSrc->lexeme);
+    bohStringViewAssignPtr(&pDst->lexeme, &pSrc->lexeme);
     pDst->type = pSrc->type;
     pDst->line = pSrc->line;
     pDst->column = pSrc->column;

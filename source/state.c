@@ -87,7 +87,7 @@ bohLexerError* bohLexerErrorAssign(bohLexerError* pDst, const bohLexerError* pSr
     assert(pDst);
     assert(pSrc);
 
-    bohStringViewAssign(&pDst->filepath, &pSrc->filepath);
+    bohStringViewAssignPtr(&pDst->filepath, &pSrc->filepath);
     bohStringAssign(&pDst->message, &pSrc->message);
     pDst->line = pSrc->line;
     pDst->column = pSrc->column;
@@ -124,7 +124,7 @@ bohParserError* bohParserErrorAssign(bohParserError* pDst, const bohParserError*
     assert(pDst);
     assert(pSrc);
 
-    bohStringViewAssign(&pDst->filepath, &pSrc->filepath);
+    bohStringViewAssignPtr(&pDst->filepath, &pSrc->filepath);
     bohStringAssign(&pDst->message, &pSrc->message);
     pDst->line = pSrc->line;
     pDst->column = pSrc->column;
@@ -161,7 +161,7 @@ bohInterpreterError* bohInterpreterErrorAssign(bohInterpreterError* pDst, const 
     assert(pDst);
     assert(pSrc);
 
-    bohStringViewAssign(&pDst->filepath, &pSrc->filepath);
+    bohStringViewAssignPtr(&pDst->filepath, &pSrc->filepath);
     bohStringAssign(&pDst->message, &pSrc->message);
     pDst->line = pSrc->line;
     pDst->column = pSrc->column;
@@ -219,7 +219,7 @@ bohState* bohGlobalStateGet(void)
 void bohStateSetCurrProcessingFile(bohState* pState, bohStringView filepath)
 {
     assert(pState);
-    bohStringViewAssign(&pState->currProcessingFile, &filepath);
+    bohStringViewAssignPtr(&pState->currProcessingFile, &filepath);
 }
 
 
@@ -229,7 +229,7 @@ void bohStateEmplaceLexerError(bohState* pState, uint64_t line, uint64_t column,
 
     bohLexerError* pError = (bohLexerError*)bohDynArrayPushBackDummy(&pState->lexerErrors);
     
-    bohStringViewAssign(&pError->filepath, &pState->currProcessingFile);
+    bohStringViewAssignPtr(&pError->filepath, &pState->currProcessingFile);
     bohStringAssignCStr(&pError->message, pMessage);
     pError->line = line;
     pError->column = column;
@@ -242,7 +242,7 @@ void bohStateEmplaceParserError(bohState* pState, uint64_t line, uint64_t column
 
     bohParserError* pError = (bohParserError*)bohDynArrayPushBackDummy(&pState->parserErrors);
     
-    bohStringViewAssign(&pError->filepath, &pState->currProcessingFile);
+    bohStringViewAssignPtr(&pError->filepath, &pState->currProcessingFile);
     bohStringAssignCStr(&pError->message, pMessage);
     pError->line = line;
     pError->column = column;
@@ -255,7 +255,7 @@ void bohStateEmplaceInterpreterError(bohState *pState, uint64_t line, uint64_t c
 
     bohInterpreterError* pError = (bohInterpreterError*)bohDynArrayPushBackDummy(&pState->interpreterErrors);
     
-    bohStringViewAssign(&pError->filepath, &pState->currProcessingFile);
+    bohStringViewAssignPtr(&pError->filepath, &pState->currProcessingFile);
     bohStringAssignCStr(&pError->message, pMessage);
     pError->line = line;
     pError->column = column;

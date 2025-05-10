@@ -101,11 +101,16 @@ static bool parsIsCurrTokenMatch(bohParser* pParser, bohTokenType type)
 static bohAstNode* parsAddition(bohParser* pParser);
 
 
+// <primary> = <integer> | <float> | <bool> | <string> | '(' <expr> ')' 
 static bohAstNode* parsPrimary(bohParser* pParser)
 {
     assert(pParser);
 
-    if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
+    if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_TRUE)) {
+        return bohAstNodeCreateNumberI64(1);
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FALSE)) {
+        return bohAstNodeCreateNumberI64(0);
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
         const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
         return bohAstNodeCreateNumberI64(value);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
@@ -132,6 +137,7 @@ static bohAstNode* parsPrimary(bohParser* pParser)
 }
 
 
+// <unary> = ('+' | '-' | '~' | '!') <unary> | <primary>
 static bohAstNode* parsUnary(bohParser* pParser)
 {
     assert(pParser);
@@ -155,6 +161,7 @@ static bohAstNode* parsUnary(bohParser* pParser)
 }
 
 
+// <multiplication> = <unary> (('*' | '/' | '%' | '&' | '|') <unary>)*
 static bohAstNode* parsMultiplication(bohParser* pParser)
 {
     assert(pParser);
@@ -213,7 +220,7 @@ static bohAstNode* parsExpr(bohParser* pParser)
 }
 
 
-void bohAstNodeDestroy(bohAstNode* pNode)
+void bohAstNodeDestroy(bohAstNode *pNode)
 {
     if (!pNode) {
         return;
@@ -221,20 +228,32 @@ void bohAstNodeDestroy(bohAstNode* pNode)
 
     switch (pNode->type) {
         case BOH_AST_NODE_TYPE_NUMBER:
+            bohNumberSetI64(&pNode->number, 0);
             break;
         case BOH_AST_NODE_TYPE_UNARY:
-            BOH_AST_NODE_DESTROY(pNode->unary.pNode);
+            bohAstNodeFree(&pNode->unary.pNode);
             break;
         case BOH_AST_NODE_TYPE_BINARY:
-            BOH_AST_NODE_DESTROY(pNode->binary.pLeftNode);
-            BOH_AST_NODE_DESTROY(pNode->binary.pRightNode);
+            bohAstNodeFree(&pNode->binary.pLeftNode);
+            bohAstNodeFree(&pNode->binary.pRightNode);
             break;
         default:
             assert(false && "Invalid AST node type");
             break;
     }
+}
 
-    free(pNode);
+
+void bohAstNodeFree(bohAstNode** ppNode)
+{
+    if (!ppNode) {
+        return;
+    }
+
+    bohAstNodeDestroy(*ppNode);
+    free(*ppNode);
+
+    ppNode = NULL;
 }
 
 
@@ -243,6 +262,7 @@ bohAstNode* bohAstNodeCreateNumberI64(int64_t value)
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
+    memset(pNode, 0, sizeof(bohAstNode));
     bohAstNodeSetNumberI64(pNode, value);
 
     return pNode;
@@ -254,6 +274,7 @@ bohAstNode* bohAstNodeCreateNumberF64(double value)
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
+    memset(pNode, 0, sizeof(bohAstNode));
     bohAstNodeSetNumberF64(pNode, value);
 
     return pNode;
@@ -267,6 +288,7 @@ bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg)
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
+    memset(pNode, 0, sizeof(bohAstNode));
     bohAstNodeSetUnary(pNode, op, pArg);
 
     return pNode;
@@ -281,6 +303,7 @@ bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstN
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
+    memset(pNode, 0, sizeof(bohAstNode));
     bohAstNodeSetBinary(pNode, op, pLeftArg, pRightArg);
 
     return pNode;
@@ -294,14 +317,14 @@ bool bohAstNodeIsNumber(const bohAstNode* pNode)
 }
 
 
-bool bohAstNodeIsUnary(const bohAstNode *pNode)
+bool bohAstNodeIsUnary(const bohAstNode* pNode)
 {
     assert(pNode);
     return pNode->type == BOH_AST_NODE_TYPE_UNARY;
 }
 
 
-bool bohAstNodeIsBinary(const bohAstNode *pNode)
+bool bohAstNodeIsBinary(const bohAstNode* pNode)
 {
     assert(pNode);
     return pNode->type == BOH_AST_NODE_TYPE_BINARY;
@@ -335,21 +358,29 @@ const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode)
 }
 
 
-void bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value)
+bohAstNode* bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value)
 {
     assert(pNode);
+
+    bohAstNodeDestroy(pNode);
 
     pNode->type = BOH_AST_NODE_TYPE_NUMBER;
     pNode->number = bohNumberCreateI64(value);
+
+    return pNode;
 }
 
 
-void bohAstNodeSetNumberF64(bohAstNode* pNode, double value)
+bohAstNode* bohAstNodeSetNumberF64(bohAstNode* pNode, double value)
 {
     assert(pNode);
+
+    bohAstNodeDestroy(pNode);
     
     pNode->type = BOH_AST_NODE_TYPE_NUMBER;
     pNode->number = bohNumberCreateF64(value);
+
+    return pNode;
 }
 
 
@@ -357,6 +388,8 @@ bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pA
 {
     assert(pNode);
     assert(pArg);
+
+    bohAstNodeDestroy(pNode);
     
     pNode->type = BOH_AST_NODE_TYPE_UNARY;
     pNode->unary.op = op;
@@ -371,6 +404,8 @@ bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* p
     assert(pNode);
     assert(pLeftArg);
     assert(pRightArg);
+
+    bohAstNodeDestroy(pNode);
     
     pNode->type = BOH_AST_NODE_TYPE_BINARY;
     pNode->binary.op = op;
@@ -384,7 +419,7 @@ bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* p
 void bohAstDestroy(bohAST* pAST)
 {
     assert(pAST);
-    BOH_AST_NODE_DESTROY(pAST->pRoot);
+    bohAstNodeFree(&pAST->pRoot);
 }
 
 

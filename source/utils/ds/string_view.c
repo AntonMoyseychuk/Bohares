@@ -45,6 +45,19 @@ bohStringView bohStringViewCreateString(const bohString* pStr)
 }
 
 
+bohStringView bohStringViewCreateStringView(bohStringView strView)
+{
+    return strView;
+}
+
+
+bohStringView bohStringViewCreateStringViewPtr(const bohStringView* pStrView)
+{
+    assert(pStrView);
+    return *pStrView;
+}
+
+
 void bohStringViewReset(bohStringView* pStringView)
 {
     assert(pStringView);
@@ -80,7 +93,13 @@ bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, const char* pSt
 }
 
 
-bohStringView* bohStringViewAssign(bohStringView* pDst, const bohStringView* pSrc)
+bohStringView* bohStringViewAssign(bohStringView* pDst, bohStringView src)
+{
+    return bohStringViewAssignPtr(pDst, &src);
+}
+
+
+bohStringView* bohStringViewAssignPtr(bohStringView* pDst, const bohStringView* pSrc)
 {
     assert(pDst);
     assert(pSrc);
@@ -135,37 +154,114 @@ bool bohStringViewIsEmpty(const bohStringView* pStrView)
 }
 
 
-bool bohStringViewEqual(const bohStringView* pLeft, const bohStringView* pRight)
+int32_t bohStringViewCmp(const bohStringView* pLeft, bohStringView right)
 {
-    assert(pLeft);
-    assert(pRight);
-
-    const size_t minSize = min(pLeft->size, pRight->size);
-
-    const int cmpResult = _memicmp(pLeft->pData, pRight->pData, minSize);
-
-    return cmpResult == 0 ? pLeft->size == pRight->size : false;
+    return bohStringViewCmpPtr(pLeft, &right);
 }
 
 
-bool bohStringViewLess(const bohStringView *pLeft, const bohStringView *pRight)
+int32_t bohStringViewCmpPtr(const bohStringView *pLeft, const bohStringView *pRight)
 {
     assert(pLeft);
     assert(pRight);
 
-    const size_t minSize = min(pLeft->size, pRight->size);
+    const size_t minSize = (pLeft->size < pRight->size) ? pLeft->size : pRight->size;
 
-    const int cmpResult = _memicmp(pLeft->pData, pRight->pData, minSize);
+    return strncmp(pLeft->pData, pRight->pData, minSize);
+}
 
-    if (cmpResult < 0) {
-        return true;
+
+bool bohStringViewEqual(const bohStringView* pLeft, bohStringView right)
+{
+    return bohStringViewEqualPtr(pLeft, &right);
+}
+
+
+bool bohStringViewEqualPtr(const bohStringView *pLeft, const bohStringView *pRight)
+{
+    return bohStringViewCmpPtr(pLeft, pRight) == 0 ? pLeft->size == pRight->size : false;
+}
+
+
+bool bohStringViewNotEqual(const bohStringView* pLeft, bohStringView right)
+{
+    return bohStringViewNotEqualPtr(pLeft, &right);
+}
+
+
+bool bohStringViewNotEqualPtr(const bohStringView* pLeft, const bohStringView* pRight)
+{
+    return !bohStringViewEqualPtr(pLeft, pRight);
+}
+
+
+bool bohStringViewLess(const bohStringView* pLeft, bohStringView right)
+{
+    return bohStringViewLessPtr(pLeft, &right);
+}
+
+
+bool bohStringViewLessPtr(const bohStringView *pLeft, const bohStringView *pRight)
+{
+    const int32_t cmpResult = bohStringViewCmpPtr(pLeft, pRight);
+
+    if (cmpResult == 0) {
+        return pLeft->size < pRight->size;
     }
 
-    return cmpResult == 0 ? pLeft->size < pRight->size : false;
+    return cmpResult < 0;
 }
 
 
-bool bohStringViewGreater(const bohStringView *pLeft, const bohStringView *pRight)
+bool bohStringViewLessEqual(const bohStringView* pLeft, bohStringView right)
 {
-    return !bohStringViewEqual(pLeft, pRight) && !bohStringViewLess(pLeft, pRight);
+    return bohStringViewLessEqualPtr(pLeft, &right);
+}
+
+
+bool bohStringViewLessEqualPtr(const bohStringView* pLeft, const bohStringView* pRight)
+{
+    const int32_t cmpResult = bohStringViewCmpPtr(pLeft, pRight);
+
+    if (cmpResult == 0) {
+        return pLeft->size <= pRight->size;
+    }
+
+    return cmpResult < 0;
+}
+
+
+bool bohStringViewGreater(const bohStringView* pLeft, bohStringView right)
+{
+    return bohStringViewGreaterPtr(pLeft, &right);
+}
+
+
+bool bohStringViewGreaterPtr(const bohStringView* pLeft, const bohStringView* pRight)
+{
+    const int32_t cmpResult = bohStringViewCmpPtr(pLeft, pRight);
+
+    if (cmpResult == 0) {
+        return pLeft->size > pRight->size;
+    }
+
+    return cmpResult > 0;
+}
+
+
+bool bohStringViewGreaterEqual(const bohStringView* pLeft, bohStringView right)
+{
+    return bohStringViewGreaterEqualPtr(pLeft, &right);
+}
+
+
+bool bohStringViewGreaterEqualPtr(const bohStringView* pLeft, const bohStringView* pRight)
+{
+    const int32_t cmpResult = bohStringViewCmpPtr(pLeft, pRight);
+
+    if (cmpResult == 0) {
+        return pLeft->size >= pRight->size;
+    }
+
+    return cmpResult > 0;
 }

@@ -444,7 +444,15 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
         type = pKeyWord->type != BOH_TOKEN_TYPE_UNKNOWN ? pKeyWord->type : BOH_TOKEN_TYPE_IDENTIFIER;
     }
 
-    return bohTokenCreateParams(lexGetCurrLexem(pLexer), type, tokenLine, tokenColumn);
+    bohStringView lexeme = lexGetCurrLexem(pLexer);
+    
+    // If token is string than we need to remove " symbols from final lexeme
+    if (type == BOH_TOKEN_TYPE_STRING) {
+        ++lexeme.pData;
+        lexeme.size = lexeme.size >= 2 ? lexeme.size - 2 : 0;
+    }
+
+    return bohTokenCreateParams(lexeme, type, tokenLine, tokenColumn);
 }
 
 

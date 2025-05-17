@@ -28,6 +28,8 @@ bohStringView* bohStringViewAssignCStr(bohStringView* pDst, const char* pStr);
 bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, const char* pStr, size_t size);
 bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* pStr);
 
+bohStringView* bohStringViewMove(bohStringView* pDst, bohStringView* pSrc);
+
 const char* bohStringViewGetData(const bohStringView* pStrView);
 size_t bohStringViewGetSize(const bohStringView* pStrView);
 

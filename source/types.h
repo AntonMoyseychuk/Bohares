@@ -6,6 +6,67 @@
 #include <stdint.h>
 
 
+typedef enum StringType
+{
+    BOH_STRING_TYPE_VIEW,  // String literals (example: "Hello World")
+    BOH_STRING_TYPE_STRING // (example: var = "Hello World", var2 = var)
+} bohStringType;
+
+
+typedef struct BoharesString
+{
+    bohStringType type;
+
+    union {
+        bohStringView view;
+        bohString string;
+    };
+} bohBoharesString;
+
+
+bohBoharesString bohBoharesStringCreateView(void);
+bohBoharesString bohBoharesStringCreateViewStringView(bohStringView strView);
+bohBoharesString bohBoharesStringCreateViewStringViewPtr(const bohStringView* pStrView);
+
+bohBoharesString bohBoharesStringCreateString(void);
+bohBoharesString bohBoharesStringCreateStringString(const bohString* pString);
+bohBoharesString bohBoharesStringCreateStringStringView(bohStringView strView);
+bohBoharesString bohBoharesStringCreateStringStringViewPtr(const bohStringView* pStrView);
+
+void bohBoharesStringDestroy(bohBoharesString* pString);
+
+bohBoharesString* bohBoharesStringAssign(bohBoharesString* pDst, const bohBoharesString* pSrc);
+bohBoharesString* bohBoharesStringAssignView(bohBoharesString* pDst, bohStringView src);
+bohBoharesString* bohBoharesStringAssignViewPtr(bohBoharesString* pDst, const bohStringView* pSrc);
+bohBoharesString* bohBoharesStringAssignString(bohBoharesString* pDst, const bohString* pSrc);
+
+bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString* pSrc);
+
+bool bohBoharesStringIsView(const bohBoharesString* pString);
+bool bohBoharesStringIsString(const bohBoharesString* pString);
+
+const bohStringView* bohBoharesStringGetView(const bohBoharesString* pString);
+const bohString* bohBoharesStringGetString(const bohBoharesString* pString);
+
+const char* bohBoharesStringGetData(const bohBoharesString* pString);
+size_t bohBoharesStringGetSize(const bohBoharesString* pString);
+
+char bohBoharesStringAt(const bohBoharesString* pString, size_t index);
+
+bool bohBoharesStringIsEmpty(const bohBoharesString* pString);
+
+int32_t bohBoharesStringCmp(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+
+bool bohBoharesStringEqual(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+bool bohBoharesStringNotEqual(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+bool bohBoharesStringLess(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+bool bohBoharesStringLessEqual(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+bool bohBoharesStringGreater(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+bool bohBoharesStringGreaterEqual(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+
+bohBoharesString bohBoharesStringAdd(const bohBoharesString* pLeft, const bohBoharesString* pRight);
+
+
 typedef struct Number bohNumber;
 
 

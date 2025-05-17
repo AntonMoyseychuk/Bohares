@@ -132,8 +132,19 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             } else {
                 bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Float[%f]", bohNumberGetF64(&pNode->number));
             }
-        }
             break;
+        }
+        case BOH_AST_NODE_TYPE_STRING:
+        {
+            if (bohBoharesStringIsString(&pNode->string)) {
+                const bohString* pString = bohBoharesStringGetString(&pNode->string);
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "String[\"%s\"]", bohStringGetCStr(pString));
+            } else {
+                const bohStringView* pStrView = bohBoharesStringGetView(&pNode->string);
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "StringView[\"%.*s\"]", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
+            }
+            break;
+        }
         case BOH_AST_NODE_TYPE_UNARY:
         {
             const bohAstNodeUnary* pUnary = bohAstNodeGetUnary(pNode);
@@ -156,8 +167,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
                 PrintOffset(stdout, offsetLen);
             }
             fputc(')', stdout);
-        }
+
             break;
+        }
         case BOH_AST_NODE_TYPE_BINARY:
         {
             const bohAstNodeBinary* pBinary = bohAstNodeGetBinary(pNode);
@@ -188,8 +200,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
                 PrintOffset(stdout, offsetLen);
             }
             fputc(')', stdout);
-        }
+            
             break;
+        }
         default:
             assert(false && "Invalid AST node type");
             break;

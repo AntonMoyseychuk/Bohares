@@ -123,6 +123,18 @@ bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* p
 }
 
 
+bohStringView* bohStringViewMove(bohStringView* pDst, bohStringView* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohStringViewAssignPtr(pDst, pSrc);
+    bohStringViewReset(pSrc);
+
+    return pDst;
+}
+
+
 const char* bohStringViewGetData(const bohStringView* pStrView)
 {
     assert(pStrView);

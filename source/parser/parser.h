@@ -2,9 +2,6 @@
 
 #include "types.h"
 
-#include "utils/ds/string.h"
-#include "utils/ds/string_view.h"
-
 
 typedef enum Operator
 {
@@ -45,6 +42,7 @@ typedef enum Operator
 typedef enum AstNodeType
 {
     BOH_AST_NODE_TYPE_NUMBER,
+    BOH_AST_NODE_TYPE_STRING,
     BOH_AST_NODE_TYPE_UNARY,
     BOH_AST_NODE_TYPE_BINARY,
 } bohAstNodeType;
@@ -74,9 +72,10 @@ struct AstNode
 
     union 
     {
+        bohNumber number;
+        bohBoharesString string;
         bohAstNodeUnary unary;
         bohAstNodeBinary binary;
-        bohNumber number;
     };
 };
 

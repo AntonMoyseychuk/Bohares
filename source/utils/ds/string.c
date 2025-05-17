@@ -69,6 +69,17 @@ bohString bohStringCreateStringViewPtr(const bohStringView* pStrView)
 }
 
 
+bohString bohStringCreateString(const bohString* pString)
+{
+    assert(pString);
+
+    bohString string;
+    bohStringAssign(&string, pString);
+
+    return string;
+}
+
+
 void bohStringDestroy(bohString* pStr)
 {
     assert(pStr);
@@ -317,19 +328,44 @@ bool bohStringGreaterEqual(const bohString* pLeft, const bohString* pRight)
 
 bohString bohStringAdd(const bohString* pLeft, const bohString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    const bohStringView leftStrView = bohStringViewCreateString(pLeft);
+    const bohStringView rightStrView = bohStringViewCreateString(pRight);
+    
+    return bohStringViewAddStringView(&leftStrView, &rightStrView);
+}
 
-    const size_t leftStringSize = bohStringGetSize(pLeft);
-    const size_t rightStringSize = bohStringGetSize(pRight);
+
+bohString bohStringAddStringView(const bohString* pLeft, const bohStringView* pRStrView)
+{
+    const bohStringView leftStrView = bohStringViewCreateString(pLeft);
+    return bohStringViewAddStringView(&leftStrView, pRStrView);
+}
+
+
+bohString bohStringViewAddString(const bohStringView* pLStrView, const bohString* pRight)
+{
+    const bohStringView rightStrView = bohStringViewCreateString(pRight);
+    return bohStringViewAddStringView(pLStrView, &rightStrView);
+}
+
+
+bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohStringView* pRStrView)
+{
+    assert(pLStrView);
+    assert(pRStrView);
+
+    const size_t leftStringSize = bohStringViewGetSize(pLStrView);
+    const size_t rightStringSize = bohStringViewGetSize(pRStrView);
     const size_t newStringSize = leftStringSize + rightStringSize;
     const size_t newStringCapacity = newStringSize + 1;
 
     bohString newString = bohStringCreate();
     
     newString.pData = (char*)malloc(newStringSize);
-    strcpy_s(newString.pData, newStringCapacity, pLeft->pData);
-    strcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pRight->pData);
+    memset(newString.pData, 0, newStringSize);
+
+    strcpy_s(newString.pData, newStringCapacity, pLStrView->pData);
+    strcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pLStrView->pData);
 
     newString.size = newStringSize;
     newString.capacity = newStringCapacity;

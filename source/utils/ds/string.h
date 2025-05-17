@@ -20,6 +20,7 @@ bohString bohStringCreateCStr(const char* pCStr);
 bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd);
 bohString bohStringCreateStringView(bohStringView strView);
 bohString bohStringCreateStringViewPtr(const bohStringView* pStrView);
+bohString bohStringCreateString(const bohString* pString);
 
 void bohStringDestroy(bohString* pStr);
 
@@ -50,3 +51,6 @@ bool bohStringGreater(const bohString* pLeft, const bohString* pRight);
 bool bohStringGreaterEqual(const bohString* pLeft, const bohString* pRight);
 
 bohString bohStringAdd(const bohString* pLeft, const bohString* pRight);
+bohString bohStringAddStringView(const bohString* pLeft, const bohStringView* pRStrView);
+bohString bohStringViewAddString(const bohStringView* pLStrView, const bohString* pRight);
+bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohStringView* pRStrView);

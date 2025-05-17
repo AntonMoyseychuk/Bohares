@@ -22,8 +22,8 @@ bohStringView bohStringViewCreateStringViewPtr(const bohStringView* pStrView);
 
 void bohStringViewReset(bohStringView* pStringView);
 
-bohStringView* bohStringViewAssign(bohStringView* pDst, bohStringView src);
-bohStringView* bohStringViewAssignPtr(bohStringView* pDst, const bohStringView* pSrc);
+bohStringView* bohStringViewAssignStringView(bohStringView* pDst, bohStringView src);
+bohStringView* bohStringViewAssignStringViewPtr(bohStringView* pDst, const bohStringView* pSrc);
 bohStringView* bohStringViewAssignCStr(bohStringView* pDst, const char* pStr);
 bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, const char* pStr, size_t size);
 bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* pStr);

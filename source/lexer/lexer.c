@@ -473,7 +473,7 @@ bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t 
 {
     bohToken token;
 
-    bohStringViewAssignPtr(&token.lexeme, &lexeme);
+    bohStringViewAssignStringViewPtr(&token.lexeme, &lexeme);
     token.type = type;
     token.line = line;
     token.column = column;
@@ -498,7 +498,7 @@ void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
     assert(pDst);
     assert(pSrc);
 
-    bohStringViewAssignPtr(&pDst->lexeme, &pSrc->lexeme);
+    bohStringViewAssignStringViewPtr(&pDst->lexeme, &pSrc->lexeme);
     pDst->type = pSrc->type;
     pDst->line = pSrc->line;
     pDst->column = pSrc->column;

@@ -101,7 +101,7 @@ bohBoharesString* bohBoharesStringAssign(bohBoharesString* pDst, const bohBohare
         bohStringAssign(&pDst->string, &pSrc->string);
         pDst->type = BOH_STRING_TYPE_STRING;
     } else {
-        bohStringViewAssignPtr(&pDst->view, &pSrc->view);
+        bohStringViewAssignStringViewPtr(&pDst->view, &pSrc->view);
         pDst->type = BOH_STRING_TYPE_VIEW;
     }
 
@@ -109,37 +109,55 @@ bohBoharesString* bohBoharesStringAssign(bohBoharesString* pDst, const bohBohare
 }
 
 
-bohBoharesString* bohBoharesStringAssignView(bohBoharesString* pDst, bohStringView src)
+bohBoharesString* bohBoharesStringStringAssignStringView(bohBoharesString* pDst, bohStringView src)
 {
-    return bohBoharesStringAssignViewPtr(pDst, &src);
+    return bohBoharesStringStringAssignStringViewPtr(pDst, &src);
 }
 
 
-bohBoharesString* bohBoharesStringAssignViewPtr(bohBoharesString* pDst, const bohStringView* pSrc)
+bohBoharesString* bohBoharesStringStringAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc)
 {
     assert(pDst);
     assert(pSrc);
 
     bohBoharesStringDestroy(pDst);
 
-    bohStringViewAssignPtr(&pDst->view, pSrc);
+    bohStringAssignStringViewPtr(&pDst->string, pSrc);
+    pDst->type = BOH_STRING_TYPE_STRING;
+
+    return pDst;
+}
+
+
+bohBoharesString* bohBoharesStringStringAssignString(bohBoharesString* pDst, const bohString* pSrc)
+{
+    return bohBoharesStringStringAssignStringView(pDst, bohStringViewCreateString(pSrc));
+}
+
+
+bohBoharesString* bohBoharesStringStringViewAssignStringView(bohBoharesString* pDst, bohStringView src)
+{
+    return bohBoharesStringStringViewAssignStringViewPtr(pDst, &src);
+}
+
+
+bohBoharesString* bohBoharesStringStringViewAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohBoharesStringDestroy(pDst);
+
+    bohStringViewAssignStringViewPtr(&pDst->view, pSrc);
     pDst->type = BOH_STRING_TYPE_VIEW;
 
     return pDst;
 }
 
 
-bohBoharesString* bohBoharesStringAssignString(bohBoharesString* pDst, const bohString* pSrc)
+bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst, const bohString* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
-
-    bohBoharesStringDestroy(pDst);
-
-    bohStringAssign(&pDst->string, pSrc);
-    pDst->type = BOH_STRING_TYPE_STRING;
-
-    return pDst;
+    return bohBoharesStringStringViewAssignStringView(pDst, bohStringViewCreateString(pSrc));
 }
 
 

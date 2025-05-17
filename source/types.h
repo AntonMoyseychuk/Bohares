@@ -36,9 +36,12 @@ bohBoharesString bohBoharesStringCreateStringStringViewPtr(const bohStringView* 
 void bohBoharesStringDestroy(bohBoharesString* pString);
 
 bohBoharesString* bohBoharesStringAssign(bohBoharesString* pDst, const bohBoharesString* pSrc);
-bohBoharesString* bohBoharesStringAssignView(bohBoharesString* pDst, bohStringView src);
-bohBoharesString* bohBoharesStringAssignViewPtr(bohBoharesString* pDst, const bohStringView* pSrc);
-bohBoharesString* bohBoharesStringAssignString(bohBoharesString* pDst, const bohString* pSrc);
+bohBoharesString* bohBoharesStringStringAssignStringView(bohBoharesString* pDst, bohStringView src);
+bohBoharesString* bohBoharesStringStringAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc);
+bohBoharesString* bohBoharesStringStringAssignString(bohBoharesString* pDst, const bohString* pSrc);
+bohBoharesString* bohBoharesStringStringViewAssignStringView(bohBoharesString* pDst, bohStringView src);
+bohBoharesString* bohBoharesStringStringViewAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc);
+bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst, const bohString* pSrc);
 
 bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString* pSrc);
 

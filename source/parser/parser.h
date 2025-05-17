@@ -87,19 +87,30 @@ void bohAstNodeFree(bohAstNode** ppNode);
 
 bohAstNode* bohAstNodeCreateNumberI64(int64_t value);
 bohAstNode* bohAstNodeCreateNumberF64(double value);
+bohAstNode* bohAstNodeCreateString(const char* pCStr);
+bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView);
+bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView);
 bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg);
 bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 
 bool bohAstNodeIsNumber(const bohAstNode* pNode);
+bool bohAstNodeIsNumberI64(const bohAstNode* pNode);
+bool bohAstNodeIsNumberF64(const bohAstNode* pNode);
+bool bohAstNodeIsString(const bohAstNode* pNode);
 bool bohAstNodeIsUnary(const bohAstNode* pNode);
 bool bohAstNodeIsBinary(const bohAstNode* pNode);
 
 const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode);
+int64_t bohAstNodeGetNumberI64(const bohAstNode* pNode);
+double  bohAstNodeGetNumberF64(const bohAstNode* pNode);
 const bohAstNodeUnary* bohAstNodeGetUnary(const bohAstNode* pNode);
 const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode);
 
 bohAstNode* bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value);
 bohAstNode* bohAstNodeSetNumberF64(bohAstNode* pNode, double value);
+bohAstNode* bohAstNodeSetStringCStr(bohAstNode* pNode, const char* pCStr);
+bohAstNode* bohAstNodeSetStringString(bohAstNode* pNode, const bohString* pString);
+bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
 bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg);
 bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 

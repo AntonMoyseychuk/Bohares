@@ -116,6 +116,8 @@ static bohAstNode* parsPrimary(bohParser* pParser)
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
         const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
         return bohAstNodeCreateNumberF64(value);
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_STRING)) {
+        return bohAstNodeCreateStringStringViewPtr(&parsPeekPrevToken(pParser)->lexeme);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
@@ -230,6 +232,9 @@ void bohAstNodeDestroy(bohAstNode *pNode)
         case BOH_AST_NODE_TYPE_NUMBER:
             bohNumberSetI64(&pNode->number, 0);
             break;
+        case BOH_AST_NODE_TYPE_STRING:
+            bohBoharesStringDestroy(&pNode->string);
+            break;
         case BOH_AST_NODE_TYPE_UNARY:
             bohAstNodeFree(&pNode->unary.pNode);
             break;
@@ -281,6 +286,40 @@ bohAstNode* bohAstNodeCreateNumberF64(double value)
 }
 
 
+bohAstNode* bohAstNodeCreateString(const char* pCStr)
+{
+    assert(pCStr);
+
+    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
+    assert(pNode);
+
+    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNodeSetStringCStr(pNode, pCStr);
+
+    return pNode;
+}
+
+
+bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView)
+{
+    return bohAstNodeCreateStringStringViewPtr(&strView);
+}
+
+
+bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView)
+{
+    assert(pStrView);
+
+    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
+    assert(pNode);
+
+    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNodeSetStringStringViewPtr(pNode, pStrView);
+
+    return pNode;
+}
+
+
 bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg)
 {
     assert(pArg);
@@ -317,6 +356,27 @@ bool bohAstNodeIsNumber(const bohAstNode* pNode)
 }
 
 
+bool bohAstNodeIsNumberI64(const bohAstNode* pNode)
+{
+    assert(pNode);
+    return bohAstNodeIsNumber(pNode) && bohNumberIsI64(&pNode->number);
+}
+
+
+bool bohAstNodeIsNumberF64(const bohAstNode *pNode)
+{
+    assert(pNode);
+    return bohAstNodeIsNumber(pNode) && bohNumberIsF64(&pNode->number);
+}
+
+
+bool bohAstNodeIsString(const bohAstNode* pNode)
+{
+    assert(pNode);
+    return pNode->type == BOH_AST_NODE_TYPE_STRING;
+}
+
+
 bool bohAstNodeIsUnary(const bohAstNode* pNode)
 {
     assert(pNode);
@@ -337,6 +397,24 @@ const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode)
     assert(bohAstNodeIsNumber(pNode));
 
     return &pNode->number;
+}
+
+
+int64_t bohAstNodeGetNumberI64(const bohAstNode* pNode)
+{
+    assert(pNode);
+    assert(bohAstNodeIsNumberI64(pNode));
+
+    return bohNumberGetI64(&pNode->number);
+}
+
+
+double bohAstNodeGetNumberF64(const bohAstNode *pNode)
+{
+    assert(pNode);
+    assert(bohAstNodeIsNumberF64(pNode));
+
+    return bohNumberGetF64(&pNode->number);
 }
 
 
@@ -379,6 +457,40 @@ bohAstNode* bohAstNodeSetNumberF64(bohAstNode* pNode, double value)
     
     pNode->type = BOH_AST_NODE_TYPE_NUMBER;
     pNode->number = bohNumberCreateF64(value);
+
+    return pNode;
+}
+
+
+bohAstNode* bohAstNodeSetStringCStr(bohAstNode* pNode, const char* pCStr)
+{
+    assert(pNode);
+    assert(pCStr);
+
+    bohAstNodeDestroy(pNode);
+    
+    pNode->type = BOH_AST_NODE_TYPE_STRING;
+    pNode->string = bohBoharesStringCreateStringStringView(bohStringViewCreateCStr(pCStr));
+
+    return pNode;
+}
+
+
+bohAstNode* bohAstNodeSetStringString(bohAstNode* pNode, const bohString* pString)
+{
+    return bohAstNodeSetStringCStr(pNode, bohStringGetCStr(pString));
+}
+
+
+bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView)
+{
+    assert(pNode);
+    assert(pStrView);
+
+    bohAstNodeDestroy(pNode);
+    
+    pNode->type = BOH_AST_NODE_TYPE_STRING;
+    pNode->string = bohBoharesStringCreateStringStringViewPtr(pStrView);
 
     return pNode;
 }

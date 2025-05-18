@@ -21,14 +21,19 @@ typedef union InterpResult
 } bohInterpResult;
 
 
+bohInterpResult bohInterpResultCreateNumber(bohNumber number);
+bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber);
+
 bohInterpResult bohInterpResultCreateString(const bohString* pString);
 bohInterpResult bohInterpResultCreateStringCStr(const char* pCStr);
 bohInterpResult bohInterpResultCreateStringStringView(bohStringView strView);
 bohInterpResult bohInterpResultCreateStringStringViewPtr(const bohStringView* pStrView);
+bohInterpResult bohInterpResultCreateStringBoharesStringRVal(bohBoharesString string);
+bohInterpResult bohInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString);
+bohInterpResult bohInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString);
+
 bohInterpResult bohInterpResultCreateStringViewStringView(bohStringView strView);
 bohInterpResult bohInterpResultCreateStringViewStringViewPtr(const bohStringView* pStrView);
-bohInterpResult bohInterpResultCreateNumber(bohNumber number);
-bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber);
 
 void bohInterpResultDestroy(bohInterpResult* pResult);
 

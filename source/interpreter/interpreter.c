@@ -20,7 +20,7 @@ bohInterpResult bohInterpResultCreateString(const bohString* pString)
 {
     assert(pString);
 
-    bohInterpResult result;
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
     bohInterpResultSetString(&result, pString);
 
     return result;
@@ -31,7 +31,7 @@ bohInterpResult bohInterpResultCreateStringCStr(const char* pCStr)
 {
     assert(pCStr);
 
-    bohInterpResult result;
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
     bohInterpResultSetStringCStr(&result, pCStr);
 
     return result;
@@ -48,8 +48,40 @@ bohInterpResult bohInterpResultCreateStringStringViewPtr(const bohStringView* pS
 {
     assert(pStrView);
 
-    bohInterpResult result;
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
     bohInterpResultSetStringStringViewPtr(&result, pStrView);
+
+    return result;
+}
+
+
+bohInterpResult bohInterpResultCreateStringBoharesStringRVal(bohBoharesString string)
+{
+    return bohInterpResultCreateStringBoharesStringRValPtr(&string);
+}
+
+
+bohInterpResult bohInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString)
+{
+    assert(pString);
+
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+
+    result.type = BOH_INTERP_RES_TYPE_STRING;
+    bohBoharesStringMove(&result.string, pString);
+
+    return result;
+}
+
+
+bohInterpResult bohInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString)
+{
+    assert(pString);
+
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+
+    result.type = BOH_INTERP_RES_TYPE_STRING;
+    bohBoharesStringAssign(&result.string, pString);
 
     return result;
 }
@@ -65,7 +97,7 @@ bohInterpResult bohInterpResultCreateStringViewStringViewPtr(const bohStringView
 {
     assert(pStrView);
 
-    bohInterpResult result;
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
     bohInterpResultSetStringViewStringViewPtr(&result, pStrView);
 
     return result;
@@ -82,7 +114,7 @@ bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber)
 {
     assert(pNumber);
 
-    bohInterpResult result;
+    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
     bohInterpResultSetNumberPtr(&result, pNumber);
 
     return result;

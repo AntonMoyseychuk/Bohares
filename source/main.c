@@ -7,34 +7,6 @@
 #include "interpreter/interpreter.h"
 
 
-static const char* OperatorToStr(bohOperator op)
-{
-    switch (op) {
-        case BOH_OP_PLUS: return "+";
-        case BOH_OP_MINUS: return "-";
-        case BOH_OP_MULT: return "*";
-        case BOH_OP_DIV: return "/";
-        case BOH_OP_MOD: return "%";
-        case BOH_OP_NOT: return "!";
-        case BOH_OP_GREATER: return ">";
-        case BOH_OP_LESS: return "<";
-        case BOH_OP_NOT_EQUAL: return "!=";
-        case BOH_OP_GEQUAL: return ">=";
-        case BOH_OP_LEQUAL: return "<=";
-        case BOH_OP_EQUAL: return "==";
-        case BOH_OP_BITWISE_AND: return "&";
-        case BOH_OP_BITWISE_OR: return "|";
-        case BOH_OP_BITWISE_XOR: return "^";
-        case BOH_OP_BITWISE_NOT: return "~";
-        case BOH_OP_BITWISE_RSHIFT: return ">>";
-        case BOH_OP_BITWISE_LSHIFT: return "<<";
-        default:
-            assert(false && "Error: Failed to convert operator to string");
-            return NULL;
-    }
-}
-
-
 static void PrintLexerError(const bohLexerError* pError)
 {
     assert(pError);
@@ -140,7 +112,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
                 const bohString* pString = bohBoharesStringGetString(&pNode->string);
                 bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "String[\"%s\"]", bohStringGetCStr(pString));
             } else {
-                const bohStringView* pStrView = bohBoharesStringGetView(&pNode->string);
+                const bohStringView* pStrView = bohBoharesStringGetStringView(&pNode->string);
                 bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "StringView[\"%.*s\"]", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
             }
             break;
@@ -153,7 +125,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             const bool isOperandNumber = bohAstNodeIsNumber(pUnary->pNode);
 
             fputs("UnOp(", stdout);
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pUnary->op));
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", bohParsOperatorToStr(pUnary->op));
             fputs(isOperandNumber ? ", " : ",\n", stdout);
 
             if (!isOperandNumber) {
@@ -178,7 +150,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             const bool areLeftAndRightNodesNumbers = bohAstNodeIsNumber(pBinary->pLeftNode) && bohAstNodeIsNumber(pBinary->pRightNode);
             
             fputs("BinOp(", stdout);
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", OperatorToStr(pBinary->op));
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", bohParsOperatorToStr(pBinary->op));
             fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
             if (!areLeftAndRightNodesNumbers) {

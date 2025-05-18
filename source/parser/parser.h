@@ -39,6 +39,9 @@ typedef enum Operator
 } bohOperator;
 
 
+const char* bohParsOperatorToStr(bohOperator op);
+
+
 typedef enum AstNodeType
 {
     BOH_AST_NODE_TYPE_NUMBER,
@@ -103,6 +106,7 @@ bool bohAstNodeIsBinary(const bohAstNode* pNode);
 const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode);
 int64_t bohAstNodeGetNumberI64(const bohAstNode* pNode);
 double  bohAstNodeGetNumberF64(const bohAstNode* pNode);
+const bohBoharesString* bohAstNodeGetString(const bohAstNode* pNode);
 const bohAstNodeUnary* bohAstNodeGetUnary(const bohAstNode* pNode);
 const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode);
 

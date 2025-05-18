@@ -175,7 +175,7 @@ bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString*
 }
 
 
-bool bohBoharesStringIsView(const bohBoharesString* pString)
+bool bohBoharesStringIsStringView(const bohBoharesString* pString)
 {
     assert(pString);
     return pString->type == BOH_STRING_TYPE_VIEW;
@@ -189,10 +189,10 @@ bool bohBoharesStringIsString(const bohBoharesString* pString)
 }
 
 
-const bohStringView* bohBoharesStringGetView(const bohBoharesString* pString)
+const bohStringView* bohBoharesStringGetStringView(const bohBoharesString* pString)
 {
     assert(pString);
-    assert(bohBoharesStringIsView(pString));
+    assert(bohBoharesStringIsStringView(pString));
 
     return &pString->view;
 }
@@ -415,10 +415,10 @@ bohNumber* bohNumberAssign(bohNumber* pDst, const bohNumber* pNumber)
     assert(pDst);
     assert(pNumber);
 
-    if (bohNumberIsI64(pDst)) {
-        bohNumberSetI64(pDst, BOH_NUMBER_GET_UNDERLYING_VALUE(pNumber));
+    if (bohNumberIsI64(pNumber)) {
+        bohNumberSetI64(pDst, bohNumberGetI64(pNumber));
     } else {
-        bohNumberSetF64(pDst, BOH_NUMBER_GET_UNDERLYING_VALUE(pNumber));
+        bohNumberSetF64(pDst, bohNumberGetF64(pNumber));
     }
 
     return pDst;

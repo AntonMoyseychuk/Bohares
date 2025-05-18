@@ -14,6 +14,45 @@
     }
 
 
+const char* bohParsOperatorToStr(bohOperator op)
+{
+    switch (op) {
+        case BOH_OP_PLUS: return "+";
+        case BOH_OP_PLUS_ASSIGN: return "+=";
+        case BOH_OP_MINUS: return "-";
+        case BOH_OP_MINUS_ASSIGN: return "-=";
+        case BOH_OP_MULT: return "*";
+        case BOH_OP_MULT_ASSIGN: return "*=";
+        case BOH_OP_DIV: return "/";
+        case BOH_OP_DIV_ASSIGN: return "/=";
+        case BOH_OP_MOD: return "%";
+        case BOH_OP_MOD_ASSIGN: return "%=";
+        case BOH_OP_NOT: return "!";
+        case BOH_OP_GREATER: return ">";
+        case BOH_OP_LESS: return "<";
+        case BOH_OP_NOT_EQUAL: return "!=";
+        case BOH_OP_GEQUAL: return ">=";
+        case BOH_OP_LEQUAL: return "<=";
+        case BOH_OP_EQUAL: return "==";
+        case BOH_OP_BITWISE_AND: return "&";
+        case BOH_OP_BITWISE_AND_ASSIGN: return "&=";
+        case BOH_OP_BITWISE_OR: return "|";
+        case BOH_OP_BITWISE_OR_ASSIGN: return "|=";
+        case BOH_OP_BITWISE_XOR: return "^";
+        case BOH_OP_BITWISE_XOR_ASSIGN: return "^=";
+        case BOH_OP_BITWISE_NOT: return "~";
+        case BOH_OP_BITWISE_NOT_ASSIGN: return "~=";
+        case BOH_OP_BITWISE_RSHIFT: return ">>";
+        case BOH_OP_BITWISE_RSHIFT_ASSIGN: return ">>=";
+        case BOH_OP_BITWISE_LSHIFT: return "<<";
+        case BOH_OP_BITWISE_LSHIFT_ASSIGN: return "<<=";
+        default:
+            assert(false && "Invalid operator type");
+            return NULL;
+    }
+}
+
+
 static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
 {
     switch (tokenType) {
@@ -415,6 +454,15 @@ double bohAstNodeGetNumberF64(const bohAstNode *pNode)
     assert(bohAstNodeIsNumberF64(pNode));
 
     return bohNumberGetF64(&pNode->number);
+}
+
+
+const bohBoharesString* bohAstNodeGetString(const bohAstNode* pNode)
+{
+    assert(pNode);
+    assert(bohAstNodeIsString(pNode));
+
+    return &pNode->string;
 }
 
 

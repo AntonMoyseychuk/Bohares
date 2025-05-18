@@ -45,10 +45,10 @@ bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst,
 
 bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString* pSrc);
 
-bool bohBoharesStringIsView(const bohBoharesString* pString);
+bool bohBoharesStringIsStringView(const bohBoharesString* pString);
 bool bohBoharesStringIsString(const bohBoharesString* pString);
 
-const bohStringView* bohBoharesStringGetView(const bohBoharesString* pString);
+const bohStringView* bohBoharesStringGetStringView(const bohBoharesString* pString);
 const bohString* bohBoharesStringGetString(const bohBoharesString* pString);
 
 const char* bohBoharesStringGetData(const bohBoharesString* pString);

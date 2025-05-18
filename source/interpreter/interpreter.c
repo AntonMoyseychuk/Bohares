@@ -138,7 +138,7 @@ bool bohInterpResultIsString(const bohInterpResult* pResult)
 bool bohInterpResultIsStringStringView(const bohInterpResult* pResult)
 {
     assert(pResult);
-    return bohInterpResultIsString(pResult) && bohBoharesStringIsView(&pResult->string);
+    return bohInterpResultIsString(pResult) && bohBoharesStringIsStringView(&pResult->string);
 }
 
 

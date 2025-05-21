@@ -21,6 +21,10 @@ typedef union InterpResult
 } bohInterpResult;
 
 
+bohInterpResult bohInterpResultCreate(void);
+
+bohInterpResult bohInterpResultCreateNumberI64(int64_t value);
+bohInterpResult bohInterpResultCreateNumberF64(double value);
 bohInterpResult bohInterpResultCreateNumber(bohNumber number);
 bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber);
 
@@ -61,7 +65,6 @@ bohInterpResult* bohInterpResultSetNumber(bohInterpResult* pResult, bohNumber nu
 bohInterpResult* bohInterpResultSetNumberPtr(bohInterpResult* pResult, const bohNumber* pNumber);
 bohInterpResult* bohInterpResultSetNumberI64(bohInterpResult* pResult, int64_t value);
 bohInterpResult* bohInterpResultSetNumberF64(bohInterpResult* pResult, double value);
-
 
 
 typedef struct AST bohAST;

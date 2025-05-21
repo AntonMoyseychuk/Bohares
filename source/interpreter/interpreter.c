@@ -12,7 +12,7 @@
         char msg[1024] = {0};                                                    \
         sprintf_s(msg, sizeof(msg) - 1, FMT, __VA_ARGS__);                       \
         bohStateEmplaceInterpreterError(bohGlobalStateGet(), LINE, COLUMN, msg); \
-        return bohNumberCreateI64(0);                                            \
+        return bohNumberCreateI64(0);                                \
     }
 
 
@@ -20,7 +20,7 @@ bohInterpResult bohInterpResultCreateString(const bohString* pString)
 {
     assert(pString);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetString(&result, pString);
 
     return result;
@@ -31,7 +31,7 @@ bohInterpResult bohInterpResultCreateStringCStr(const char* pCStr)
 {
     assert(pCStr);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetStringCStr(&result, pCStr);
 
     return result;
@@ -48,7 +48,7 @@ bohInterpResult bohInterpResultCreateStringStringViewPtr(const bohStringView* pS
 {
     assert(pStrView);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetStringStringViewPtr(&result, pStrView);
 
     return result;
@@ -65,7 +65,7 @@ bohInterpResult bohInterpResultCreateStringBoharesStringRValPtr(bohBoharesString
 {
     assert(pString);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
 
     result.type = BOH_INTERP_RES_TYPE_STRING;
     bohBoharesStringMove(&result.string, pString);
@@ -78,7 +78,7 @@ bohInterpResult bohInterpResultCreateStringBoharesStringPtr(const bohBoharesStri
 {
     assert(pString);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
 
     result.type = BOH_INTERP_RES_TYPE_STRING;
     bohBoharesStringAssign(&result.string, pString);
@@ -97,10 +97,28 @@ bohInterpResult bohInterpResultCreateStringViewStringViewPtr(const bohStringView
 {
     assert(pStrView);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetStringViewStringViewPtr(&result, pStrView);
 
     return result;
+}
+
+
+bohInterpResult bohInterpResultCreate(void)
+{
+    return bohInterpResultCreateNumberI64(0);
+}
+
+
+bohInterpResult bohInterpResultCreateNumberI64(int64_t value)
+{
+    return bohInterpResultCreateNumber(bohNumberCreateI64(value));
+}
+
+
+bohInterpResult bohInterpResultCreateNumberF64(double value)
+{
+    return bohInterpResultCreateNumber(bohNumberCreateF64(value));
 }
 
 
@@ -114,7 +132,7 @@ bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber)
 {
     assert(pNumber);
 
-    bohInterpResult result = { BOH_INTERP_RES_TYPE_NUMBER };
+    bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetNumberPtr(&result, pNumber);
 
     return result;

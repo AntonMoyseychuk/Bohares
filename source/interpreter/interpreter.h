@@ -10,7 +10,7 @@ typedef enum InterpResultType
 } bohInterpResultType;
 
 
-typedef union InterpResult
+typedef struct InterpResult
 {
     bohInterpResultType type;
     
@@ -19,6 +19,9 @@ typedef union InterpResult
         bohNumber number;
     };
 } bohInterpResult;
+
+
+const char* bohInterpResultTypeToStr(const bohInterpResult* pResult);
 
 
 bohInterpResult bohInterpResultCreate(void);
@@ -78,4 +81,4 @@ typedef struct Interpreter
 bohInterpreter bohInterpCreate(const bohAST* pAst);
 void bohInterpDestroy(bohInterpreter* pInterp);
 
-bohNumber bohInterpInterpret(bohInterpreter* pInterp);
+bohInterpResult bohInterpInterpret(bohInterpreter* pInterp);

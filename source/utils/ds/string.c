@@ -88,7 +88,7 @@ void bohStringDestroy(bohString* pStr)
         free(pStr->pData);
     }
 
-    pStr->pData = NULL;
+    pStr->pData = "";
     pStr->size = 0;
     pStr->capacity = 0;
 }
@@ -365,7 +365,7 @@ bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohSt
     memset(newString.pData, 0, newStringSize);
 
     strcpy_s(newString.pData, newStringCapacity, pLStrView->pData);
-    strcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pLStrView->pData);
+    strcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pRStrView->pData);
 
     newString.size = newStringSize;
     newString.capacity = newStringCapacity;

@@ -12,8 +12,29 @@
         char msg[1024] = {0};                                                    \
         sprintf_s(msg, sizeof(msg) - 1, FMT, __VA_ARGS__);                       \
         bohStateEmplaceInterpreterError(bohGlobalStateGet(), LINE, COLUMN, msg); \
-        return bohNumberCreateI64(0);                                \
+        return bohInterpResultCreateNumberI64(-1);                               \
     }
+
+
+static bool bohInterpAreInterpResultValuesSameType(const bohInterpResult* pRes0, const bohInterpResult* pRes1)
+{
+    assert(pRes0);
+    assert(pRes1);
+
+    return bohInterpResultIsNumber(pRes0) == bohInterpResultIsNumber(pRes1) || bohInterpResultIsString(pRes0) == bohInterpResultIsString(pRes1);
+}
+
+
+const char* bohInterpResultTypeToStr(const bohInterpResult* pResult)
+{
+    assert(pResult);
+
+    switch (pResult->type) {
+        case BOH_INTERP_RES_TYPE_NUMBER: return "NUMBER";
+        case BOH_INTERP_RES_TYPE_STRING: return "STRING";
+        default: return "UNKNOWN TYPE";
+    }
+}
 
 
 bohInterpResult bohInterpResultCreateString(const bohString* pString)
@@ -106,7 +127,12 @@ bohInterpResult bohInterpResultCreateStringViewStringViewPtr(const bohStringView
 
 bohInterpResult bohInterpResultCreate(void)
 {
-    return bohInterpResultCreateNumberI64(0);
+    bohInterpResult result;
+
+    result.type = BOH_INTERP_RES_TYPE_NUMBER;
+    result.number = bohNumberCreate();
+
+    return result;
 }
 
 
@@ -154,6 +180,8 @@ void bohInterpResultDestroy(bohInterpResult* pResult)
             assert(false && "Invalid interpretation result type");
             break;
     }
+
+    memset(pResult, 0, sizeof(bohInterpResult));
 }
 
 
@@ -353,11 +381,11 @@ bohInterpResult* bohInterpResultSetNumberF64(bohInterpResult* pResult, double va
 }
 
 
-static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode);
-static bohNumber interpInterpretUnaryAstNode(const bohAstNodeUnary* pNode);
+static bohInterpResult interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode);
+static bohInterpResult interpInterpretUnaryAstNode(const bohAstNodeUnary* pNode);
 
 
-static bohNumber interpInterpretAstNode(const bohAstNode* pNode)
+static bohInterpResult interpInterpretAstNode(const bohAstNode* pNode)
 {
     assert(pNode);
 
@@ -367,78 +395,104 @@ static bohNumber interpInterpretAstNode(const bohAstNode* pNode)
         return interpInterpretUnaryAstNode(bohAstNodeGetUnary(pNode));
     }
 
-    return *bohAstNodeGetNumber(pNode);
+    if (bohAstNodeIsNumber(pNode)) {
+        return bohInterpResultCreateNumberPtr(bohAstNodeGetNumber(pNode));
+    } else if (bohAstNodeIsString(pNode)) {
+        return bohInterpResultCreateStringBoharesStringPtr(bohAstNodeGetString(pNode));
+    }
+
+    assert(false && "Invalid pNode type");
+    return bohInterpResultCreateNumberI64(-1);
 }
 
 
-static bohNumber interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
+static bohInterpResult interpInterpretBinaryAstNode(const bohAstNodeBinary* pNode)
 {
     assert(pNode);
 
-    const bohNumber left = interpInterpretAstNode(pNode->pLeftNode);
-    const bohNumber right = interpInterpretAstNode(pNode->pRightNode);
+    const bohInterpResult left = interpInterpretAstNode(pNode->pLeftNode);
+    const bohInterpResult right = interpInterpretAstNode(pNode->pRightNode);
+
+    BOH_CHECK_INTERPRETER_COND(bohInterpAreInterpResultValuesSameType(&left, &right), 0, 0, 
+        "invalid operation: %s %s %s", 
+        bohInterpResultTypeToStr(&left), 
+        bohParsOperatorToStr(pNode->op), 
+        bohInterpResultTypeToStr(&right));  // TODO: pass line and column inside bohAstNode
+
+    if (pNode->op == BOH_OP_PLUS) {
+        if (bohInterpResultIsNumber(&left)) {
+            const bohNumber* pLeftNumber  = bohInterpResultGetNumber(&left);
+            const bohNumber* pRightNumber = bohInterpResultGetNumber(&right);
+            return bohInterpResultCreateNumber(bohNumberAdd(pLeftNumber, pRightNumber));
+        } else {
+            const bohBoharesString* pLeftStr  = bohInterpResultGetString(&left);
+            const bohBoharesString* pRightStr = bohInterpResultGetString(&right);
+            const bohBoharesString finalString = bohBoharesStringAdd(pLeftStr, pRightStr);
+            return bohInterpResultCreateStringBoharesStringPtr(&finalString);
+        }
+    }
+
+    BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&left), 0, 0, "can't use binary %s operator with non numbers types", bohParsOperatorToStr(pNode->op)); // TODO: pass line and column inside bohAstNode
+    BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&right), 0, 0, "can't use binary %s operator with non numbers types", bohParsOperatorToStr(pNode->op)); // TODO: pass line and column inside bohAstNode
+
+    const bohNumber* pLeftNumber  = bohInterpResultGetNumber(&left);
+    const bohNumber* pRightNumber = bohInterpResultGetNumber(&right);
+
+    if (bohParsIsBitwiseOperator(pNode->op)) {
+        BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(pLeftNumber) && bohNumberIsI64(pRightNumber), 0, 0, 
+            "can't use %s bitwise operator with non integral types", bohParsOperatorToStr(pNode->op)); // TODO: pass line and column inside bohAstNode
+    }
+
+    assert(pLeftNumber);
+    assert(pRightNumber);
 
     switch (pNode->op) {
-        case BOH_OP_PLUS:      return bohNumberAdd(&left, &right);
-        case BOH_OP_MINUS:     return bohNumberSub(&left, &right);
-        case BOH_OP_MULT:      return bohNumberMult(&left, &right);
-        case BOH_OP_GREATER:   return bohNumberCreateI64(bohNumberGreater(&left, &right));
-        case BOH_OP_LESS:      return bohNumberCreateI64(bohNumberLess(&left, &right));
-        case BOH_OP_NOT_EQUAL: return bohNumberCreateI64(bohNumberNotEqual(&left, &right));
-        case BOH_OP_GEQUAL:    return bohNumberCreateI64(bohNumberGreaterEqual(&left, &right));
-        case BOH_OP_LEQUAL:    return bohNumberCreateI64(bohNumberLessEqual(&left, &right));
-        case BOH_OP_EQUAL:     return bohNumberCreateI64(bohNumberEqual(&left, &right));
+        case BOH_OP_MINUS:     return bohInterpResultCreateNumber(bohNumberSub(pLeftNumber, pRightNumber));
+        case BOH_OP_MULT:      return bohInterpResultCreateNumber(bohNumberMult(pLeftNumber, pRightNumber));
+        case BOH_OP_GREATER:   return bohInterpResultCreateNumberI64(bohNumberGreater(pLeftNumber, pRightNumber));
+        case BOH_OP_LESS:      return bohInterpResultCreateNumberI64(bohNumberLess(pLeftNumber, pRightNumber));
+        case BOH_OP_NOT_EQUAL: return bohInterpResultCreateNumberI64(bohNumberNotEqual(pLeftNumber, pRightNumber));
+        case BOH_OP_GEQUAL:    return bohInterpResultCreateNumberI64(bohNumberGreaterEqual(pLeftNumber, pRightNumber));
+        case BOH_OP_LEQUAL:    return bohInterpResultCreateNumberI64(bohNumberLessEqual(pLeftNumber, pRightNumber));
+        case BOH_OP_EQUAL:     return bohInterpResultCreateNumberI64(bohNumberEqual(pLeftNumber, pRightNumber));
         case BOH_OP_DIV:
-            BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
-                "right operand of / is zero"); // TODO: pass line and column inside bohAstNode
-            return bohNumberDiv(&left, &right);
+            BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(pRightNumber), 0, 0, "right operand of / is zero"); // TODO: pass line and column inside bohAstNode
+            return bohInterpResultCreateNumber(bohNumberDiv(pLeftNumber, pRightNumber));
         case BOH_OP_MOD:
-            BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(&right), 0, 0, 
-                "right operand of % is zero"); // TODO: pass line and column inside bohAstNode
-            return bohNumberMod(&left, &right);
-        case BOH_OP_BITWISE_AND:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use & operator with non integral types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberBitwiseAnd(&left, &right);
-        case BOH_OP_BITWISE_OR:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use | operator with non integral types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberBitwiseOr(&left, &right);
-        case BOH_OP_BITWISE_XOR:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use ^ operator with non integral types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberBitwiseXor(&left, &right);
-        case BOH_OP_BITWISE_RSHIFT:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use >> operator with non integral types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberBitwiseRShift(&left, &right);
-        case BOH_OP_BITWISE_LSHIFT:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&left) && bohNumberIsI64(&right), 0, 0, 
-                "can't use << operator with non integral types"); // TODO: pass line and column inside bohAstNode
-            return bohNumberBitwiseLShift(&left, &right);    
+            BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(pRightNumber), 0, 0, "right operand of % is zero"); // TODO: pass line and column inside bohAstNode
+            return bohInterpResultCreateNumber(bohNumberMod(pLeftNumber, pRightNumber));
+        case BOH_OP_BITWISE_AND:    return bohInterpResultCreateNumber(bohNumberBitwiseAnd(pLeftNumber, pRightNumber));
+        case BOH_OP_BITWISE_OR:     return bohInterpResultCreateNumber(bohNumberBitwiseOr(pLeftNumber, pRightNumber));
+        case BOH_OP_BITWISE_XOR:    return bohInterpResultCreateNumber(bohNumberBitwiseXor(pLeftNumber, pRightNumber));
+        case BOH_OP_BITWISE_RSHIFT: return bohInterpResultCreateNumber(bohNumberBitwiseRShift(pLeftNumber, pRightNumber));
+        case BOH_OP_BITWISE_LSHIFT: return bohInterpResultCreateNumber(bohNumberBitwiseLShift(pLeftNumber, pRightNumber));    
         default:
-            assert(false && "Not implemented yet");
-            return bohNumberCreateI64(0);
+            assert(false && "Invalid binary operator");
+            return bohInterpResultCreateNumberI64(-1);
     }
 }
 
 
-static bohNumber interpInterpretUnaryAstNode(const bohAstNodeUnary* pNode)
+static bohInterpResult interpInterpretUnaryAstNode(const bohAstNodeUnary* pNode)
 {
-    const bohNumber value = interpInterpretAstNode(pNode->pNode);
+    const bohInterpResult result = interpInterpretAstNode(pNode->pNode);
 
-    switch (pNode->op)
-    {
-        case BOH_OP_PLUS:           return value;
-        case BOH_OP_MINUS:          return bohNumberGetOpposite(&value);
-        case BOH_OP_NOT:            return bohNumberGetNegation(&value);
+    BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&result), 0, 0, "can't use unary %s operator with non numbers types", bohParsOperatorToStr(pNode->op));   // TODO: pass line and column inside bohAstNode
+
+    const bohNumber* pResultNumber = bohInterpResultGetNumber(&result);
+    assert(pResultNumber);
+
+    switch (pNode->op) {
+        case BOH_OP_PLUS:           return result;
+        case BOH_OP_MINUS:          return bohInterpResultCreateNumber(bohNumberGetOpposite(pResultNumber));
+        case BOH_OP_NOT:            return bohInterpResultCreateNumber(bohNumberGetNegation(pResultNumber));
         case BOH_OP_BITWISE_NOT:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(&value), 0, 0, "can't use ~ operator with non integral type");  // TODO: pass line and column inside bohAstNode
-            return bohNumberGetBitwiseNegation(&value);
+            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(pResultNumber), 0, 0, "can't use ~ operator with non integral type");  // TODO: pass line and column inside bohAstNode
+            return bohInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
     
         default:
-            assert(false && "Not implemented yet");
-            return bohNumberCreateI64(0);
+            assert(false && "Invalid unary operator");
+            return bohInterpResultCreateNumberI64(-1);
     }
 }
 
@@ -461,12 +515,12 @@ void bohInterpDestroy(bohInterpreter* pInterp)
 }
 
 
-bohNumber bohInterpInterpret(bohInterpreter* pInterp)
+bohInterpResult bohInterpInterpret(bohInterpreter* pInterp)
 {
     assert(pInterp);
 
     const bohAST* pAst = pInterp->pAst;
     assert(pAst);
 
-    return bohAstIsEmpty(pAst) ? bohNumberCreateI64(0) : interpInterpretAstNode(pAst->pRoot);
+    return bohAstIsEmpty(pAst) ? bohInterpResultCreateNumberI64(0) : interpInterpretAstNode(pAst->pRoot);
 }

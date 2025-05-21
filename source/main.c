@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
     PrintAst(&ast);
 
     bohInterpreter interp = bohInterpCreate(&ast);
-    bohNumber number = bohInterpInterpret(&interp);
+    bohInterpResult interpResult = bohInterpInterpret(&interp);
 
     if (bohStateHasInterpreterErrors(pState)) {
         PrintInterpreterErrors(pState);        
@@ -274,31 +274,25 @@ int main(int argc, char* argv[])
     bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nINTERPRETER:");
     fputc('\n', stdout);
 
-    if (bohNumberIsF64(&number)) {
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f\n", bohNumberGetF64(&number));
-    } else {
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d\n", bohNumberGetI64(&number));
+    if (bohInterpResultIsNumber(&interpResult)) {
+        const bohNumber* pNumber = bohInterpResultGetNumber(&interpResult);
+
+        if (bohNumberIsI64(pNumber)) {
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d\n", bohNumberGetI64(pNumber));
+        } else {
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f\n", bohNumberGetF64(pNumber));
+        }
+    } else if (bohInterpResultIsString(&interpResult)) {
+        const bohBoharesString* pString = bohInterpResultGetString(&interpResult);
+
+        if (bohBoharesStringIsStringView(pString)) {
+            const bohStringView* pStrView = bohBoharesStringGetStringView(pString);
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %.*s\n", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
+        } else {
+            const bohString* pStrStr = bohBoharesStringGetString(pString);
+            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %s\n", bohStringGetCStr(pStrStr));
+        }
     }
-
-    // if (bohInterpResultIsNumber(&result)) {
-    //     const bohNumber* pNumber = bohInterpResultGetNumber(&result);
-
-    //     if (bohNumberIsI64(pNumber)) {
-    //         bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f\n", bohNumberGetI64(pNumber));
-    //     } else {
-    //         bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d\n", bohNumberGetF64(pNumber));
-    //     }
-    // } else if (bohInterpResultIsString(&result)) {
-    //     const bohBoharesString* pString = bohInterpResultGetString(&result);
-
-    //     if (bohBoharesStringIsView(pString)) {
-    //         const bohStringView* pStrView = bohBoharesStringGetView(pString);
-    //         bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %.*s\n", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
-    //     } else {
-    //         const bohString* pStrStr = bohBoharesStringGetString(pString);
-    //         bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %s\n", bohStringGetCStr(pStrStr));
-    //     }
-    // }
 
     bohAstDestroy(&ast);
     bohParserDestroy(&parser);

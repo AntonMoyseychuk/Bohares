@@ -40,7 +40,7 @@ typedef enum Operator
 
 
 const char* bohParsOperatorToStr(bohOperator op);
-
+bool bohParsIsBitwiseOperator(bohOperator op);
 
 typedef enum AstNodeType
 {

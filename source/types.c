@@ -86,7 +86,7 @@ void bohBoharesStringDestroy(bohBoharesString* pString)
         bohStringViewReset(&pString->view);
     }
 
-    pString->type = BOH_STRING_TYPE_VIEW;
+    memset(pString, 0, sizeof(bohBoharesString));
 }
 
 
@@ -328,9 +328,20 @@ bohBoharesString bohBoharesStringAdd(const bohBoharesString* pLeft, const bohBoh
 }
 
 
-bohNumber bohNumberCreateI64(int64_t value)
+bohNumber bohNumberCreate(void)
 {
     bohNumber number;
+
+    number.type = BOH_NUMBER_TYPE_INTEGER;
+    number.i64 = 0;
+
+    return number;
+}
+
+
+bohNumber bohNumberCreateI64(int64_t value)
+{
+    bohNumber number = bohNumberCreate();
     bohNumberSetI64(&number, value);
 
     return number;
@@ -339,7 +350,7 @@ bohNumber bohNumberCreateI64(int64_t value)
 
 bohNumber bohNumberCreateF64(double value)
 {
-    bohNumber number;
+    bohNumber number = bohNumberCreate();
     bohNumberSetF64(&number, value);
 
     return number;

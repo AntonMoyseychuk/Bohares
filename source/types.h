@@ -91,6 +91,8 @@ typedef struct Number
 } bohNumber;
 
 
+bohNumber bohNumberCreate(void);
+
 bohNumber bohNumberCreateI64(int64_t value);
 bohNumber bohNumberCreateF64(double value);
 

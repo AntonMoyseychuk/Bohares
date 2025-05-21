@@ -53,6 +53,24 @@ const char* bohParsOperatorToStr(bohOperator op)
 }
 
 
+bool bohParsIsBitwiseOperator(bohOperator op)
+{
+    return 
+        op == BOH_OP_BITWISE_AND || 
+        op == BOH_OP_BITWISE_AND_ASSIGN || 
+        op == BOH_OP_BITWISE_OR || 
+        op == BOH_OP_BITWISE_OR_ASSIGN || 
+        op == BOH_OP_BITWISE_XOR || 
+        op == BOH_OP_BITWISE_XOR_ASSIGN ||
+        op == BOH_OP_BITWISE_NOT ||
+        op == BOH_OP_BITWISE_NOT_ASSIGN ||
+        op == BOH_OP_BITWISE_RSHIFT ||
+        op == BOH_OP_BITWISE_RSHIFT_ASSIGN ||
+        op == BOH_OP_BITWISE_LSHIFT ||
+        op == BOH_OP_BITWISE_LSHIFT_ASSIGN;
+}
+
+
 static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
 {
     switch (tokenType) {
@@ -285,6 +303,8 @@ void bohAstNodeDestroy(bohAstNode *pNode)
             assert(false && "Invalid AST node type");
             break;
     }
+
+    memset(pNode, 0, sizeof(bohAstNode));
 }
 
 

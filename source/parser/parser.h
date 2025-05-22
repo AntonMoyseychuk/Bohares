@@ -80,6 +80,9 @@ struct AstNode
         bohAstNodeUnary unary;
         bohAstNodeBinary binary;
     };
+
+    uint64_t line;
+    uint64_t column;
 };
 
 
@@ -88,13 +91,15 @@ void bohAstNodeDestroy(bohAstNode* pNode);
 // Calls bohAstNodeDestroy and frees *ppNode
 void bohAstNodeFree(bohAstNode** ppNode);
 
-bohAstNode* bohAstNodeCreateNumberI64(int64_t value);
-bohAstNode* bohAstNodeCreateNumberF64(double value);
-bohAstNode* bohAstNodeCreateString(const char* pCStr);
-bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView);
-bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView);
-bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg);
-bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
+bohAstNode* bohAstNodeCreate(uint64_t line, uint64_t column);
+
+bohAstNode* bohAstNodeCreateNumberI64(int64_t value, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateNumberF64(double value, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateString(const char* pCStr, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column);
 
 bool bohAstNodeIsNumber(const bohAstNode* pNode);
 bool bohAstNodeIsNumberI64(const bohAstNode* pNode);
@@ -117,6 +122,9 @@ bohAstNode* bohAstNodeSetStringString(bohAstNode* pNode, const bohString* pStrin
 bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
 bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg);
 bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
+
+uint64_t bohAstNodeGetLine(const bohAstNode* pNode);
+uint64_t bohAstNodeGetColumn(const bohAstNode* pNode);
 
 
 typedef struct AST

@@ -91,6 +91,22 @@ static bool lexIsIdentifierAppropriateChar(char ch)
 }
 
 
+static void lexProcessCarriageReturn(bohLexer* pLexer)
+{
+    assert(pLexer);
+    pLexer->column = 0;
+}
+
+
+static void lexProcessNewLine(bohLexer* pLexer)
+{
+    assert(pLexer);
+    
+    ++pLexer->line;
+    lexProcessCarriageReturn(pLexer);
+}
+
+
 static void lexTokenDefConstructor(void* pToken)
 {
     assert(pToken);
@@ -142,8 +158,12 @@ static char lexAdvanceCurrPos(bohLexer* pLexer)
 static char lexAdvanceCurrPosWhile(bohLexer* pLexer, storAlgorithmDelegate pFunc)
 {
     char ch = lexPickCurrPosChar(pLexer);
-    
+
     while(pFunc(ch)) {
+        if (lexIsEndLineChar(ch)) {
+            lexProcessNewLine(pLexer);
+        }
+
         lexAdvanceCurrPos(pLexer);
         ch = lexPickCurrPosChar(pLexer);
     }
@@ -192,12 +212,11 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
 
     switch (ch) {
         case '\n':
-            ++pLexer->line;
-            pLexer->column = 0;
+            lexProcessNewLine(pLexer);
             type = BOH_TOKEN_TYPE_DUMMY;
             break;
         case '\r': 
-            pLexer->column = 0;
+            lexProcessCarriageReturn(pLexer);
             type = BOH_TOKEN_TYPE_DUMMY;
             break;
         case '\t': type = BOH_TOKEN_TYPE_DUMMY; break;

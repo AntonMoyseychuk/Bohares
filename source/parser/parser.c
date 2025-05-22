@@ -163,18 +163,20 @@ static bohAstNode* parsPrimary(bohParser* pParser)
 {
     assert(pParser);
 
+    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+
     if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_TRUE)) {
-        return bohAstNodeCreateNumberI64(1);
+        return bohAstNodeCreateNumberI64(1, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FALSE)) {
-        return bohAstNodeCreateNumberI64(0);
+        return bohAstNodeCreateNumberI64(0, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
         const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        return bohAstNodeCreateNumberI64(value);
+        return bohAstNodeCreateNumberI64(value, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
         const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        return bohAstNodeCreateNumberF64(value);
+        return bohAstNodeCreateNumberF64(value, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_STRING)) {
-        return bohAstNodeCreateStringStringViewPtr(&parsPeekPrevToken(pParser)->lexeme);
+        return bohAstNodeCreateStringStringViewPtr(&parsPeekPrevToken(pParser)->lexeme, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
@@ -188,7 +190,7 @@ static bohAstNode* parsPrimary(bohParser* pParser)
         return pExpr;
     }
 
-    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+    pCurrToken = parsPeekCurrToken(pParser);
     BOH_CHECK_PARSER_COND(false, pCurrToken->line, pCurrToken->column, "unknown primary token type: %.*s", 
         bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
     
@@ -213,7 +215,7 @@ static bohAstNode* parsUnary(bohParser* pParser)
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown unary operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
-        return bohAstNodeCreateUnary(op, pOperand);
+        return bohAstNodeCreateUnary(op, pOperand, pOperand->line, pOperand->column);
     }
 
     return parsPrimary(pParser);
@@ -241,7 +243,7 @@ static bohAstNode* parsMultiplication(bohParser* pParser)
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown term operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
-        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg);
+        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg, pOperatorToken->line, pOperatorToken->column);
     }
 
     return pExpr;
@@ -266,7 +268,7 @@ static bohAstNode* parsAddition(bohParser* pParser)
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
-        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg);
+        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg, pOperatorToken->line, pOperatorToken->column);
     }
 
     return pExpr;
@@ -304,7 +306,13 @@ void bohAstNodeDestroy(bohAstNode *pNode)
             break;
     }
 
+    const uint64_t line = pNode->line;
+    const uint64_t column = pNode->column;
+
     memset(pNode, 0, sizeof(bohAstNode));
+
+    pNode->line = line;
+    pNode->column = column;
 }
 
 
@@ -321,87 +329,82 @@ void bohAstNodeFree(bohAstNode** ppNode)
 }
 
 
-bohAstNode* bohAstNodeCreateNumberI64(int64_t value)
+bohAstNode* bohAstNodeCreate(uint64_t line, uint64_t column)
 {
     bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
     assert(pNode);
 
     memset(pNode, 0, sizeof(bohAstNode));
+    pNode->line = line;
+    pNode->column = column;
+
+    return pNode;
+}
+
+
+bohAstNode* bohAstNodeCreateNumberI64(int64_t value, uint64_t line, uint64_t column)
+{
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
     bohAstNodeSetNumberI64(pNode, value);
 
     return pNode;
 }
 
 
-bohAstNode* bohAstNodeCreateNumberF64(double value)
+bohAstNode* bohAstNodeCreateNumberF64(double value, uint64_t line, uint64_t column)
 {
-    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
-    assert(pNode);
-
-    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
     bohAstNodeSetNumberF64(pNode, value);
 
     return pNode;
 }
 
 
-bohAstNode* bohAstNodeCreateString(const char* pCStr)
+bohAstNode* bohAstNodeCreateString(const char* pCStr, uint64_t line, uint64_t column)
 {
     assert(pCStr);
 
-    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
-    assert(pNode);
-
-    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
     bohAstNodeSetStringCStr(pNode, pCStr);
 
     return pNode;
 }
 
 
-bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView)
+bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView, uint64_t line, uint64_t column)
 {
-    return bohAstNodeCreateStringStringViewPtr(&strView);
+    return bohAstNodeCreateStringStringViewPtr(&strView, line, column);
 }
 
 
-bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView)
+bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column)
 {
     assert(pStrView);
 
-    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
-    assert(pNode);
-
-    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
     bohAstNodeSetStringStringViewPtr(pNode, pStrView);
 
     return pNode;
 }
 
 
-bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg)
+bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t line, uint64_t column)
 {
     assert(pArg);
 
-    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
-    assert(pNode);
-
-    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
     bohAstNodeSetUnary(pNode, op, pArg);
 
     return pNode;
 }
 
 
-bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg)
+bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column)
 {
     assert(pLeftArg);
     assert(pRightArg);
 
-    bohAstNode* pNode = (bohAstNode*)malloc(sizeof(bohAstNode));
-    assert(pNode);
-
-    memset(pNode, 0, sizeof(bohAstNode));
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
     bohAstNodeSetBinary(pNode, op, pLeftArg, pRightArg);
 
     return pNode;
@@ -593,6 +596,20 @@ bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* p
     pNode->binary.pRightNode = pRightArg;
 
     return pNode;
+}
+
+
+uint64_t bohAstNodeGetLine(const bohAstNode* pNode)
+{
+    assert(pNode);
+    return pNode->line;
+}
+
+
+uint64_t bohAstNodeGetColumn(const bohAstNode* pNode)
+{
+    assert(pNode);
+    return pNode->column;
 }
 
 

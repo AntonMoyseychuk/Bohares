@@ -418,16 +418,36 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
     assert((bohInterpResultIsNumber(&left) || bohInterpResultIsString(&left)) && "Invalid left bohInterpResult type");
     assert((bohInterpResultIsNumber(&right) || bohInterpResultIsString(&right)) && "Invalid right bohInterpResult type");
 
-    const char* pOperatorStr = bohParsOperatorToStr(pBinaryNode->op);
-
-    BOH_CHECK_INTERPRETER_COND(bohInterpAreInterpResultValuesSameType(&left, &right), pNode->line, pNode->column, 
-        "invalid operation: %s %s %s", bohInterpResultTypeToStr(&left), pOperatorStr, bohInterpResultTypeToStr(&right));
-
     const bohNumber* pLeftNumber = bohInterpResultIsNumber(&left) ? bohInterpResultGetNumber(&left) : NULL;
     const bohNumber* pRightNumber = bohInterpResultIsNumber(&right) ? bohInterpResultGetNumber(&right) : NULL;
 
     const bohBoharesString* pLeftStr = bohInterpResultIsString(&left) ? bohInterpResultGetString(&left) : NULL;
     const bohBoharesString* pRightStr = bohInterpResultIsString(&right) ? bohInterpResultGetString(&right) : NULL;
+
+    if (pBinaryNode->op == BOH_OP_AND) {
+        if (bohInterpResultIsString(&left) && bohInterpResultIsString(&right)) {
+            return bohInterpResultCreateNumberI64(true); 
+        } else if (bohInterpResultIsNumber(&left) && bohInterpResultIsNumber(&right)) {
+            return bohInterpResultCreateNumberI64(!bohNumberIsZero(pLeftNumber) && !bohNumberIsZero(pRightNumber));
+        } else {
+            if (bohInterpResultIsString(&left)) {
+                return bohInterpResultCreateNumberI64(!bohNumberIsZero(pRightNumber));
+            } else {
+                return bohInterpResultCreateNumberI64(!bohNumberIsZero(pLeftNumber));
+            }
+        }
+    } else if (pBinaryNode->op == BOH_OP_OR) {
+        if (bohInterpResultIsString(&left) || bohInterpResultIsString(&right)) {
+            return bohInterpResultCreateNumberI64(true);
+        } else {
+            return bohInterpResultCreateNumberI64(!bohNumberIsZero(pLeftNumber) || !bohNumberIsZero(pRightNumber));
+        }
+    }
+
+    const char* pOperatorStr = bohParsOperatorToStr(pBinaryNode->op);
+
+    BOH_CHECK_INTERPRETER_COND(bohInterpAreInterpResultValuesSameType(&left, &right), pNode->line, pNode->column, 
+        "invalid operation: %s %s %s", bohInterpResultTypeToStr(&left), pOperatorStr, bohInterpResultTypeToStr(&right));
 
     switch (pBinaryNode->op) {
         case BOH_OP_PLUS:

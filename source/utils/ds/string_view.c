@@ -179,7 +179,17 @@ int32_t bohStringViewCmpPtr(const bohStringView *pLeft, const bohStringView *pRi
 
     const size_t minSize = (pLeft->size < pRight->size) ? pLeft->size : pRight->size;
 
-    return strncmp(pLeft->pData, pRight->pData, minSize);
+    const int32_t cmpResult = strncmp(pLeft->pData, pRight->pData, minSize);
+    
+    if (cmpResult != 0) {
+        return cmpResult;
+    }
+    
+    if (pLeft->size == pRight->size) {
+        return 0;
+    }
+
+    return pLeft->size < pRight->size ? -1 : 1;
 }
 
 

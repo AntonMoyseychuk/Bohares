@@ -259,7 +259,13 @@ static bohAstNode* parsAddition(bohParser* pParser)
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PLUS) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MINUS) ||
-        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_OR)
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_OR) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_GREATER) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LESS) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_GEQUAL) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LEQUAL) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_NOT_EQUAL) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_EQUAL)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsMultiplication(pParser);

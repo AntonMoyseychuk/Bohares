@@ -100,9 +100,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         case BOH_AST_NODE_TYPE_NUMBER:
         {
             if (bohNumberIsI64(&pNode->number)) {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Int32[%d]", bohNumberGetI64(&pNode->number));
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "I64[%d]", bohNumberGetI64(&pNode->number));
             } else {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Float[%f]", bohNumberGetF64(&pNode->number));
+                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "F64[%f]", bohNumberGetF64(&pNode->number));
             }
             break;
         }
@@ -227,6 +227,11 @@ int main(int argc, char* argv[])
     const char* pSourceCode = (const char*)fileContent.pData;
     const size_t sourceCodeSize = fileContent.dataSize;
 
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "SOURCE:");
+    fputc('\n', stdout);
+
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "%.*s\n\n", sourceCodeSize, pSourceCode);
+
     bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
     bohTokenStorage tokens = bohLexerTokenize(&lexer);
 
@@ -264,15 +269,14 @@ int main(int argc, char* argv[])
     PrintAst(&ast);
 
     bohInterpreter interp = bohInterpCreate(&ast);
+
+    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nINTERPRETER:\n");
     bohInterpResult interpResult = bohInterpInterpret(&interp);
 
     if (bohStateHasInterpreterErrors(pState)) {
         PrintInterpreterErrors(pState);        
         exit(-3);
     }
-
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nINTERPRETER:");
-    fputc('\n', stdout);
 
     if (bohInterpResultIsNumber(&interpResult)) {
         const bohNumber* pNumber = bohInterpResultGetNumber(&interpResult);

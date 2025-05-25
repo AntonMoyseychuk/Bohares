@@ -130,6 +130,8 @@ bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* p
 uint64_t bohAstNodeGetLine(const bohAstNode* pNode);
 uint64_t bohAstNodeGetColumn(const bohAstNode* pNode);
 
+const char* bohAstNodeTypeToStr(const bohAstNode* pNode);
+
 
 typedef struct AST
 {

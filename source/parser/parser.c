@@ -709,6 +709,20 @@ uint64_t bohAstNodeGetColumn(const bohAstNode* pNode)
 }
 
 
+const char* bohAstNodeTypeToStr(const bohAstNode* pNode)
+{
+    assert(pNode);
+
+    switch (pNode->type) {
+        case BOH_AST_NODE_TYPE_NUMBER: return "NUMBER NODE";
+        case BOH_AST_NODE_TYPE_STRING: return "STRING NODE";
+        case BOH_AST_NODE_TYPE_UNARY:  return "UNARY NODE";
+        case BOH_AST_NODE_TYPE_BINARY: return "BINARY NODE";
+        default: return "UNKNOWN AST NODE TYPE";
+    }
+}
+
+
 void bohAstDestroy(bohAST* pAST)
 {
     assert(pAST);

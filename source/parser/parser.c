@@ -115,9 +115,9 @@ static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
 static const bohToken* parsPeekCurrToken(const bohParser* pParser)
 {
     assert(pParser);
-    assert(pParser->currTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage));
 
-    return bohDynArrayAtConst(pParser->pTokenStorage, pParser->currTokenIdx);
+    return pParser->currTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage) ? 
+        bohDynArrayAtConst(pParser->pTokenStorage, pParser->currTokenIdx) : NULL;
 }
 
 
@@ -162,7 +162,7 @@ static bool parsIsCurrTokenMatch(bohParser* pParser, bohTokenType type)
 static bohAstNode* parsExpr(bohParser* pParser);
 
 
-// <primary> = <integer> | <float> | <bool> | <string> | '(' <expr> ')' 
+// <primary> = <integer> | <float> | <string> | '(' <expr> ')' 
 static bohAstNode* parsPrimary(bohParser* pParser)
 {
     assert(pParser);
@@ -180,7 +180,7 @@ static bohAstNode* parsPrimary(bohParser* pParser)
         const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
         return bohAstNodeCreateNumberF64(value, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_STRING)) {
-        return bohAstNodeCreateStringStringViewPtr(&parsPeekPrevToken(pParser)->lexeme, pCurrToken->line, pCurrToken->column);
+        return bohAstNodeCreateStringViewStringView(parsPeekPrevToken(pParser)->lexeme, pCurrToken->line, pCurrToken->column);
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
@@ -193,10 +193,6 @@ static bohAstNode* parsPrimary(bohParser* pParser)
 
         return pExpr;
     }
-
-    pCurrToken = parsPeekCurrToken(pParser);
-    BOH_CHECK_PARSER_COND(false, pCurrToken->line, pCurrToken->column, "unknown primary token type: %.*s", 
-        bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
     
     return NULL;
 }
@@ -226,7 +222,7 @@ static bohAstNode* parsUnary(bohParser* pParser)
 }
 
 
-// <multiplication> = <unary> (('*' | '/' | '%' | '&' | '|') <unary>)*
+// <multiplication> = <unary> (('*' | '/' | '%' | '&' | '|' | '^') <unary>)*
 static bohAstNode* parsMultiplication(bohParser* pParser)
 {
     assert(pParser);
@@ -484,6 +480,23 @@ bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView, u
 }
 
 
+bohAstNode* bohAstNodeCreateStringViewStringView(bohStringView strView, uint64_t line, uint64_t column)
+{
+    return bohAstNodeCreateStringViewStringViewPtr(&strView, line, column);
+}
+
+
+bohAstNode* bohAstNodeCreateStringViewStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column)
+{
+    assert(pStrView);
+
+    bohAstNode* pNode = bohAstNodeCreate(line, column);
+    bohAstNodeSetStringViewStringViewPtr(pNode, pStrView);
+
+    return pNode;
+}
+
+
 bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t line, uint64_t column)
 {
     assert(pArg);
@@ -663,6 +676,26 @@ bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringV
 }
 
 
+bohAstNode* bohAstNodeSetStringViewStringView(bohAstNode* pNode, bohStringView strView)
+{
+    return bohAstNodeSetStringViewStringViewPtr(pNode, &strView);
+}
+
+
+bohAstNode* bohAstNodeSetStringViewStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView)
+{
+    assert(pNode);
+    assert(pStrView);
+
+    bohAstNodeDestroy(pNode);
+    
+    pNode->type = BOH_AST_NODE_TYPE_STRING;
+    pNode->string = bohBoharesStringCreateStringViewStringViewPtr(pStrView);
+
+    return pNode;
+}
+
+
 bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg)
 {
     assert(pNode);
@@ -761,11 +794,8 @@ void bohParserDestroy(bohParser* pParser)
 
 bohAST bohParserParse(bohParser* pParser)
 {
-    bohAST ast = { NULL };
-
-    if (!bohDynArrayIsEmpty(pParser->pTokenStorage)) {
-        ast.pRoot = parsExpr(pParser);
-    }
+    bohAST ast;
+    ast.pRoot = parsExpr(pParser);
 
     return ast;
 }

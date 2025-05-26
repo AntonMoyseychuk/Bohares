@@ -3,7 +3,7 @@
 #include "types.h"
 
 
-bohBoharesString bohBoharesStringCreateView(void)
+bohBoharesString bohBoharesStringCreateStringView(void)
 {
     bohBoharesString str;
 
@@ -14,13 +14,13 @@ bohBoharesString bohBoharesStringCreateView(void)
 }
 
 
-bohBoharesString bohBoharesStringCreateViewStringView(bohStringView strView)
+bohBoharesString bohBoharesStringCreateStringViewStringView(bohStringView strView)
 {
-    return bohBoharesStringCreateViewStringViewPtr(&strView);
+    return bohBoharesStringCreateStringViewStringViewPtr(&strView);
 }
 
 
-bohBoharesString bohBoharesStringCreateViewStringViewPtr(const bohStringView* pStrView)
+bohBoharesString bohBoharesStringCreateStringViewStringViewPtr(const bohStringView* pStrView)
 {
     assert(pStrView);
 

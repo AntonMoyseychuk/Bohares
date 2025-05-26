@@ -102,6 +102,8 @@ bohAstNode* bohAstNodeCreateNumberF64(double value, uint64_t line, uint64_t colu
 bohAstNode* bohAstNodeCreateString(const char* pCStr, uint64_t line, uint64_t column);
 bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView, uint64_t line, uint64_t column);
 bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateStringViewStringView(bohStringView strView, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateStringViewStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
 bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t line, uint64_t column);
 bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column);
 
@@ -124,6 +126,8 @@ bohAstNode* bohAstNodeSetNumberF64(bohAstNode* pNode, double value);
 bohAstNode* bohAstNodeSetStringCStr(bohAstNode* pNode, const char* pCStr);
 bohAstNode* bohAstNodeSetStringString(bohAstNode* pNode, const bohString* pString);
 bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
+bohAstNode* bohAstNodeSetStringViewStringView(bohAstNode* pNode, bohStringView strView);
+bohAstNode* bohAstNodeSetStringViewStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
 bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg);
 bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 

@@ -412,13 +412,11 @@ static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode)
 
     const bohAstNodeUnary* pUnaryNode = bohAstNodeGetUnary(pNode);
 
-    const char* pOperatorStr = bohParsOperatorToStr(pUnaryNode->op);
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Interpretating: %s %s\n", 
-        pOperatorStr, bohAstNodeTypeToStr(pUnaryNode->pNode));
-
     const bohInterpResult result = interpInterpretAstNode(pUnaryNode->pNode);
-
-    BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&result), pNode->line, pNode->column, "can't use unary %s operator with non numbers types", bohParsOperatorToStr(pUnaryNode->op));
+    
+    const char* pOperatorStr = bohParsOperatorToStr(pUnaryNode->op);
+    BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&result), pNode->line, pNode->column, 
+        "can't use unary %s operator with non numbers types", pOperatorStr);
 
     const bohNumber* pResultNumber = bohInterpResultGetNumber(&result);
     assert(pResultNumber);
@@ -496,10 +494,6 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
 
     const bohAstNodeBinary* pBinaryNode = bohAstNodeGetBinary(pNode);
 
-    const char* pOperatorStr = bohParsOperatorToStr(pBinaryNode->op);
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Interpretating: %s %s %s\n", 
-        bohAstNodeTypeToStr(pBinaryNode->pLeftNode), pOperatorStr, bohAstNodeTypeToStr(pBinaryNode->pRightNode));
-
     if (pBinaryNode->op == BOH_OP_AND) {
         return interpInterpretLogicalAnd(pBinaryNode);
     } else if (pBinaryNode->op == BOH_OP_OR) {
@@ -517,6 +511,8 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
 
     const bohBoharesString* pLeftStr = bohInterpResultIsString(&left) ? bohInterpResultGetString(&left) : NULL;
     const bohBoharesString* pRightStr = bohInterpResultIsString(&right) ? bohInterpResultGetString(&right) : NULL;
+
+    const char* pOperatorStr = bohParsOperatorToStr(pBinaryNode->op);
 
     BOH_CHECK_INTERPRETER_COND(bohInterpAreInterpResultValuesSameType(&left, &right), pNode->line, pNode->column, 
         "invalid operation: %s %s %s", bohInterpResultTypeToStr(&left), pOperatorStr, bohInterpResultTypeToStr(&right));

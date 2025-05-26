@@ -580,7 +580,6 @@ void bohLexerDestroy(bohLexer* pLexer)
 bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
 {
     assert(pLexer);
-    assert(bohLexerIsValid(pLexer));
 
     bohTokenStorage tokens = BOH_DYN_ARRAY_CREATE(bohToken, lexTokenDefConstructor, lexTokenDestructor, lexTokenCopy);
 
@@ -597,12 +596,6 @@ bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
     }
 
     return tokens;
-}
-
-
-bool bohLexerIsValid(bohLexer* pLexer)
-{
-    return pLexer && !bohStringViewIsEmpty(&pLexer->data);
 }
 
 

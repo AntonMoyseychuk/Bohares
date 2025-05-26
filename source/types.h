@@ -24,9 +24,9 @@ typedef struct BoharesString
 } bohBoharesString;
 
 
-bohBoharesString bohBoharesStringCreateView(void);
-bohBoharesString bohBoharesStringCreateViewStringView(bohStringView strView);
-bohBoharesString bohBoharesStringCreateViewStringViewPtr(const bohStringView* pStrView);
+bohBoharesString bohBoharesStringCreateStringView(void);
+bohBoharesString bohBoharesStringCreateStringViewStringView(bohStringView strView);
+bohBoharesString bohBoharesStringCreateStringViewStringViewPtr(const bohStringView* pStrView);
 
 bohBoharesString bohBoharesStringCreateString(void);
 bohBoharesString bohBoharesStringCreateStringString(const bohString* pString);

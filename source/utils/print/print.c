@@ -43,6 +43,7 @@ void bohColorPrintf(FILE* const pStream, bohOutputColor color, const char* pFmt,
     va_start(args, pFmt);
 
     vfprintf_s(pStream, fmt, args);
+    fflush(pStream);
     
     va_end(args);
 }

@@ -275,11 +275,35 @@ static bohAstNode* parsAddition(bohParser* pParser)
 }
 
 
-static bohAstNode* parsComparison(bohParser* pParser)
+static bohAstNode* parsBitwiseShift(bohParser* pParser)
 {
     assert(pParser);
 
     bohAstNode* pExpr = parsAddition(pParser);
+
+    while (
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_LSHIFT) ||
+        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_RSHIFT)
+    ) {
+        const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
+        bohAstNode* pRightArg = parsAddition(pParser);
+
+        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+
+        pExpr = bohAstNodeCreateBinary(op, pExpr, pRightArg, pOperatorToken->line, pOperatorToken->column);
+    }
+
+    return pExpr;
+}
+
+
+static bohAstNode* parsComparison(bohParser* pParser)
+{
+    assert(pParser);
+
+    bohAstNode* pExpr = parsBitwiseShift(pParser);
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_GREATER) ||
@@ -288,7 +312,7 @@ static bohAstNode* parsComparison(bohParser* pParser)
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LEQUAL)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        bohAstNode* pRightArg = parsAddition(pParser);
+        bohAstNode* pRightArg = parsBitwiseShift(pParser);
 
         const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 

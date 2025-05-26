@@ -131,7 +131,9 @@ static void lexTokenCopy(void* pDstToken, const void* pSrcToken)
 
 static char lexPickCurrPosChar(bohLexer* pLexer)
 {
-    return bohStringViewAt(&pLexer->data, pLexer->currPos);
+    const size_t dataSize = bohStringViewGetSize(&pLexer->data);
+
+    return pLexer->currPos >= dataSize ? '\0' : bohStringViewAt(&pLexer->data, pLexer->currPos);
 }
 
 

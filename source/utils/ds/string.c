@@ -364,8 +364,8 @@ bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohSt
     newString.pData = (char*)malloc(newStringSize);
     memset(newString.pData, 0, newStringSize);
 
-    strcpy_s(newString.pData, newStringCapacity, pLStrView->pData);
-    strcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pRStrView->pData);
+    strncpy_s(newString.pData, newStringCapacity, pLStrView->pData, leftStringSize);
+    strncpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pRStrView->pData, rightStringSize);
 
     newString.size = newStringSize;
     newString.capacity = newStringCapacity;

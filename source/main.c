@@ -11,10 +11,12 @@ static void PrintLexerError(const bohLexerError* pError)
 {
     assert(pError);
 
-    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_WHITE, "[LEXER ERROR]: %.*s (%u, %u): ", 
-        bohStringViewGetSize(&pError->filepath), bohStringViewGetData(&pError->filepath), pError->line, pError->column);
+    const bohStringView* pFilepath = &pError->filepath;
+
+    fprintf_s(stderr, "[LEXER ERROR]: %.*s (%u, %u): ", 
+        bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
     
-    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "%s\n", bohStringGetCStr(&pError->message));
+    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
 }
 
 
@@ -35,10 +37,12 @@ static void PrintParserError(const bohParserError* pError)
 {
     assert(pError);
 
-    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_WHITE, "[PARSER ERROR]: %.*s (%u, %u): ", 
-        bohStringViewGetSize(&pError->filepath), bohStringViewGetData(&pError->filepath), pError->line, pError->column);
+    const bohStringView* pFilepath = &pError->filepath;
+
+    fprintf_s(stderr, "[PARSER ERROR]: %.*s (%u, %u): ", 
+        bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
     
-    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "%s\n", bohStringGetCStr(&pError->message));
+    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
 }
 
 
@@ -59,10 +63,12 @@ static void PrintInterpreterError(const bohInterpreterError* pError)
 {
     assert(pError);
 
-    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_WHITE, "[INTERPRETER ERROR]: %.*s (%u, %u): ", 
-        bohStringViewGetSize(&pError->filepath), bohStringViewGetData(&pError->filepath), pError->line, pError->column);
+    const bohStringView* pFilepath = &pError->filepath;
+
+    fprintf_s(stderr, "[INTERPRETER ERROR]: %.*s (%u, %u): ", 
+        bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
     
-    bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "%s\n", bohStringGetCStr(&pError->message));
+    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
 }
 
 
@@ -82,7 +88,7 @@ static void PrintInterpreterErrors(const bohState* pState)
 static void PrintOffset(FILE* pStream, uint64_t length)
 {
     for (uint64_t i = 0; i < length; ++i) {
-        bohColorPrintf(pStream, BOH_OUTPUT_COLOR_WHITE, "%s", " ");
+        fputc(' ', pStream);
     }
 }
 
@@ -97,9 +103,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         case BOH_AST_NODE_TYPE_NUMBER:
         {
             if (bohNumberIsI64(&pNode->number)) {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "I64[%d]", bohNumberGetI64(&pNode->number));
+                fprintf_s(stdout, "%sI64[%d]%s", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetI64(&pNode->number), BOH_OUTPUT_COLOR_RESET);
             } else {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "F64[%f]", bohNumberGetF64(&pNode->number));
+                fprintf_s(stdout, "%sF64[%f]%s", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetF64(&pNode->number), BOH_OUTPUT_COLOR_RESET);
             }
             break;
         }
@@ -107,10 +113,11 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
         {
             if (bohBoharesStringIsString(&pNode->string)) {
                 const bohString* pString = bohBoharesStringGetString(&pNode->string);
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "Str[\"%s\"]", bohStringGetCStr(pString));
+                fprintf_s(stdout, "%sStr[\"%s\"]%s", BOH_OUTPUT_COLOR_YELLOW, bohStringGetCStr(pString), BOH_OUTPUT_COLOR_RESET);
             } else {
                 const bohStringView* pStrView = bohBoharesStringGetStringView(&pNode->string);
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "StrView[\"%.*s\"]", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
+                fprintf_s(stdout, "%sStrView[\"%.*s\"]%s", 
+                    BOH_OUTPUT_COLOR_YELLOW, bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView), BOH_OUTPUT_COLOR_RESET);
             }
             break;
         }
@@ -121,9 +128,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             const uint64_t nextlevelOffsetLen = offsetLen + 4;
             const bool isOperandNumber = bohAstNodeIsNumber(pUnary->pNode);
 
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "UnOp(");
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", bohParsOperatorToStr(pUnary->op));
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, isOperandNumber ? ", " : ",\n");
+            fputs("UnOp(", stdout);
+            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsOperatorToStr(pUnary->op), BOH_OUTPUT_COLOR_RESET);
+            fputs(isOperandNumber ? ", " : ",\n", stdout);
 
             if (!isOperandNumber) {
                 PrintOffset(stdout, nextlevelOffsetLen);
@@ -132,10 +139,10 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             PrintAstNode(pUnary->pNode, nextlevelOffsetLen);
             
             if (!isOperandNumber) {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "\n");
+                fputc('\n', stdout);
                 PrintOffset(stdout, offsetLen);
             }
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, ")");
+            fputc(')', stdout);
 
             break;
         }
@@ -146,9 +153,9 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             const uint64_t nextlevelOffsetLen = offsetLen + 4;
             const bool areLeftAndRightNodesNumbers = bohAstNodeIsNumber(pBinary->pLeftNode) && bohAstNodeIsNumber(pBinary->pRightNode);
             
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "BinOp(");
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%s", bohParsOperatorToStr(pBinary->op));
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, areLeftAndRightNodesNumbers ? ", " : ",\n");
+            fputs("BinOp(", stdout);
+            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsOperatorToStr(pBinary->op), BOH_OUTPUT_COLOR_RESET);
+            fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
             if (!areLeftAndRightNodesNumbers) {
                 PrintOffset(stdout, nextlevelOffsetLen);
@@ -156,7 +163,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 
             PrintAstNode(pBinary->pLeftNode, nextlevelOffsetLen);
             
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, areLeftAndRightNodesNumbers ? ", " : ",\n");
+            fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
             if (!areLeftAndRightNodesNumbers) {
                 PrintOffset(stdout, nextlevelOffsetLen);
@@ -165,10 +172,10 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             PrintAstNode(pBinary->pRightNode, nextlevelOffsetLen);
             
             if (!areLeftAndRightNodesNumbers) {
-                bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "\n");
+                fputc('\n', stdout);
                 PrintOffset(stdout, offsetLen);
             }
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, ")");
+            fputc(')', stdout);
             
             break;
         }
@@ -211,10 +218,10 @@ int main(int argc, char* argv[])
     bohFileContent fileContent = bohReadTextFile(pFilePath);
     switch (bohFileContentGetErrorCode(&fileContent)) {
         case BOH_FILE_CONTENT_ERROR_NULL_FILEPATH:
-            bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Filepath is NULL\n");
+            fprintf_s(stderr, "%sFilepath is NULL%s\n", BOH_OUTPUT_COLOR_RED, BOH_OUTPUT_COLOR_RESET);
             return EXIT_FAILURE;
         case BOH_FILE_CONTENT_ERROR_OPEN_FAILED:
-            bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Failed to open file: %s\n", pFilePath);
+            fprintf_s(stderr, "%sFailed to open file: %s%s\n", BOH_OUTPUT_COLOR_RED, pFilePath, BOH_OUTPUT_COLOR_RESET);
             return EXIT_FAILURE;
         default:
             break;
@@ -223,9 +230,9 @@ int main(int argc, char* argv[])
     const char* pSourceCode = (const char*)fileContent.pData;
     const size_t sourceCodeSize = fileContent.dataSize;
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "SOURCE:\n");
+    fprintf_s(stdout, "%sSOURCE:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     if (sourceCodeSize > 0) {
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "%.*s\n", sourceCodeSize, pSourceCode);
+        fprintf_s(stdout, "%.*s\n", sourceCodeSize, pSourceCode);
     }
 
     bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
@@ -236,7 +243,7 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nLEXER TOKENS:\n");
+    fprintf_s(stdout, "\n%sLEXER TOKENS:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
 
     const size_t tokensCount = bohDynArrayGetSize(&tokens);
     for (size_t i = 0; i < tokensCount; ++i) {
@@ -244,11 +251,9 @@ int main(int argc, char* argv[])
 
         const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
 
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, "(");
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "%s", bohTokenGetTypeStr(pToken));
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, ", ");
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "%.*s", bohStringViewGetSize(pLexeme), bohStringViewGetData(pLexeme));
-        bohColorPrintf(stdout, BOH_OUTPUT_COLOR_WHITE, ", %u, %u)\n", pToken->line, pToken->column);
+        fprintf_s(stdout, "(%s%s%s, ", BOH_OUTPUT_COLOR_YELLOW, bohTokenGetTypeStr(pToken), BOH_OUTPUT_COLOR_RESET);
+        fprintf_s(stdout, "%s%.*s%s", BOH_OUTPUT_COLOR_GREEN, bohStringViewGetSize(pLexeme), bohStringViewGetData(pLexeme), BOH_OUTPUT_COLOR_RESET);
+        fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
     }
 
     bohParser parser = bohParserCreate(&tokens);
@@ -259,12 +264,12 @@ int main(int argc, char* argv[])
         exit(-2);
     }
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\nAST:\n");
+    fprintf_s(stdout, "%s\nAST:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     PrintAst(&ast);
 
     bohInterpreter interp = bohInterpCreate(&ast);
 
-    bohColorPrintf(stdout, BOH_OUTPUT_COLOR_GREEN, "\n\nINTERPRETER:\n");
+    fprintf_s(stdout, "\n\n%sINTERPRETER:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     bohInterpResult interpResult = bohInterpInterpret(&interp);
 
     if (bohStateHasInterpreterErrors(pState)) {
@@ -276,19 +281,20 @@ int main(int argc, char* argv[])
         const bohNumber* pNumber = bohInterpResultGetNumber(&interpResult);
 
         if (bohNumberIsI64(pNumber)) {
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %d\n", bohNumberGetI64(pNumber));
+            fprintf_s(stdout, "%sresult: %d%s\n", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetI64(pNumber), BOH_OUTPUT_COLOR_RESET);
         } else {
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %f\n", bohNumberGetF64(pNumber));
+            fprintf_s(stdout, "%sresult: %f%s\n", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetF64(pNumber), BOH_OUTPUT_COLOR_RESET);
         }
     } else if (bohInterpResultIsString(&interpResult)) {
         const bohBoharesString* pString = bohInterpResultGetString(&interpResult);
 
         if (bohBoharesStringIsStringView(pString)) {
             const bohStringView* pStrView = bohBoharesStringGetStringView(pString);
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %.*s\n", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
+            fprintf_s(stdout, "%sresult: %.*s%s\n", 
+                BOH_OUTPUT_COLOR_YELLOW, bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView), BOH_OUTPUT_COLOR_RESET);
         } else {
             const bohString* pStrStr = bohBoharesStringGetString(pString);
-            bohColorPrintf(stdout, BOH_OUTPUT_COLOR_YELLOW, "result: %s\n", bohStringGetCStr(pStrStr));
+            fprintf_s(stdout, "%sresult: %s%s\n", BOH_OUTPUT_COLOR_YELLOW, bohStringGetCStr(pStrStr), BOH_OUTPUT_COLOR_RESET);
         }
     }
 

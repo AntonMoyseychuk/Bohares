@@ -296,6 +296,10 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                     lexAdvanceCurrPos(pLexer);
                     type = BOH_TOKEN_TYPE_BITWISE_AND_ASSIGN;
                     break;
+                case '&':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_AND;
+                    break;
                 default: 
                     type = BOH_TOKEN_TYPE_BITWISE_AND;
                     break;
@@ -306,6 +310,10 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                 case '=':
                     lexAdvanceCurrPos(pLexer);
                     type = BOH_TOKEN_TYPE_BITWISE_OR_ASSIGN;
+                    break;
+                case '|':
+                    lexAdvanceCurrPos(pLexer);
+                    type = BOH_TOKEN_TYPE_OR;
                     break;
                 default: 
                     type = BOH_TOKEN_TYPE_BITWISE_OR;

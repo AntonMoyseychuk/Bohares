@@ -129,7 +129,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             const bool isOperandNumber = bohAstNodeIsNumber(pUnary->pNode);
 
             fputs("UnOp(", stdout);
-            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsOperatorToStr(pUnary->op), BOH_OUTPUT_COLOR_RESET);
+            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsExprOperatorToStr(pUnary->op), BOH_OUTPUT_COLOR_RESET);
             fputs(isOperandNumber ? ", " : ",\n", stdout);
 
             if (!isOperandNumber) {
@@ -154,7 +154,7 @@ static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
             const bool areLeftAndRightNodesNumbers = bohAstNodeIsNumber(pBinary->pLeftNode) && bohAstNodeIsNumber(pBinary->pRightNode);
             
             fputs("BinOp(", stdout);
-            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsOperatorToStr(pBinary->op), BOH_OUTPUT_COLOR_RESET);
+            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsExprOperatorToStr(pBinary->op), BOH_OUTPUT_COLOR_RESET);
             fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
             if (!areLeftAndRightNodesNumbers) {

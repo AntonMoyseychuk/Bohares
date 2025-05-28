@@ -3,7 +3,7 @@
 #include "types.h"
 
 
-typedef enum Operator
+typedef enum ExprOperator
 {
     BOH_OP_UNKNOWN,
 
@@ -40,11 +40,11 @@ typedef enum Operator
 
     BOH_OP_AND,
     BOH_OP_OR
-} bohOperator;
+} bohExprOperator;
 
 
-const char* bohParsOperatorToStr(bohOperator op);
-bool bohParsIsBitwiseOperator(bohOperator op);
+const char* bohParsExprOperatorToStr(bohExprOperator op);
+bool bohParsIsBitwiseExprOperator(bohExprOperator op);
 
 typedef enum AstNodeType
 {
@@ -60,16 +60,16 @@ typedef struct AstNode bohAstNode;
 
 typedef struct AstNodeUnary
 {
-    bohOperator op;
     bohAstNode* pNode;
+    bohExprOperator op;
 } bohAstNodeUnary;
 
 
 typedef struct AstNodeBinary
 {
-    bohOperator op;
     bohAstNode* pLeftNode;
     bohAstNode* pRightNode;
+    bohExprOperator op;
 } bohAstNodeBinary;
 
 
@@ -104,8 +104,8 @@ bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView, uint64_t lin
 bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
 bohAstNode* bohAstNodeCreateStringViewStringView(bohStringView strView, uint64_t line, uint64_t column);
 bohAstNode* bohAstNodeCreateStringViewStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateUnary(bohExprOperator op, bohAstNode* pArg, uint64_t line, uint64_t column);
+bohAstNode* bohAstNodeCreateBinary(bohExprOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column);
 
 bool bohAstNodeIsNumber(const bohAstNode* pNode);
 bool bohAstNodeIsNumberI64(const bohAstNode* pNode);
@@ -128,8 +128,8 @@ bohAstNode* bohAstNodeSetStringString(bohAstNode* pNode, const bohString* pStrin
 bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
 bohAstNode* bohAstNodeSetStringViewStringView(bohAstNode* pNode, bohStringView strView);
 bohAstNode* bohAstNodeSetStringViewStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
-bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg);
-bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
+bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohExprOperator op, bohAstNode* pArg);
+bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohExprOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 
 uint64_t bohAstNodeGetLine(const bohAstNode* pNode);
 uint64_t bohAstNodeGetColumn(const bohAstNode* pNode);

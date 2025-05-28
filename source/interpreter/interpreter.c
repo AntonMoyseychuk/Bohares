@@ -414,7 +414,7 @@ static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode)
 
     const bohInterpResult result = interpInterpretAstNode(pUnaryNode->pNode);
     
-    const char* pOperatorStr = bohParsOperatorToStr(pUnaryNode->op);
+    const char* pOperatorStr = bohParsExprOperatorToStr(pUnaryNode->op);
     BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&result), pNode->line, pNode->column, 
         "can't use unary %s operator with non numbers types", pOperatorStr);
 
@@ -512,7 +512,7 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
     const bohBoharesString* pLeftStr = bohInterpResultIsString(&left) ? bohInterpResultGetString(&left) : NULL;
     const bohBoharesString* pRightStr = bohInterpResultIsString(&right) ? bohInterpResultGetString(&right) : NULL;
 
-    const char* pOperatorStr = bohParsOperatorToStr(pBinaryNode->op);
+    const char* pOperatorStr = bohParsExprOperatorToStr(pBinaryNode->op);
 
     BOH_CHECK_INTERPRETER_COND(bohInterpAreInterpResultValuesSameType(&left, &right), pNode->line, pNode->column, 
         "invalid operation: %s %s %s", bohInterpResultTypeToStr(&left), pOperatorStr, bohInterpResultTypeToStr(&right));
@@ -575,7 +575,7 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
     BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&left), pNode->line, pNode->column, "can't use binary %s operator with non numbers types", pOperatorStr);
     BOH_CHECK_INTERPRETER_COND(bohInterpResultIsNumber(&right), pNode->line, pNode->column, "can't use binary %s operator with non numbers types", pOperatorStr);
 
-    if (bohParsIsBitwiseOperator(pBinaryNode->op)) {
+    if (bohParsIsBitwiseExprOperator(pBinaryNode->op)) {
         BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(pLeftNumber) && bohNumberIsI64(pRightNumber), pNode->line, pNode->column, 
             "can't use %s bitwise operator with non integral types", pOperatorStr);
     }

@@ -14,7 +14,7 @@
     }
 
 
-const char* bohParsOperatorToStr(bohOperator op)
+const char* bohParsExprOperatorToStr(bohExprOperator op)
 {
     switch (op) {
         case BOH_OP_PLUS: return "+";
@@ -55,7 +55,7 @@ const char* bohParsOperatorToStr(bohOperator op)
 }
 
 
-bool bohParsIsBitwiseOperator(bohOperator op)
+bool bohParsIsBitwiseExprOperator(bohExprOperator op)
 {
     return 
         op == BOH_OP_BITWISE_AND || 
@@ -73,7 +73,7 @@ bool bohParsIsBitwiseOperator(bohOperator op)
 }
 
 
-static bohOperator parsTokenTypeToOperator(bohTokenType tokenType)
+static bohExprOperator parsTokenTypeToExprOperator(bohTokenType tokenType)
 {
     switch (tokenType) {
         case BOH_TOKEN_TYPE_PLUS:                   return BOH_OP_PLUS;
@@ -211,7 +211,7 @@ static bohAstNode* parsUnary(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pOperand = parsUnary(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown unary operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -237,7 +237,7 @@ static bohAstNode* parsMultiplication(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsUnary(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown term operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -261,7 +261,7 @@ static bohAstNode* parsAddition(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsMultiplication(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -285,7 +285,7 @@ static bohAstNode* parsBitwiseShift(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsAddition(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -311,7 +311,7 @@ static bohAstNode* parsComparison(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsBitwiseShift(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -335,7 +335,7 @@ static bohAstNode* parsEquality(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsComparison(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -356,7 +356,7 @@ static bohAstNode* parsBitwiseAnd(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsEquality(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -377,7 +377,7 @@ static bohAstNode* parsBitwiseXor(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsBitwiseAnd(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -398,7 +398,7 @@ static bohAstNode* parsBitwiseOr(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsBitwiseXor(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -419,7 +419,7 @@ static bohAstNode* parsAnd(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsBitwiseOr(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -440,7 +440,7 @@ static bohAstNode* parsOr(bohParser* pParser)
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
         bohAstNode* pRightArg = parsAnd(pParser);
 
-        const bohOperator op = parsTokenTypeToOperator(pOperatorToken->type);
+        const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
 
@@ -581,7 +581,7 @@ bohAstNode* bohAstNodeCreateStringViewStringViewPtr(const bohStringView* pStrVie
 }
 
 
-bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t line, uint64_t column)
+bohAstNode* bohAstNodeCreateUnary(bohExprOperator op, bohAstNode* pArg, uint64_t line, uint64_t column)
 {
     assert(pArg);
 
@@ -592,7 +592,7 @@ bohAstNode* bohAstNodeCreateUnary(bohOperator op, bohAstNode* pArg, uint64_t lin
 }
 
 
-bohAstNode* bohAstNodeCreateBinary(bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column)
+bohAstNode* bohAstNodeCreateBinary(bohExprOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column)
 {
     assert(pLeftArg);
     assert(pRightArg);
@@ -780,7 +780,7 @@ bohAstNode* bohAstNodeSetStringViewStringViewPtr(bohAstNode* pNode, const bohStr
 }
 
 
-bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pArg)
+bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohExprOperator op, bohAstNode* pArg)
 {
     assert(pNode);
     assert(pArg);
@@ -795,7 +795,7 @@ bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohOperator op, bohAstNode* pA
 }
 
 
-bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg)
+bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohExprOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg)
 {
     assert(pNode);
     assert(pLeftArg);

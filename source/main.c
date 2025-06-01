@@ -92,7 +92,7 @@ static void PrintOffset(FILE* pStream, uint64_t length)
     }
 }
 
-
+#if 0
 static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
 {
     if (!pNode) {
@@ -191,6 +191,7 @@ static void PrintAst(const bohAST* pAST)
     assert(pAST);
     PrintAstNode(pAST->pRoot, 0);
 }
+#endif
 
 
 int main(int argc, char* argv[])
@@ -236,7 +237,7 @@ int main(int argc, char* argv[])
     }
 
     bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
-    bohTokenStorage tokens = bohLexerTokenize(&lexer);
+    bohLexerTokenize(&lexer);
 
     if (bohStateHasLexerErrors(pState)) {
         PrintLexerErrors(pState);        
@@ -245,9 +246,11 @@ int main(int argc, char* argv[])
 
     fprintf_s(stdout, "\n%sLEXER TOKENS:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
 
-    const size_t tokensCount = bohDynArrayGetSize(&tokens);
+    const bohTokenStorage* pTokens = bohLexerGetTokens(&lexer);
+
+    const size_t tokensCount = bohDynArrayGetSize(pTokens);
     for (size_t i = 0; i < tokensCount; ++i) {
-        const bohToken* pToken = bohDynArrayAt(&tokens, i);
+        const bohToken* pToken = bohDynArrayAt(pTokens, i);
 
         const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
 
@@ -256,14 +259,15 @@ int main(int argc, char* argv[])
         fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
     }
 
-    bohParser parser = bohParserCreate(&tokens);
-    bohAST ast = bohParserParse(&parser);
+    bohParser parser = bohParserCreate(pTokens);
+    bohParserParse(&parser);
 
     if (bohStateHasParserErrors(pState)) {
         PrintParserErrors(pState);        
         exit(-2);
     }
 
+#if 0
     fprintf_s(stdout, "%s\nAST:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     PrintAst(&ast);
 
@@ -298,7 +302,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    bohAstDestroy(&ast);
+    bohInterpreterDestroy(&interp);
+#endif
+
     bohParserDestroy(&parser);
     bohLexerDestroy(&lexer);
 

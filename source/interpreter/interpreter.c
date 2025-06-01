@@ -380,6 +380,7 @@ bohInterpResult* bohInterpResultSetNumberF64(bohInterpResult* pResult, double va
     return pResult;
 }
 
+#if 0
 
 static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode);
 static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode);
@@ -635,3 +636,4 @@ bohInterpResult bohInterpInterpret(bohInterpreter* pInterp)
 
     return bohAstIsEmpty(pAst) ? bohInterpResultCreateNumberI64(0) : interpInterpretAstNode(pAst->pRoot);
 }
+#endif

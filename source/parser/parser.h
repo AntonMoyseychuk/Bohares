@@ -46,106 +46,252 @@ typedef enum ExprOperator
 const char* bohParsExprOperatorToStr(bohExprOperator op);
 bool bohParsIsBitwiseExprOperator(bohExprOperator op);
 
-typedef enum AstNodeType
+
+typedef struct Expr bohExpr;
+typedef struct Stmt bohStmt;
+typedef struct AST bohAST;
+
+typedef uint32_t bohExprIdx;
+#define BOH_EXPR_IDX_INVALID 0xffffffff
+
+typedef uint32_t bohStmtIdx;
+#define BOH_STMT_IDX_INVALID 0xffffffff
+
+
+typedef enum ValueExprType
 {
-    BOH_AST_NODE_TYPE_NUMBER,
-    BOH_AST_NODE_TYPE_STRING,
-    BOH_AST_NODE_TYPE_UNARY,
-    BOH_AST_NODE_TYPE_BINARY,
-} bohAstNodeType;
+    BOH_VALUE_EXPR_TYPE_NUMBER,
+    BOH_VALUE_EXPR_TYPE_STRING
+} bohValueExprType;
 
 
-typedef struct AstNode bohAstNode;
-
-
-typedef struct AstNodeUnary
+typedef struct ValueExpr
 {
-    bohAstNode* pNode;
-    bohExprOperator op;
-} bohAstNodeUnary;
-
-
-typedef struct AstNodeBinary
-{
-    bohAstNode* pLeftNode;
-    bohAstNode* pRightNode;
-    bohExprOperator op;
-} bohAstNodeBinary;
-
-
-struct AstNode
-{
-    bohAstNodeType type;
-
     union 
     {
         bohNumber number;
         bohBoharesString string;
-        bohAstNodeUnary unary;
-        bohAstNodeBinary binary;
     };
 
-    uint64_t line;
-    uint64_t column;
-};
+    bohValueExprType type;
+} bohValueExpr;
 
 
-void bohAstNodeDestroy(bohAstNode* pNode);
+void bohValueExprDestroy(bohValueExpr* pExpr);
 
-// Calls bohAstNodeDestroy and frees *ppNode
-void bohAstNodeFree(bohAstNode** ppNode);
+bohValueExpr bohValueExprCreate(void);
+bohValueExpr bohValueExprCreateNumber(bohNumber number);
+bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber);
+bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString);
+bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString);
 
-bohAstNode* bohAstNodeCreate(uint64_t line, uint64_t column);
+bool bohValueExprIsNumber(const bohValueExpr* pExpr);
+bool bohValueExprIsNumberI64(const bohValueExpr* pExpr);
+bool bohValueExprIsNumberF64(const bohValueExpr* pExpr);
+bool bohValueExprIsString(const bohValueExpr* pExpr);
 
-bohAstNode* bohAstNodeCreateNumberI64(int64_t value, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateNumberF64(double value, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateString(const char* pCStr, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateStringStringView(bohStringView strView, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateStringStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateStringViewStringView(bohStringView strView, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateStringViewStringViewPtr(const bohStringView* pStrView, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateUnary(bohExprOperator op, bohAstNode* pArg, uint64_t line, uint64_t column);
-bohAstNode* bohAstNodeCreateBinary(bohExprOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg, uint64_t line, uint64_t column);
+const bohNumber* bohValueExprGetNumber(const bohValueExpr* pExpr);
+const bohBoharesString* bohValueExprGetString(const bohValueExpr* pExpr);
 
-bool bohAstNodeIsNumber(const bohAstNode* pNode);
-bool bohAstNodeIsNumberI64(const bohAstNode* pNode);
-bool bohAstNodeIsNumberF64(const bohAstNode* pNode);
-bool bohAstNodeIsString(const bohAstNode* pNode);
-bool bohAstNodeIsUnary(const bohAstNode* pNode);
-bool bohAstNodeIsBinary(const bohAstNode* pNode);
+void bohValueExprSetNumber(bohValueExpr* pExpr, bohNumber number);
+void bohValueExprSetNumberNumberPtr(bohValueExpr* pExpr, const bohNumber* pNumber);
+void bohValueExprSetStringStringPtr(bohValueExpr* pExpr, const bohBoharesString* pString);
+void bohValueExprSetStringStringMove(bohValueExpr* pExpr, bohBoharesString* pString);
 
-const bohNumber* bohAstNodeGetNumber(const bohAstNode* pNode);
-int64_t bohAstNodeGetNumberI64(const bohAstNode* pNode);
-double  bohAstNodeGetNumberF64(const bohAstNode* pNode);
-const bohBoharesString* bohAstNodeGetString(const bohAstNode* pNode);
-const bohAstNodeUnary* bohAstNodeGetUnary(const bohAstNode* pNode);
-const bohAstNodeBinary* bohAstNodeGetBinary(const bohAstNode* pNode);
+bohValueExpr* bohValueExprAssign(bohValueExpr* pDst, const bohValueExpr* pSrc);
+bohValueExpr* bohValueExprMove(bohValueExpr* pDst, bohValueExpr* pSrc);
 
-bohAstNode* bohAstNodeSetNumberI64(bohAstNode* pNode, int64_t value);
-bohAstNode* bohAstNodeSetNumberF64(bohAstNode* pNode, double value);
-bohAstNode* bohAstNodeSetStringCStr(bohAstNode* pNode, const char* pCStr);
-bohAstNode* bohAstNodeSetStringString(bohAstNode* pNode, const bohString* pString);
-bohAstNode* bohAstNodeSetStringStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
-bohAstNode* bohAstNodeSetStringViewStringView(bohAstNode* pNode, bohStringView strView);
-bohAstNode* bohAstNodeSetStringViewStringViewPtr(bohAstNode* pNode, const bohStringView* pStrView);
-bohAstNode* bohAstNodeSetUnary(bohAstNode* pNode, bohExprOperator op, bohAstNode* pArg);
-bohAstNode* bohAstNodeSetBinary(bohAstNode* pNode, bohExprOperator op, bohAstNode* pLeftArg, bohAstNode* pRightArg);
 
-uint64_t bohAstNodeGetLine(const bohAstNode* pNode);
-uint64_t bohAstNodeGetColumn(const bohAstNode* pNode);
+typedef struct UnaryExpr
+{
+    bohExprIdx exprIdx;
+    bohExprOperator op;
+} bohUnaryExpr;
 
-const char* bohAstNodeTypeToStr(const bohAstNode* pNode);
 
+void bohUnaryExprDestroy(bohUnaryExpr* pExpr);
+
+bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx);
+
+bohExprIdx bohUnaryExprGetExprIdx(const bohUnaryExpr* pExpr);
+bohExprOperator bohUnaryExprGetOp(const bohUnaryExpr* pExpr);
+
+bohUnaryExpr* bohUnaryExprAssign(bohUnaryExpr* pDst, const bohUnaryExpr* pSrc);
+bohUnaryExpr* bohUnaryExprMove(bohUnaryExpr* pDst, bohUnaryExpr* pSrc);
+
+
+typedef struct BinaryExpr
+{
+    bohExprIdx leftExprIdx;
+    bohExprIdx rightExprIdx;
+    bohExprOperator op;
+} bohBinaryExpr;
+
+
+void bohBinaryExprDestroy(bohBinaryExpr* pExpr);
+
+bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx);
+
+bohExprIdx bohBinaryExprGetLeftExprIdx(const bohBinaryExpr* pExpr);
+bohExprIdx bohBinaryExprGetRightExprIdx(const bohBinaryExpr* pExpr);
+bohExprOperator bohBinaryExprGetOp(const bohBinaryExpr* pExpr);
+
+bohBinaryExpr* bohBinaryExprAssign(bohBinaryExpr* pDst, const bohBinaryExpr* pSrc);
+bohBinaryExpr* bohBinaryExprMove(bohBinaryExpr* pDst, bohBinaryExpr* pSrc);
+
+
+typedef enum ExprType
+{
+    BOH_EXPR_TYPE_VALUE,
+    BOH_EXPR_TYPE_UNARY,
+    BOH_EXPR_TYPE_BINARY
+} bohExprType;
+
+
+typedef struct Expr
+{
+    union
+    {
+        bohValueExpr valueExpr;
+        bohUnaryExpr unaryExpr;
+        bohBinaryExpr binaryExpr;
+    };
+    
+    bohExprType type;
+} bohExpr;
+
+
+void bohExprDestroy(bohExpr* pExpr);
+
+bohExpr bohExprCreate(void);
+
+bohExpr bohExprCreateNumberValueExpr(bohNumber number);
+bohExpr bohExprCreateNumberValueExprPtr(const bohNumber* pNumber);
+bohExpr bohExprCreateStringValueExpr(const bohBoharesString* pString);
+bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString);
+
+bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx exprIdx);
+bohExpr bohExprCreateBinaryExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx);
+
+bool bohExprIsValueExpr(const bohExpr* pExpr);
+bool bohExprIsUnaryExpr(const bohExpr* pExpr);
+bool bohExprIsBinaryExpr(const bohExpr* pExpr);
+
+const bohValueExpr* bohExprGetValueExpr(const bohExpr* pExpr);
+const bohUnaryExpr* bohExprGetUnaryExpr(const bohExpr* pExpr);
+const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr);
+
+bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc);
+bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc);
+
+
+typedef struct RawExprStmt
+{
+    bohExprIdx exprIdx;
+} bohRawExprStmt;
+
+
+void bohRawExprStmtDestroy(bohRawExprStmt* pStmt);
+
+bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx);
+
+bohExprIdx bohRawExprStmtGetExprIdx(const bohRawExprStmt* pStmt);
+
+bohRawExprStmt* bohRawExprStmtAssign(bohRawExprStmt* pDst, const bohRawExprStmt* pSrc);
+bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc);
+
+
+typedef struct PrintStmt
+{
+    bohStmtIdx stmtIdx;
+} bohPrintStmt;
+
+
+void bohPrintStmtDestroy(bohPrintStmt* pStmt);
+
+bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx stmtIdx);
+
+bohStmtIdx bohPrintStmtGetStmtIdx(const bohPrintStmt* pStmt);
+
+bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc);
+bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
+
+
+typedef enum StmtType
+{
+    BOH_STMT_TYPE_EMPTY,
+    BOH_STMT_TYPE_RAW_EXPR,
+    BOH_STMT_TYPE_PRINT,
+} bohStmtType;
+
+
+typedef struct Stmt
+{
+    union
+    {
+        bohRawExprStmt rawExpr;
+        bohPrintStmt printStmt;
+    };
+    
+    bohStmtType type;
+} bohStmt;
+
+
+void bohStmtDestroy(bohStmt* pStmt);
+
+bohStmt bohStmtCreate(void);
+bohStmt bohStmtCreateRawExpr(bohExprIdx exprIdx);
+bohStmt bohStmtCreatePrint(bohStmtIdx stmtIdx);
+
+bohStmtType bohStmtGetType(const bohStmt* pStmt);
+
+bool bohStmtIsEmpty(const bohStmt* pStmt);
+bool bohStmtIsRawExpr(const bohStmt* pStmt);
+bool bohStmtIsPrint(const bohStmt* pStmt);
+
+const bohRawExprStmt* bohStmtGetRawExpr(const bohStmt* pStmt);
+const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt);
+
+bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc);
+bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc);
+
+
+typedef bohDynArray bohStmtStorage;
+typedef bohDynArray bohExprStorage;
 
 typedef struct AST
 {
-    bohAstNode* pRoot;
+    bohStmtStorage stmts;
+    bohExprStorage exprs;
 } bohAST;
 
 
 void bohAstDestroy(bohAST* pAST);
 
+
+typedef struct StmtStorageCreateInfo
+{
+    bohDynArrElemDefConstr pStmtDefConstr; 
+    bohDynArrElemDestr pStmtDestr;
+    bohDynArrElemCopyFunc pStmtCopyFunc;
+} bohStmtStorageCreateInfo;
+
+
+typedef struct ExprStorageCreateInfo
+{
+    bohDynArrElemDefConstr pExprDefConstr; 
+    bohDynArrElemDestr pExprDestr;
+    bohDynArrElemCopyFunc pExprCopyFunc;
+} bohExprStorageCreateInfo;
+
+
+bohAST bohASTCreate(
+    const bohStmtStorageCreateInfo* pStmtStorageCreateInfo, 
+    const bohExprStorageCreateInfo* pExprStorageCreateInfo
+);
+
 bool bohAstIsEmpty(const bohAST* pAST);
+
 
 typedef bohDynArray bohTokenStorage;
 
@@ -153,11 +299,14 @@ typedef struct Parser
 {
     const bohTokenStorage* pTokenStorage;
     size_t currTokenIdx;
+
+    bohAST ast;
 } bohParser;
 
 
 bohParser bohParserCreate(const bohTokenStorage* pTokenStorage);
 void bohParserDestroy(bohParser* pParser);
 
+const bohAST* bohParserGetAST(const bohParser* pParser);
 
-bohAST bohParserParse(bohParser* pParser);
+void bohParserParse(bohParser* pParser);

@@ -7,8 +7,8 @@
 
 
 bohDynArray bohDynArrayCreate(size_t elementSize, 
-    const bohDynArrElemDefaultConstructor pConstr, 
-    const bohDynArrElemDestructor pDestr, 
+    const bohDynArrElemDefConstr pConstr, 
+    const bohDynArrElemDestr pDestr, 
     const bohDynArrElemCopyFunc pCopyFunc)
 {
     assert(elementSize > 0);
@@ -77,6 +77,12 @@ void bohDynArrayReserve(bohDynArray* pArray, size_t newCapacity)
     pArray->pData = pNewBuffer;
     pArray->capacity = newCapacity;
 
+    const bohDynArrElemDestr ElemDestr = pArray->pElemDestr;
+
+    for (size_t i = 0; i < size; ++i) {
+        ElemDestr(BOH_GET_DYN_ARRAY_ELEMENT_PTR(pOldBuffer, i, elemSize));
+    }
+
     free(pOldBuffer);
 }
 
@@ -95,7 +101,7 @@ void bohDynArrayResize(bohDynArray* pArray, size_t newSize)
     const size_t elemSize = pArray->elementSize;
 
     if (newSize < oldSize) {
-        const bohDynArrElemDestructor ElemDestructor = pArray->pElemDestr;
+        const bohDynArrElemDestr ElemDestructor = pArray->pElemDestr;
 
         for (size_t i = newSize; i < oldSize; ++i) {
             ElemDestructor(BOH_GET_DYN_ARRAY_ELEMENT_PTR(pArrData, i, elemSize));
@@ -106,7 +112,7 @@ void bohDynArrayResize(bohDynArray* pArray, size_t newSize)
         return;
     }
 
-    const bohDynArrElemDefaultConstructor ElemConstructor = pArray->pElemDefContr;
+    const bohDynArrElemDefConstr ElemConstructor = pArray->pElemDefContr;
 
     bohDynArrayReserve(pArray, newSize);
     for (size_t i = oldSize; i < newSize; ++i) {

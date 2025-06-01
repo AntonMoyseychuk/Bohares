@@ -14,6 +14,56 @@
     }
 
 
+static void stmtDefConstr(void* pElement)
+{
+    assert(pElement);
+
+    bohStmt* pStmt = (bohStmt*)pElement;
+    *pStmt = bohStmtCreate();
+}
+
+
+static void stmtDestr(void* pElement)
+{
+    assert(pElement);
+    bohStmtDestroy((bohStmt*)pElement);
+}
+
+
+static void stmtCopyFunc(void* pDst, const void* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohStmtAssign((bohStmt*)pDst, (bohStmt*)pSrc);
+}
+
+
+static void exprDefConstr(void* pElement)
+{
+    assert(pElement);
+
+    bohExpr* pExpr = (bohExpr*)pElement;
+    *pExpr = bohExprCreate();
+}
+
+
+static void exprDestr(void* pElement)
+{
+    assert(pElement);
+    bohExprDestroy((bohExpr*)pElement);
+}
+
+
+static void exprCopyFunc(void* pDst, const void* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohExprAssign((bohExpr*)pDst, (bohExpr*)pSrc);
+}
+
+
 const char* bohParsExprOperatorToStr(bohExprOperator op)
 {
     switch (op) {
@@ -52,6 +102,797 @@ const char* bohParsExprOperatorToStr(bohExprOperator op)
             assert(false && "Invalid operator type");
             return NULL;
     }
+}
+
+
+void bohValueExprDestroy(bohValueExpr* pExpr)
+{
+    assert(pExpr);
+
+    switch (pExpr->type) {
+        case BOH_VALUE_EXPR_TYPE_NUMBER:
+            bohNumberSetI64(&pExpr->number, 0);
+            break;
+        case BOH_VALUE_EXPR_TYPE_STRING:
+            bohBoharesStringDestroy(&pExpr->string);
+            break;
+        default:
+            assert(false && "Invalid value expression type");
+            break;
+    }
+
+    pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
+}
+
+
+bohValueExpr bohValueExprCreate(void)
+{
+    bohValueExpr expr;
+
+    expr.type = BOH_VALUE_EXPR_TYPE_NUMBER;
+    expr.number = bohNumberCreateI64(0);
+
+    return expr;
+}
+
+
+bohValueExpr bohValueExprCreateNumber(bohNumber number)
+{
+    return bohValueExprCreateNumberNumberPtr(&number);
+}
+
+
+bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber)
+{
+    assert(pNumber);
+
+    bohValueExpr expr = bohValueExprCreate();
+    bohValueExprSetNumberNumberPtr(&expr, pNumber);
+
+    return expr;
+}
+
+
+bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString)
+{
+    assert(pString);
+
+    bohValueExpr expr = bohValueExprCreate();
+    bohValueExprSetStringStringPtr(&expr, pString);
+
+    return expr;
+}
+
+
+bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString)
+{
+    assert(pString);
+
+    bohValueExpr expr = bohValueExprCreate();
+    bohValueExprSetStringStringMove(&expr, pString);
+
+    return expr;
+}
+
+
+bool bohValueExprIsNumber(const bohValueExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->type == BOH_VALUE_EXPR_TYPE_NUMBER;
+}
+
+
+bool bohValueExprIsNumberI64(const bohValueExpr* pExpr)
+{
+    assert(pExpr);
+    return bohValueExprIsNumber(pExpr) && bohNumberIsI64(&pExpr->number);
+}
+
+
+bool bohValueExprIsNumberF64(const bohValueExpr *pExpr)
+{
+    assert(pExpr);
+    return bohValueExprIsNumber(pExpr) && bohNumberIsF64(&pExpr->number);
+}
+
+
+bool bohValueExprIsString(const bohValueExpr *pExpr)
+{
+    assert(pExpr);
+    return pExpr->type == BOH_VALUE_EXPR_TYPE_STRING;
+}
+
+
+const bohNumber* bohValueExprGetNumber(const bohValueExpr* pExpr)
+{
+    assert(bohValueExprIsNumber(pExpr));
+    return &pExpr->number;
+}
+
+
+const bohBoharesString* bohValueExprGetString(const bohValueExpr *pExpr)
+{
+    assert(bohValueExprIsString(pExpr));
+    return &pExpr->string;
+}
+
+
+void bohValueExprSetNumber(bohValueExpr* pExpr, bohNumber number)
+{
+    bohValueExprSetNumberNumberPtr(pExpr, &number);
+}
+
+
+void bohValueExprSetNumberNumberPtr(bohValueExpr* pExpr, const bohNumber* pNumber)
+{
+    assert(pExpr);
+    assert(pNumber);
+
+    bohValueExprDestroy(pExpr);
+
+    pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
+    bohNumberAssign(&pExpr->number, pNumber);
+}
+
+
+void bohValueExprSetStringStringPtr(bohValueExpr* pExpr, const bohBoharesString* pString)
+{
+    assert(pExpr);
+    assert(pString);
+
+    bohValueExprDestroy(pExpr);
+
+    pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
+    bohBoharesStringAssign(&pExpr->string, pString);
+}
+
+
+void bohValueExprSetStringStringMove(bohValueExpr* pExpr, bohBoharesString* pString)
+{
+    assert(pExpr);
+    assert(pString);
+
+    bohValueExprDestroy(pExpr);
+
+    pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
+    bohBoharesStringMove(&pExpr->string, pString);
+}
+
+
+bohValueExpr* bohValueExprAssign(bohValueExpr* pDst, const bohValueExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohValueExprDestroy(pDst);
+
+    pDst->type = pSrc->type;
+
+    switch (pSrc->type) {
+        case BOH_VALUE_EXPR_TYPE_NUMBER:
+            bohNumberAssign(&pDst->number, &pSrc->number);
+            break;
+        case BOH_VALUE_EXPR_TYPE_STRING:
+            bohBoharesStringAssign(&pDst->string, &pSrc->string);
+            break;
+        default:
+            assert(false && "Invalid value expr type");
+            break;
+    }
+
+    return pDst;
+}
+
+
+bohValueExpr* bohValueExprMove(bohValueExpr* pDst, bohValueExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohValueExprDestroy(pDst);
+
+    pDst->type = pSrc->type;
+
+    switch (pSrc->type) {
+        case BOH_VALUE_EXPR_TYPE_NUMBER:
+            bohNumberMove(&pDst->number, &pSrc->number);
+            break;
+        case BOH_VALUE_EXPR_TYPE_STRING:
+            bohBoharesStringMove(&pDst->string, &pSrc->string);
+            break;
+        default:
+            assert(false && "Invalid value expr type");
+            break;
+    }
+
+    pSrc->type = BOH_VALUE_EXPR_TYPE_NUMBER;
+
+    return pDst;
+}
+
+
+void bohUnaryExprDestroy(bohUnaryExpr* pExpr)
+{
+    assert(pExpr);
+    pExpr->exprIdx = BOH_EXPR_IDX_INVALID;
+    pExpr->op = BOH_OP_UNKNOWN;
+}
+
+
+bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx)
+{
+    bohUnaryExpr expr;
+    
+    expr.exprIdx = exprIdx;
+    expr.op = op;
+
+    return expr;
+}
+
+
+bohExprIdx bohUnaryExprGetExprIdx(const bohUnaryExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->exprIdx;
+}
+
+
+bohExprOperator bohUnaryExprGetOp(const bohUnaryExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->op;
+}
+
+
+bohUnaryExpr* bohUnaryExprAssign(bohUnaryExpr* pDst, const bohUnaryExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohUnaryExprDestroy(pDst);
+
+    pDst->op = pSrc->op;
+    pDst->exprIdx = pSrc->exprIdx;
+
+    return pDst;
+}
+
+
+bohUnaryExpr* bohUnaryExprMove(bohUnaryExpr* pDst, bohUnaryExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohUnaryExprAssign(pDst, pSrc);
+    
+    pSrc->exprIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->op = BOH_OP_UNKNOWN;
+
+    return pDst;
+}
+
+
+void bohBinaryExprDestroy(bohBinaryExpr* pExpr)
+{
+    assert(pExpr);
+
+    pExpr->leftExprIdx  = BOH_EXPR_IDX_INVALID;
+    pExpr->rightExprIdx = BOH_EXPR_IDX_INVALID;
+    pExpr->op           = BOH_OP_UNKNOWN;
+}
+
+
+bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx)
+{
+    bohBinaryExpr expr;
+
+    expr.leftExprIdx = leftExprIdx;
+    expr.rightExprIdx = rightExprIdx;
+    expr.op = op;
+
+    return expr;
+}
+
+
+bohExprIdx bohBinaryExprGetLeftExprIdx(const bohBinaryExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->leftExprIdx;
+}
+
+
+bohExprIdx bohBinaryExprGetRightExprIdx(const bohBinaryExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->rightExprIdx;
+}
+
+
+bohExprOperator bohBinaryExprGetOp(const bohBinaryExpr *pExpr)
+{
+    assert(pExpr);
+    return pExpr->op;
+}
+
+
+bohBinaryExpr* bohBinaryExprAssign(bohBinaryExpr* pDst, const bohBinaryExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohBinaryExprDestroy(pDst);
+
+    pDst->leftExprIdx = pSrc->leftExprIdx;
+    pDst->rightExprIdx = pSrc->rightExprIdx;
+    pDst->op = pSrc->op;
+
+    return pDst;
+}
+
+
+bohBinaryExpr* bohBinaryExprMove(bohBinaryExpr* pDst, bohBinaryExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohBinaryExprAssign(pDst, pSrc);
+    
+    pSrc->leftExprIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->rightExprIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->op = BOH_OP_UNKNOWN;
+
+    return pDst;
+}
+
+
+void bohExprDestroy(bohExpr* pExpr)
+{
+    assert(pExpr);
+
+    switch (pExpr->type) {
+        case BOH_EXPR_TYPE_VALUE:
+            bohValueExprDestroy(&pExpr->valueExpr);
+            break;
+        case BOH_EXPR_TYPE_UNARY:
+            bohUnaryExprDestroy(&pExpr->unaryExpr);
+            break;
+        case BOH_EXPR_TYPE_BINARY:
+            bohBinaryExprDestroy(&pExpr->binaryExpr);
+            break;
+        default:
+            assert(false && "Invalid expression type");
+            break;
+    }
+
+    pExpr->type = BOH_EXPR_TYPE_VALUE;
+}
+
+
+bohExpr bohExprCreate(void)
+{
+    bohExpr expr;
+
+    expr.type = BOH_EXPR_TYPE_VALUE;
+    expr.valueExpr = bohValueExprCreateNumber(bohNumberCreateI64(0));
+
+    return expr;
+}
+
+
+bohExpr bohExprCreateNumberValueExpr(bohNumber number)
+{
+    return bohExprCreateNumberValueExprPtr(&number);
+}
+
+
+bohExpr bohExprCreateNumberValueExprPtr(const bohNumber* pNumber)
+{
+    assert(pNumber);
+
+    bohExpr expr = bohExprCreate();
+
+    expr.type = BOH_EXPR_TYPE_VALUE;
+    expr.valueExpr = bohValueExprCreateNumberNumberPtr(pNumber);
+
+    return expr;
+}
+
+
+bohExpr bohExprCreateStringValueExpr(const bohBoharesString* pString)
+{
+    assert(pString);
+
+    bohExpr expr = bohExprCreate();
+
+    expr.type = BOH_EXPR_TYPE_VALUE;
+    expr.valueExpr = bohValueExprCreateStringStringPtr(pString);
+
+    return expr;
+}
+
+
+bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString)
+{
+    assert(pString);
+
+    bohExpr expr = bohExprCreate();
+
+    expr.type = BOH_EXPR_TYPE_VALUE;
+    expr.valueExpr = bohValueExprCreateStringStringMove(pString);
+
+    return expr;
+}
+
+
+bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx exprIdx)
+{
+    bohExpr expr = bohExprCreate();
+
+    expr.type = BOH_EXPR_TYPE_UNARY;
+    expr.unaryExpr = bohUnaryExprCreateOpExpr(op, exprIdx);
+
+    return expr;
+}
+
+
+bohExpr bohExprCreateBinaryExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx)
+{
+    bohExpr expr = bohExprCreate();
+
+    expr.type = BOH_EXPR_TYPE_BINARY;
+    expr.binaryExpr = bohBinaryExprCreateOpExpr(op, leftExprIdx, rightExprIdx);
+
+    return expr;
+}
+
+
+bool bohExprIsValueExpr(const bohExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->type == BOH_EXPR_TYPE_VALUE;
+}
+
+
+bool bohExprIsUnaryExpr(const bohExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->type == BOH_EXPR_TYPE_UNARY;
+}
+
+
+bool bohExprIsBinaryExpr(const bohExpr* pExpr)
+{
+    assert(pExpr);
+    return pExpr->type == BOH_EXPR_TYPE_BINARY;
+}
+
+
+const bohValueExpr* bohExprGetValueExpr(const bohExpr* pExpr)
+{
+    assert(bohExprIsValueExpr(pExpr));
+    return &pExpr->valueExpr;
+}
+
+
+const bohUnaryExpr* bohExprGetUnaryExpr(const bohExpr* pExpr)
+{
+    assert(bohExprIsUnaryExpr(pExpr));
+    return &pExpr->unaryExpr;
+}
+
+
+const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr)
+{
+    assert(bohExprIsBinaryExpr(pExpr));
+    return &pExpr->binaryExpr;
+}
+
+
+bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohExprDestroy(pDst);
+
+    pDst->type = pSrc->type;
+
+    switch (pSrc->type) {
+        case BOH_EXPR_TYPE_VALUE:
+            bohValueExprAssign(&pDst->valueExpr, &pSrc->valueExpr);
+            break;
+        case BOH_EXPR_TYPE_UNARY:
+            bohUnaryExprAssign(&pDst->unaryExpr, &pSrc->unaryExpr);
+            break;
+        case BOH_EXPR_TYPE_BINARY:
+            bohBinaryExprAssign(&pDst->binaryExpr, &pSrc->binaryExpr);
+            break;
+        default:
+            assert(false && "Invalid expression type");
+            break;
+    }
+
+    return pDst;
+}
+
+
+bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohExprDestroy(pDst);
+
+    pDst->type = pSrc->type;
+
+    switch (pSrc->type) {
+        case BOH_EXPR_TYPE_VALUE:
+            bohValueExprMove(&pDst->valueExpr, &pSrc->valueExpr);
+            break;
+        case BOH_EXPR_TYPE_UNARY:
+            bohUnaryExprMove(&pDst->unaryExpr, &pSrc->unaryExpr);
+            break;
+        case BOH_EXPR_TYPE_BINARY:
+            bohBinaryExprMove(&pDst->binaryExpr, &pSrc->binaryExpr);
+            break;
+        default:
+            assert(false && "Invalid expression type");
+            break;
+    }
+
+    pSrc->type = BOH_EXPR_TYPE_VALUE;
+
+    return pDst;
+}
+
+
+void bohRawExprStmtDestroy(bohRawExprStmt* pStmt)
+{
+    assert(pStmt);
+    pStmt->exprIdx = BOH_EXPR_IDX_INVALID;
+}
+
+
+bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx)
+{
+    bohRawExprStmt stmt;
+    stmt.exprIdx = exprIdx;
+
+    return stmt;
+}
+
+
+bohExprIdx bohRawExprStmtGetExprIdx(const bohRawExprStmt* pStmt)
+{
+    assert(pStmt);
+    return pStmt->exprIdx;
+}
+
+
+bohRawExprStmt* bohRawExprStmtAssign(bohRawExprStmt* pDst, const bohRawExprStmt* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohRawExprStmtDestroy(pDst);
+    pDst->exprIdx = pSrc->exprIdx;
+
+    return pDst;
+}
+
+
+bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    pDst->exprIdx = pSrc->exprIdx;
+    pSrc->exprIdx = BOH_EXPR_IDX_INVALID;
+
+    return pDst;
+}
+
+
+void bohPrintStmtDestroy(bohPrintStmt* pStmt)
+{
+    assert(pStmt);
+    pStmt->stmtIdx = BOH_STMT_IDX_INVALID;
+}
+
+
+bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx stmtIdx)
+{
+    bohPrintStmt stmt;
+    stmt.stmtIdx = stmtIdx;
+
+    return stmt;
+}
+
+
+bohStmtIdx bohPrintStmtGetStmtIdx(const bohPrintStmt* pStmt)
+{
+    assert(pStmt);
+    return pStmt->stmtIdx;
+}
+
+
+bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohPrintStmtDestroy(pDst);
+
+    pDst->stmtIdx = pSrc->stmtIdx;
+
+    return pDst;
+}
+
+
+bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohPrintStmtDestroy(pDst);
+
+    pDst->stmtIdx = pSrc->stmtIdx;
+    pSrc->stmtIdx = BOH_STMT_IDX_INVALID;
+
+    return pDst;
+}
+
+
+void bohStmtDestroy(bohStmt* pStmt)
+{
+    assert(pStmt);
+
+    switch (pStmt->type) {
+        case BOH_STMT_TYPE_EMPTY:
+            break;
+        case BOH_STMT_TYPE_RAW_EXPR:
+            bohRawExprStmtDestroy(&pStmt->rawExpr);
+            break;
+        case BOH_STMT_TYPE_PRINT:
+            bohPrintStmtDestroy(&pStmt->printStmt);
+            break;
+        default:
+            assert(false && "Invalid statement type");
+            break;
+    }
+
+    pStmt->type = BOH_STMT_TYPE_EMPTY;
+}
+
+
+bohStmt bohStmtCreate(void)
+{
+    bohStmt stmt;
+
+    memset(&stmt, 0, sizeof(bohStmt));
+    stmt.type = BOH_STMT_TYPE_EMPTY;
+
+    return stmt;
+}
+
+
+bohStmt bohStmtCreateRawExpr(bohExprIdx exprIdx)
+{
+    bohStmt stmt = bohStmtCreate();
+
+    stmt.type = BOH_STMT_TYPE_RAW_EXPR;
+    stmt.rawExpr = bohRawExprStmtCreateExprIdx(exprIdx);
+
+    return stmt;
+}
+
+
+bohStmt bohStmtCreatePrint(bohStmtIdx stmtIdx)
+{
+    bohStmt stmt = bohStmtCreate();
+
+    stmt.type = BOH_STMT_TYPE_PRINT;
+    stmt.printStmt = bohPrintStmtCreateStmtIdx(stmtIdx);
+
+    return stmt;
+}
+
+
+bohStmtType bohStmtGetType(const bohStmt* pStmt)
+{
+    assert(pStmt);
+    return pStmt->type;
+}
+
+
+bool bohStmtIsRawExpr(const bohStmt* pStmt)
+{
+    assert(pStmt);
+    return pStmt->type == BOH_STMT_TYPE_RAW_EXPR;
+}
+
+
+bool bohStmtIsEmpty(const bohStmt *pStmt)
+{
+    assert(pStmt);
+    return pStmt->type == BOH_STMT_TYPE_EMPTY;
+}
+
+
+bool bohStmtIsPrint(const bohStmt* pStmt)
+{
+    assert(pStmt);
+    return pStmt->type == BOH_STMT_TYPE_PRINT;
+}
+
+
+const bohRawExprStmt* bohStmtGetRawExpr(const bohStmt* pStmt)
+{
+    assert(bohStmtIsRawExpr(pStmt));
+    return &pStmt->rawExpr;
+}
+
+
+const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt)
+{
+    assert(bohStmtIsPrint(pStmt));
+    return &pStmt->printStmt;
+}
+
+
+bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohStmtDestroy(pDst);
+
+    pDst->type = pSrc->type;
+
+    switch (pSrc->type) {
+        case BOH_STMT_TYPE_EMPTY:
+            break;
+        case BOH_STMT_TYPE_RAW_EXPR:
+            bohRawExprStmtAssign(&pDst->rawExpr, &pSrc->rawExpr);
+            break;
+        case BOH_STMT_TYPE_PRINT:
+            bohPrintStmtAssign(&pDst->printStmt, &pSrc->printStmt);
+            break;
+        default:
+            assert(false && "Invalid statement type");
+            break;
+    }
+
+    return pDst;
+}
+
+
+bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohStmtDestroy(pDst);
+
+    pDst->type = pSrc->type;
+
+    switch (pSrc->type) {
+        case BOH_STMT_TYPE_EMPTY:
+            break;
+        case BOH_STMT_TYPE_RAW_EXPR:
+            bohRawExprStmtMove(&pDst->rawExpr, &pSrc->rawExpr);
+            break;
+        case BOH_STMT_TYPE_PRINT:
+            bohPrintStmtMove(&pDst->printStmt, &pSrc->printStmt);
+            break;
+        default:
+            assert(false && "Invalid statement type");
+            break;
+    }
+
+    pSrc->type = BOH_STMT_TYPE_EMPTY;
+
+    return pDst;
 }
 
 
@@ -159,6 +1000,7 @@ static bool parsIsCurrTokenMatch(bohParser* pParser, bohTokenType type)
 }
 
 
+#if 0
 static bohAstNode* parsExpr(bohParser* pParser);
 
 
@@ -457,7 +1299,11 @@ static bohAstNode* parsExpr(bohParser* pParser)
 }
 
 
-void bohAstNodeDestroy(bohAstNode *pNode)
+#endif
+
+
+#if 0
+void bohAstNodeDestroy(bohAstNode* pNode)
 {
     if (!pNode) {
         return;
@@ -501,7 +1347,7 @@ void bohAstNodeFree(bohAstNode** ppNode)
     bohAstNodeDestroy(*ppNode);
     free(*ppNode);
 
-    ppNode = NULL;
+    *ppNode = NULL;
 }
 
 
@@ -838,19 +1684,54 @@ const char* bohAstNodeTypeToStr(const bohAstNode* pNode)
         default: return "UNKNOWN AST NODE TYPE";
     }
 }
+#endif
 
 
 void bohAstDestroy(bohAST* pAST)
 {
     assert(pAST);
-    bohAstNodeFree(&pAST->pRoot);
+    bohDynArrayDestroy(&pAST->stmts);
 }
 
 
-bool bohAstIsEmpty(const bohAST* pAST)
+bohAST bohASTCreate(
+    const bohStmtStorageCreateInfo* pStmtStorageCreateInfo, 
+    const bohExprStorageCreateInfo* pExprStorageCreateInfo
+) {
+    assert(pStmtStorageCreateInfo);
+    assert(pStmtStorageCreateInfo->pStmtDefConstr);
+    assert(pStmtStorageCreateInfo->pStmtDestr);
+    assert(pStmtStorageCreateInfo->pStmtCopyFunc);
+
+    assert(pExprStorageCreateInfo);
+    assert(pExprStorageCreateInfo->pExprDefConstr);
+    assert(pExprStorageCreateInfo->pExprDestr);
+    assert(pExprStorageCreateInfo->pExprCopyFunc);
+
+    bohAST ast;
+
+    ast.stmts = BOH_DYN_ARRAY_CREATE(
+        bohStmt, 
+        pStmtStorageCreateInfo->pStmtDefConstr, 
+        pStmtStorageCreateInfo->pStmtDestr, 
+        pStmtStorageCreateInfo->pStmtCopyFunc
+    );
+
+    ast.exprs = BOH_DYN_ARRAY_CREATE(
+        bohExpr, 
+        pExprStorageCreateInfo->pExprDefConstr, 
+        pExprStorageCreateInfo->pExprDestr, 
+        pExprStorageCreateInfo->pExprCopyFunc
+    );
+
+    return ast;
+}
+
+
+bool bohAstIsEmpty(const bohAST *pAST)
 {
     assert(pAST);
-    return pAST->pRoot == NULL;
+    return bohDynArrayIsEmpty(&pAST->stmts);
 }
 
 
@@ -863,6 +1744,18 @@ bohParser bohParserCreate(const bohTokenStorage *pTokenStorage)
     parser.pTokenStorage = pTokenStorage;
     parser.currTokenIdx = 0;
 
+    bohStmtStorageCreateInfo stmtStorageCreateInfo;
+    stmtStorageCreateInfo.pStmtDefConstr = stmtDefConstr;
+    stmtStorageCreateInfo.pStmtDestr = stmtDestr;
+    stmtStorageCreateInfo.pStmtCopyFunc = stmtCopyFunc;
+
+    bohExprStorageCreateInfo exprStorageCreateInfo;
+    exprStorageCreateInfo.pExprDefConstr = exprDefConstr;
+    exprStorageCreateInfo.pExprDestr = exprDestr;
+    exprStorageCreateInfo.pExprCopyFunc = exprCopyFunc;
+
+    parser.ast = bohASTCreate(&stmtStorageCreateInfo, &exprStorageCreateInfo);
+
     return parser;
 }
 
@@ -873,13 +1766,20 @@ void bohParserDestroy(bohParser* pParser)
 
     pParser->pTokenStorage = NULL;
     pParser->currTokenIdx = 0;
+
+    bohAstDestroy(&pParser->ast);
 }
 
 
-bohAST bohParserParse(bohParser* pParser)
+const bohAST* bohParserGetAST(const bohParser* pParser)
 {
-    bohAST ast;
-    ast.pRoot = parsExpr(pParser);
+    assert(pParser);
+    return &pParser->ast;
+}
 
-    return ast;
+
+void bohParserParse(bohParser* pParser)
+{
+    assert(pParser);
+    // ast.pRoot = parsExpr(pParser);
 }

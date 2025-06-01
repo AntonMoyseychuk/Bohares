@@ -568,6 +568,8 @@ bohLexer bohLexerCreate(const char* pCodeData, size_t codeDataSize)
     
     lexer.line = 1;
     lexer.column = 0;
+
+    lexer.tokens = BOH_DYN_ARRAY_CREATE(bohToken, lexTokenDefConstructor, lexTokenDestructor, lexTokenCopy);
     
     return lexer;
 }
@@ -584,28 +586,35 @@ void bohLexerDestroy(bohLexer* pLexer)
     
     pLexer->line = 1;
     pLexer->column = 0;
+
+    bohDynArrayDestroy(&pLexer->tokens);
 }
 
 
-bohTokenStorage bohLexerTokenize(bohLexer* pLexer)
+const bohTokenStorage* bohLexerGetTokens(const bohLexer* pLexer)
+{
+    assert(pLexer);
+    return &pLexer->tokens;
+}
+
+
+void bohLexerTokenize(bohLexer* pLexer)
 {
     assert(pLexer);
 
-    bohTokenStorage tokens = BOH_DYN_ARRAY_CREATE(bohToken, lexTokenDefConstructor, lexTokenDestructor, lexTokenCopy);
-
     const size_t dataSize = bohStringViewGetSize(&pLexer->data);
-    
+
+    bohTokenStorage* pTokens = &pLexer->tokens;
+
     while (pLexer->currPos < dataSize) {
         const bohToken token = lexGetNextToken(pLexer);
         BOH_CHECK_LEXER_COND(token.type != BOH_TOKEN_TYPE_UNKNOWN, token.line, token.column, "unknown token: %.*s", 
             bohStringViewGetSize(&token.lexeme), bohStringViewGetData(&token.lexeme));
 
         if (token.type != BOH_TOKEN_TYPE_DUMMY) {
-            bohDynArrayPushBack(&tokens, &token);
+            bohDynArrayPushBack(pTokens, &token);
         }
     }
-
-    return tokens;
 }
 
 

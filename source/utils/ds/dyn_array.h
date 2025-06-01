@@ -1,9 +1,9 @@
 #pragma once
 
 
+typedef void (*bohDynArrElemDefConstr)(void* pElement);
+typedef void (*bohDynArrElemDestr)(void* pElement);
 typedef void (*bohDynArrElemCopyFunc)(void* pDst, const void* pSrc);
-typedef void (*bohDynArrElemDefaultConstructor)(void* pElement);
-typedef void (*bohDynArrElemDestructor)(void* pElement);
 
 
 typedef struct DynArray
@@ -14,15 +14,15 @@ typedef struct DynArray
 
     size_t elementSize;
 
-    bohDynArrElemDefaultConstructor pElemDefContr;
-    bohDynArrElemDestructor pElemDestr;
+    bohDynArrElemDefConstr pElemDefContr;
+    bohDynArrElemDestr pElemDestr;
     bohDynArrElemCopyFunc pElemCopyFunc;
 } bohDynArray;
 
 
 bohDynArray bohDynArrayCreate(size_t elementSize, 
-    const bohDynArrElemDefaultConstructor pConstr, 
-    const bohDynArrElemDestructor pDestr, 
+    const bohDynArrElemDefConstr pConstr, 
+    const bohDynArrElemDestr pDestr, 
     const bohDynArrElemCopyFunc pCopyFunc);
 void bohDynArrayDestroy(bohDynArray* pArray);
 

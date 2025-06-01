@@ -772,3 +772,26 @@ bohString bohNumberToString(const bohNumber* pNumber)
 
     return bohStringCreateCStr(buff);
 }
+
+
+bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc)
+{
+    assert(pDst);
+    assert(pSrc);
+
+    bohNumberAssign(pDst, pSrc);
+
+    switch (pSrc->type) {
+        case BOH_NUMBER_TYPE_INTEGER:
+            bohNumberSetI64(pSrc, 0);
+            break;
+        case BOH_NUMBER_TYPE_FLOAT:
+            bohNumberSetF64(pSrc, 0.0);
+            break;
+        default:
+            assert(false && "Invalid number type");
+            break;
+    }
+
+    return pDst;
+}

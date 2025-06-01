@@ -99,6 +99,8 @@ bohTokenType bohTokenGetType(const bohToken* pToken);
 const char* bohTokenGetTypeStr(const bohToken* pToken);
 
 
+typedef bohDynArray bohTokenStorage;
+
 typedef struct Lexer
 {
     bohStringView data;
@@ -108,14 +110,17 @@ typedef struct Lexer
 
     size_t line;     // Lexeme line
     size_t column;   // Lexeme column
+
+    bohTokenStorage tokens;
 } bohLexer;
 
 
 bohLexer bohLexerCreate(const char* pCodeData, size_t codeDataSize);
 void bohLexerDestroy(bohLexer* pLexer);
 
-typedef bohDynArray bohTokenStorage;
-bohTokenStorage bohLexerTokenize(bohLexer* pLexer);
+const bohTokenStorage* bohLexerGetTokens(const bohLexer* pLexer);
+
+void bohLexerTokenize(bohLexer* pLexer);
 
 
 const char* bohLexerConvertTokenTypeToStr(bohTokenType type);

@@ -162,5 +162,7 @@ bohNumber* bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 
 bohString bohNumberToString(const bohNumber* pNumber);
 
+bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc);
+
 
 #define BOH_NUMBER_GET_UNDERLYING_VALUE(NUMBER_PTR) (bohNumberIsI64(NUMBER_PTR) ? (NUMBER_PTR)->i64 : (NUMBER_PTR)->f64)

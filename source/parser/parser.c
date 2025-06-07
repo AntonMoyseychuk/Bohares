@@ -1509,9 +1509,9 @@ static bohStmt parsParsPrintStmt(bohParser* pParser)
     const bool isPrintStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PRINT);
     BOH_ASSERT(isPrintStmt);
 
-    const bohStmt argStmt = parsParsNextStmt(pParser);
-
     bohStmt* pPrintStmt = bohAstAllocateStmt(&pParser->ast);
+
+    const bohStmt argStmt = parsParsNextStmt(pParser);
     *pPrintStmt = bohStmtCreatePrint(pPrintStmt->selfIdx, argStmt.selfIdx, pCurrToken->line, pCurrToken->column);
 
     return *pPrintStmt;

@@ -9,10 +9,14 @@
 
 static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen);
 
+// Returns last printed stmt
+static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen);
+
 
 #define BOH_OUTPUT_COLOR_VALUE          BOH_OUTPUT_COLOR_WHITE
 #define BOH_OUTPUT_COLOR_OPERATOR       BOH_OUTPUT_COLOR_GREEN
 #define BOH_OUTPUT_COLOR_OPERATOR_EXPR  BOH_OUTPUT_COLOR_YELLOW
+#define BOH_OUTPUT_COLOR_STMT           BOH_OUTPUT_COLOR_BLUE
 
 #define BOH_OUTPUT_COLOR_ERROR          BOH_OUTPUT_COLOR_RED
 
@@ -103,7 +107,7 @@ static void PrintOffset(FILE* pStream, uint64_t length)
 }
 
 
-static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
+static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx)
 {
     BOH_ASSERT(pAst);
 
@@ -218,7 +222,7 @@ static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen
 
     switch (pExpr->type) {
         case BOH_EXPR_TYPE_VALUE:
-            PrintValueExpr(pAst, pExpr->selfIdx, offsetLen);
+            PrintValueExpr(pAst, pExpr->selfIdx);
             break;
         case BOH_EXPR_TYPE_UNARY:
             PrintUnaryExpr(pAst, pExpr->selfIdx, offsetLen);
@@ -232,7 +236,7 @@ static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen
     }
 }
 
-static void PrintAstRawExprStmt(const bohAST* pAst, bohStmtIdx rawExprStmtIdx, uint64_t offsetLen)
+static bohStmtIdx PrintAstRawExprStmt(const bohAST* pAst, bohStmtIdx rawExprStmtIdx, uint64_t offsetLen)
 {
     BOH_ASSERT(pAst);
 
@@ -243,7 +247,7 @@ static void PrintAstRawExprStmt(const bohAST* pAst, bohStmtIdx rawExprStmtIdx, u
 
     const bohRawExprStmt* pRawExprStmt = bohStmtGetRawExpr(pStmt);
 
-    fputs("RawExprStmt(\n", stdout);
+    fprintf_s(stdout, "%sRawExprStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen);
 
     PrintExpr(pAst, pRawExprStmt->exprIdx, nextlevelOffsetLen);
@@ -251,10 +255,37 @@ static void PrintAstRawExprStmt(const bohAST* pAst, bohStmtIdx rawExprStmtIdx, u
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
+
+    return rawExprStmtIdx;
 }
 
 
-static void PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen)
+static bohStmtIdx PrintPrintStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint64_t offsetLen)
+{
+    BOH_ASSERT(pAst);
+
+    const uint64_t nextlevelOffsetLen = offsetLen + 4;
+
+    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, printStmtIdx);
+    BOH_ASSERT(pStmt);
+
+    const bohPrintStmt* pPrintStmt = bohStmtGetPrint(pStmt);
+
+    fprintf_s(stdout, "%sPrintStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
+    PrintOffset(stdout, nextlevelOffsetLen);
+
+    const bohStmtIdx lastPrintedStmt = PrintAstStmt(pAst, pPrintStmt->argStmtIdx, nextlevelOffsetLen);
+
+    fputc('\n', stdout);
+    PrintOffset(stdout, offsetLen);
+    fputc(')', stdout);
+
+    return lastPrintedStmt;
+}
+
+
+// Returns last printed stmt
+static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen)
 {
     BOH_ASSERT(pAst);
 
@@ -262,16 +293,15 @@ static void PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offset
     BOH_ASSERT(pStmt);
     
     switch (pStmt->type) {
-        // case BOH_STMT_TYPE_EMPTY:
-        //     break;
+        case BOH_STMT_TYPE_EMPTY:
+            return stmtIdx;
         case BOH_STMT_TYPE_RAW_EXPR:
-            PrintAstRawExprStmt(pAst, pStmt->selfIdx, offsetLen);
-            break;
-        // case BOH_STMT_TYPE_PRINT:
-        //     break;
+            return PrintAstRawExprStmt(pAst, pStmt->selfIdx, offsetLen);
+        case BOH_STMT_TYPE_PRINT:
+            return PrintPrintStmt(pAst, pStmt->selfIdx, offsetLen);
         default:
             BOH_ASSERT(false && "Invalid statement type");
-            break;
+            return stmtIdx;
     }
 }
 
@@ -286,7 +316,7 @@ static void PrintAst(const bohAST* pAst)
     uint64_t offsetLen = 0;
 
     for (size_t stmtIdx = 0; stmtIdx < stmtCount; ++stmtIdx) {
-        PrintAstStmt(pAst, stmtIdx, offsetLen);
+        stmtIdx = PrintAstStmt(pAst, stmtIdx, offsetLen);
     }
 }
 

@@ -17,7 +17,7 @@ if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Wno-gnu-zero-variadic-macro-arguments 
-        -Wno-gnu-anonymous-struct-Wno-nested-anon-types)
+        -Wno-gnu-anonymous-struct -Wno-nested-anon-types)
 endif()
 
 

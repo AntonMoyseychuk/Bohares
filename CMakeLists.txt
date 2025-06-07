@@ -13,10 +13,12 @@ file(GLOB_RECURSE BOHARES_SRC_FILES CONFIGURE_DEPENDS
 add_executable(${PROJECT_NAME} ${BOHARES_SRC_FILES})
 
 
-target_compile_options(${PROJECT_NAME} PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-anonymous-struct -Wno-nested-anon-types>
-)
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Wno-gnu-zero-variadic-macro-arguments 
+        -Wno-gnu-anonymous-struct-Wno-nested-anon-types)
+endif()
 
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE ${BOHARES_SRC_DIR}/pch.h)

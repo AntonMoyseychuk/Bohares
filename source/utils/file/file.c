@@ -58,14 +58,14 @@ bohFileContent bohReadBinaryFile(const char* pPath)
 
 bohFileContentErrorCode bohFileContentGetErrorCode(const bohFileContent* pContent)
 {
-    assert(pContent);
+    BOH_ASSERT(pContent);
     return pContent->error;
 }
 
 
 void bohFileContentFree(bohFileContent *pContent)
 {
-    assert(pContent);
+    BOH_ASSERT(pContent);
 
     if (pContent->dataSize != 0) {
         free(pContent->pData);

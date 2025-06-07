@@ -16,18 +16,9 @@
     }
 
 
-static bool bohInterpAreInterpResultValuesSameType(const bohInterpResult* pRes0, const bohInterpResult* pRes1)
-{
-    assert(pRes0);
-    assert(pRes1);
-
-    return bohInterpResultIsNumber(pRes0) == bohInterpResultIsNumber(pRes1) || bohInterpResultIsString(pRes0) == bohInterpResultIsString(pRes1);
-}
-
-
 const char* bohInterpResultTypeToStr(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
 
     switch (pResult->type) {
         case BOH_INTERP_RES_TYPE_NUMBER: return "NUMBER";
@@ -39,7 +30,7 @@ const char* bohInterpResultTypeToStr(const bohInterpResult* pResult)
 
 bohInterpResult bohInterpResultCreateString(const bohString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetString(&result, pString);
@@ -50,7 +41,7 @@ bohInterpResult bohInterpResultCreateString(const bohString* pString)
 
 bohInterpResult bohInterpResultCreateStringCStr(const char* pCStr)
 {
-    assert(pCStr);
+    BOH_ASSERT(pCStr);
 
     bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetStringCStr(&result, pCStr);
@@ -67,7 +58,7 @@ bohInterpResult bohInterpResultCreateStringStringView(bohStringView strView)
 
 bohInterpResult bohInterpResultCreateStringStringViewPtr(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
 
     bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetStringStringViewPtr(&result, pStrView);
@@ -84,7 +75,7 @@ bohInterpResult bohInterpResultCreateStringBoharesStringRVal(bohBoharesString st
 
 bohInterpResult bohInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     bohInterpResult result = bohInterpResultCreate();
 
@@ -97,7 +88,7 @@ bohInterpResult bohInterpResultCreateStringBoharesStringRValPtr(bohBoharesString
 
 bohInterpResult bohInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     bohInterpResult result = bohInterpResultCreate();
 
@@ -116,7 +107,7 @@ bohInterpResult bohInterpResultCreateStringViewStringView(bohStringView strView)
 
 bohInterpResult bohInterpResultCreateStringViewStringViewPtr(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
 
     bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetStringViewStringViewPtr(&result, pStrView);
@@ -156,7 +147,7 @@ bohInterpResult bohInterpResultCreateNumber(bohNumber number)
 
 bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
 
     bohInterpResult result = bohInterpResultCreate();
     bohInterpResultSetNumberPtr(&result, pNumber);
@@ -167,7 +158,7 @@ bohInterpResult bohInterpResultCreateNumberPtr(const bohNumber* pNumber)
 
 void bohInterpResultDestroy(bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
 
     switch (pResult->type) {
         case BOH_INTERP_RES_TYPE_NUMBER:
@@ -177,7 +168,7 @@ void bohInterpResultDestroy(bohInterpResult* pResult)
             bohBoharesStringDestroy(&pResult->string);
             break;
         default:
-            assert(false && "Invalid interpretation result type");
+            BOH_ASSERT(false && "Invalid interpretation result type");
             break;
     }
 
@@ -187,50 +178,50 @@ void bohInterpResultDestroy(bohInterpResult* pResult)
 
 bool bohInterpResultIsNumber(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
     return pResult->type == BOH_INTERP_RES_TYPE_NUMBER;
 }
 
 
 bool bohInterpResultIsNumberI64(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
     return bohInterpResultIsNumber(pResult) && bohNumberIsI64(&pResult->number);
 }
 
 
 bool bohInterpResultIsNumberF64(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
     return bohInterpResultIsNumber(pResult) && bohNumberIsF64(&pResult->number);
 }
 
 
 bool bohInterpResultIsString(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
     return pResult->type == BOH_INTERP_RES_TYPE_STRING;
 }
 
 
 bool bohInterpResultIsStringStringView(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
     return bohInterpResultIsString(pResult) && bohBoharesStringIsStringView(&pResult->string);
 }
 
 
 bool bohInterpResultIsStringString(const bohInterpResult* pResult)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
     return bohInterpResultIsString(pResult) && bohBoharesStringIsString(&pResult->string);
 }
 
 
 const bohNumber* bohInterpResultGetNumber(const bohInterpResult* pResult)
 {
-    assert(pResult);
-    assert(bohInterpResultIsNumber(pResult));
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(bohInterpResultIsNumber(pResult));
 
     return &pResult->number;
 }
@@ -238,8 +229,8 @@ const bohNumber* bohInterpResultGetNumber(const bohInterpResult* pResult)
 
 int64_t bohInterpResultGetNumberI64(const bohInterpResult* pResult)
 {
-    assert(pResult);
-    assert(bohInterpResultIsNumberI64(pResult));
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(bohInterpResultIsNumberI64(pResult));
 
     return pResult->number.i64;
 }
@@ -247,8 +238,8 @@ int64_t bohInterpResultGetNumberI64(const bohInterpResult* pResult)
 
 double bohInterpResultGetNumberF64(const bohInterpResult* pResult)
 {
-    assert(pResult);
-    assert(bohInterpResultIsNumberI64(pResult));
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(bohInterpResultIsNumberI64(pResult));
 
     return pResult->number.f64;
 }
@@ -256,8 +247,8 @@ double bohInterpResultGetNumberF64(const bohInterpResult* pResult)
 
 const bohBoharesString* bohInterpResultGetString(const bohInterpResult* pResult)
 {
-    assert(pResult);
-    assert(bohInterpResultIsString(pResult));
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(bohInterpResultIsString(pResult));
 
     return &pResult->string;
 }
@@ -265,8 +256,8 @@ const bohBoharesString* bohInterpResultGetString(const bohInterpResult* pResult)
 
 const bohString* bohInterpResultGetStringString(const bohInterpResult* pResult)
 {
-    assert(pResult);
-    assert(bohInterpResultIsStringString(pResult));
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(bohInterpResultIsStringString(pResult));
 
     return &pResult->string.string;
 }
@@ -274,8 +265,8 @@ const bohString* bohInterpResultGetStringString(const bohInterpResult* pResult)
 
 const bohStringView* bohInterpResultGetStringStringView(const bohInterpResult* pResult)
 {
-    assert(pResult);
-    assert(bohInterpResultIsStringStringView(pResult));
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(bohInterpResultIsStringStringView(pResult));
 
     return &pResult->string.view;
 }
@@ -283,14 +274,14 @@ const bohStringView* bohInterpResultGetStringStringView(const bohInterpResult* p
 
 bohInterpResult* bohInterpResultSetString(bohInterpResult* pResult, const bohString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
     return bohInterpResultSetStringCStr(pResult, bohStringGetCStr(pString));
 }
 
 
 bohInterpResult* bohInterpResultSetStringCStr(bohInterpResult* pResult, const char* pCStr)
 {
-    assert(pCStr);
+    BOH_ASSERT(pCStr);
     return bohInterpResultSetStringStringView(pResult, bohStringViewCreateCStr(pCStr));
 }
 
@@ -303,8 +294,8 @@ bohInterpResult* bohInterpResultSetStringStringView(bohInterpResult* pResult, bo
 
 bohInterpResult* bohInterpResultSetStringStringViewPtr(bohInterpResult* pResult, const bohStringView* pStrView)
 {
-    assert(pResult);
-    assert(pStrView);
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(pStrView);
 
     bohInterpResultDestroy(pResult);
 
@@ -323,8 +314,8 @@ bohInterpResult* bohInterpResultSetStringViewStringView(bohInterpResult* pResult
 
 bohInterpResult* bohInterpResultSetStringViewStringViewPtr(bohInterpResult* pResult, const bohStringView* pStrView)
 {
-    assert(pResult);
-    assert(pStrView);
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(pStrView);
 
     bohInterpResultDestroy(pResult);
 
@@ -343,8 +334,8 @@ bohInterpResult* bohInterpResultSetNumber(bohInterpResult* pResult, bohNumber nu
 
 bohInterpResult* bohInterpResultSetNumberPtr(bohInterpResult* pResult, const bohNumber* pNumber)
 {
-    assert(pResult);
-    assert(pNumber);
+    BOH_ASSERT(pResult);
+    BOH_ASSERT(pNumber);
 
     bohInterpResultDestroy(pResult);
 
@@ -357,7 +348,7 @@ bohInterpResult* bohInterpResultSetNumberPtr(bohInterpResult* pResult, const boh
 
 bohInterpResult* bohInterpResultSetNumberI64(bohInterpResult* pResult, int64_t value)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
 
     bohInterpResultDestroy(pResult);
 
@@ -370,7 +361,7 @@ bohInterpResult* bohInterpResultSetNumberI64(bohInterpResult* pResult, int64_t v
 
 bohInterpResult* bohInterpResultSetNumberF64(bohInterpResult* pResult, double value)
 {
-    assert(pResult);
+    BOH_ASSERT(pResult);
 
     bohInterpResultDestroy(pResult);
 
@@ -388,7 +379,7 @@ static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode);
 
 static bohInterpResult interpInterpretAstNode(const bohAstNode* pNode)
 {
-    assert(pNode);
+    BOH_ASSERT(pNode);
 
     if (bohAstNodeIsBinary(pNode)) {
         return interpInterpretBinaryAstNode(pNode);
@@ -402,14 +393,14 @@ static bohInterpResult interpInterpretAstNode(const bohAstNode* pNode)
         return bohInterpResultCreateStringBoharesStringPtr(bohAstNodeGetString(pNode));
     }
 
-    assert(false && "Invalid pNode type");
+    BOH_ASSERT(false && "Invalid pNode type");
     return bohInterpResultCreateNumberI64(-1);
 }
 
 
 static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode)
 {
-    assert(pNode);
+    BOH_ASSERT(pNode);
 
     const bohAstNodeUnary* pUnaryNode = bohAstNodeGetUnary(pNode);
 
@@ -420,7 +411,7 @@ static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode)
         "can't use unary %s operator with non numbers types", pOperatorStr);
 
     const bohNumber* pResultNumber = bohInterpResultGetNumber(&result);
-    assert(pResultNumber);
+    BOH_ASSERT(pResultNumber);
 
     switch (pUnaryNode->op) {
         case BOH_OP_PLUS:           return result;
@@ -431,7 +422,7 @@ static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode)
             return bohInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
     
         default:
-            assert(false && "Invalid unary operator");
+            BOH_ASSERT(false && "Invalid unary operator");
             return bohInterpResultCreateNumberI64(-1);
     }
 }
@@ -439,10 +430,10 @@ static bohInterpResult interpInterpretUnaryAstNode(const bohAstNode* pNode)
 
 static bohInterpResult interpInterpretLogicalAnd(const bohAstNodeBinary* pBinaryNode)
 {
-    assert(pBinaryNode);
+    BOH_ASSERT(pBinaryNode);
     
     const bohInterpResult leftInterpResult = interpInterpretAstNode(pBinaryNode->pLeftNode);
-    assert((bohInterpResultIsNumber(&leftInterpResult) || bohInterpResultIsString(&leftInterpResult)) && "Invalid left bohInterpResult type");
+    BOH_ASSERT((bohInterpResultIsNumber(&leftInterpResult) || bohInterpResultIsString(&leftInterpResult)) && "Invalid left bohInterpResult type");
 
     const bohNumber* pLeftNumber = bohInterpResultIsNumber(&leftInterpResult) ? bohInterpResultGetNumber(&leftInterpResult) : NULL;
     
@@ -451,7 +442,7 @@ static bohInterpResult interpInterpretLogicalAnd(const bohAstNodeBinary* pBinary
     }
 
     const bohInterpResult rightInterpResult = interpInterpretAstNode(pBinaryNode->pRightNode);
-    assert((bohInterpResultIsNumber(&rightInterpResult) || bohInterpResultIsString(&rightInterpResult)) && "Invalid right bohInterpResult type");
+    BOH_ASSERT((bohInterpResultIsNumber(&rightInterpResult) || bohInterpResultIsString(&rightInterpResult)) && "Invalid right bohInterpResult type");
 
     const bohNumber* pRightNumber = bohInterpResultIsNumber(&rightInterpResult) ? bohInterpResultGetNumber(&rightInterpResult) : NULL;
     
@@ -465,10 +456,10 @@ static bohInterpResult interpInterpretLogicalAnd(const bohAstNodeBinary* pBinary
 
 static bohInterpResult interpInterpretLogicalOr(const bohAstNodeBinary* pBinaryNode)
 {
-    assert(pBinaryNode);
+    BOH_ASSERT(pBinaryNode);
 
     const bohInterpResult leftInterpResult = interpInterpretAstNode(pBinaryNode->pLeftNode);
-    assert((bohInterpResultIsNumber(&leftInterpResult) || bohInterpResultIsString(&leftInterpResult)) && "Invalid left bohInterpResult type");
+    BOH_ASSERT((bohInterpResultIsNumber(&leftInterpResult) || bohInterpResultIsString(&leftInterpResult)) && "Invalid left bohInterpResult type");
 
     const bohNumber* pLeftNumber = bohInterpResultIsNumber(&leftInterpResult) ? bohInterpResultGetNumber(&leftInterpResult) : NULL;
     
@@ -477,7 +468,7 @@ static bohInterpResult interpInterpretLogicalOr(const bohAstNodeBinary* pBinaryN
     }
 
     const bohInterpResult rightInterpResult = interpInterpretAstNode(pBinaryNode->pRightNode);
-    assert((bohInterpResultIsNumber(&rightInterpResult) || bohInterpResultIsString(&rightInterpResult)) && "Invalid right bohInterpResult type");
+    BOH_ASSERT((bohInterpResultIsNumber(&rightInterpResult) || bohInterpResultIsString(&rightInterpResult)) && "Invalid right bohInterpResult type");
 
     const bohNumber* pRightNumber = bohInterpResultIsNumber(&rightInterpResult) ? bohInterpResultGetNumber(&rightInterpResult) : NULL;
     
@@ -491,7 +482,7 @@ static bohInterpResult interpInterpretLogicalOr(const bohAstNodeBinary* pBinaryN
 
 static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
 {
-    assert(pNode);
+    BOH_ASSERT(pNode);
 
     const bohAstNodeBinary* pBinaryNode = bohAstNodeGetBinary(pNode);
 
@@ -504,8 +495,8 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
     const bohInterpResult left = interpInterpretAstNode(pBinaryNode->pLeftNode);
     const bohInterpResult right = interpInterpretAstNode(pBinaryNode->pRightNode);
 
-    assert((bohInterpResultIsNumber(&left) || bohInterpResultIsString(&left)) && "Invalid left bohInterpResult type");
-    assert((bohInterpResultIsNumber(&right) || bohInterpResultIsString(&right)) && "Invalid right bohInterpResult type");
+    BOH_ASSERT((bohInterpResultIsNumber(&left) || bohInterpResultIsString(&left)) && "Invalid left bohInterpResult type");
+    BOH_ASSERT((bohInterpResultIsNumber(&right) || bohInterpResultIsString(&right)) && "Invalid right bohInterpResult type");
 
     const bohNumber* pLeftNumber = bohInterpResultIsNumber(&left) ? bohInterpResultGetNumber(&left) : NULL;
     const bohNumber* pRightNumber = bohInterpResultIsNumber(&right) ? bohInterpResultGetNumber(&right) : NULL;
@@ -603,7 +594,7 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
         case BOH_OP_BITWISE_LSHIFT:
             return bohInterpResultCreateNumber(bohNumberBitwiseLShift(pLeftNumber, pRightNumber));    
         default:
-            assert(false && "Invalid binary operator");
+            BOH_ASSERT(false && "Invalid binary operator");
             return bohInterpResultCreateNumberI64(-1);
     }
 }
@@ -611,7 +602,7 @@ static bohInterpResult interpInterpretBinaryAstNode(const bohAstNode* pNode)
 
 bohInterpreter bohInterpCreate(const bohAST* pAst)
 {
-    assert(pAst);
+    BOH_ASSERT(pAst);
 
     bohInterpreter interp;
     interp.pAst = pAst;
@@ -622,17 +613,17 @@ bohInterpreter bohInterpCreate(const bohAST* pAst)
 
 void bohInterpDestroy(bohInterpreter* pInterp)
 {
-    assert(pInterp);
+    BOH_ASSERT(pInterp);
     pInterp->pAst = NULL;
 }
 
 
 bohInterpResult bohInterpInterpret(bohInterpreter* pInterp)
 {
-    assert(pInterp);
+    BOH_ASSERT(pInterp);
 
     const bohAST* pAst = pInterp->pAst;
-    assert(pAst);
+    BOH_ASSERT(pAst);
 
     return bohAstIsEmpty(pAst) ? bohInterpResultCreateNumberI64(0) : interpInterpretAstNode(pAst->pRoot);
 }

@@ -8,7 +8,7 @@
     if (!(COND)) {                                                          \
         char msg[1024] = {0};                                               \
         sprintf_s(msg, sizeof(msg) - 1, FMT, __VA_ARGS__);                  \
-        bohStateEmplaceLexerError(bohGlobalStateGet(), LINE, COLUMN, msg);  \
+        bohStateEmplaceLexerError(bohGlobalStateGet(), (int32_t)(LINE), (int32_t)(COLUMN), msg);  \
     }
 
 
@@ -93,14 +93,14 @@ static bool lexIsIdentifierAppropriateChar(char ch)
 
 static void lexProcessCarriageReturn(bohLexer* pLexer)
 {
-    assert(pLexer);
+    BOH_ASSERT(pLexer);
     pLexer->column = 0;
 }
 
 
 static void lexProcessNewLine(bohLexer* pLexer)
 {
-    assert(pLexer);
+    BOH_ASSERT(pLexer);
     
     ++pLexer->line;
     lexProcessCarriageReturn(pLexer);
@@ -109,22 +109,22 @@ static void lexProcessNewLine(bohLexer* pLexer)
 
 static void lexTokenDefConstructor(void* pToken)
 {
-    assert(pToken);
+    BOH_ASSERT(pToken);
     *((bohToken*)pToken) = bohTokenCreate();
 }
 
 
 static void lexTokenDestructor(void* pToken)
 {
-    assert(pToken);
+    BOH_ASSERT(pToken);
     bohTokenDestroy((bohToken*)pToken);
 }
 
 
 static void lexTokenCopy(void* pDstToken, const void* pSrcToken)
 {
-    assert(pDstToken);
-    assert(pSrcToken);
+    BOH_ASSERT(pDstToken);
+    BOH_ASSERT(pSrcToken);
     bohTokenAssign((bohToken*)pDstToken, (const bohToken*)pSrcToken);
 }
 
@@ -201,12 +201,12 @@ static bohStringView lexGetCurrLexem(bohLexer* pLexer)
 
 static bohToken lexGetNextToken(bohLexer* pLexer)
 {
-    assert(pLexer);
+    BOH_ASSERT(pLexer);
 
     pLexer->startPos = pLexer->currPos;
 
-    const size_t tokenLine = pLexer->line;
-    const size_t tokenColumn = pLexer->column;
+    const bohLineNmb tokenLine = pLexer->line;
+    const bohColumnNmb tokenColumn = pLexer->column;
 
     const char ch = lexAdvanceCurrPos(pLexer);
 
@@ -498,7 +498,7 @@ bohToken bohTokenCreate(void)
 }
 
 
-bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t line, uint32_t column)
+bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, bohLineNmb line, bohColumnNmb column)
 {
     bohToken token;
 
@@ -513,7 +513,7 @@ bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t 
 
 void bohTokenDestroy(bohToken* pToken)
 {
-    assert(pToken);
+    BOH_ASSERT(pToken);
 
     bohStringViewReset(&pToken->lexeme);
     pToken->type = BOH_TOKEN_TYPE_UNKNOWN;
@@ -524,8 +524,8 @@ void bohTokenDestroy(bohToken* pToken)
 
 void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringViewAssignStringViewPtr(&pDst->lexeme, &pSrc->lexeme);
     pDst->type = pSrc->type;
@@ -536,28 +536,28 @@ void bohTokenAssign(bohToken* pDst, const bohToken* pSrc)
 
 const bohStringView* bohTokenGetLexeme(const bohToken* pToken)
 {
-    assert(pToken);
+    BOH_ASSERT(pToken);
     return &pToken->lexeme;
 }
 
 
 bohTokenType bohTokenGetType(const bohToken *pToken)
 {
-    assert(pToken);
+    BOH_ASSERT(pToken);
     return pToken->type;
 }
 
 
 const char* bohTokenGetTypeStr(const bohToken *pToken)
 {
-    assert(pToken);
+    BOH_ASSERT(pToken);
     return bohLexerConvertTokenTypeToStr(pToken->type);
 }
 
 
 bohLexer bohLexerCreate(const char* pCodeData, size_t codeDataSize)
 {
-    assert(pCodeData);
+    BOH_ASSERT(pCodeData);
 
     bohLexer lexer;
 
@@ -577,7 +577,7 @@ bohLexer bohLexerCreate(const char* pCodeData, size_t codeDataSize)
 
 void bohLexerDestroy(bohLexer* pLexer)
 {
-    assert(pLexer);
+    BOH_ASSERT(pLexer);
 
     bohStringViewReset(&pLexer->data);
 
@@ -593,14 +593,14 @@ void bohLexerDestroy(bohLexer* pLexer)
 
 const bohTokenStorage* bohLexerGetTokens(const bohLexer* pLexer)
 {
-    assert(pLexer);
+    BOH_ASSERT(pLexer);
     return &pLexer->tokens;
 }
 
 
 void bohLexerTokenize(bohLexer* pLexer)
 {
-    assert(pLexer);
+    BOH_ASSERT(pLexer);
 
     const size_t dataSize = bohStringViewGetSize(&pLexer->data);
 

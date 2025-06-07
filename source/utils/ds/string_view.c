@@ -53,14 +53,14 @@ bohStringView bohStringViewCreateStringView(bohStringView strView)
 
 bohStringView bohStringViewCreateStringViewPtr(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
     return *pStrView;
 }
 
 
 void bohStringViewReset(bohStringView* pStringView)
 {
-    assert(pStringView);
+    BOH_ASSERT(pStringView);
 
     pStringView->pData = "";
     pStringView->size = 0;
@@ -69,7 +69,7 @@ void bohStringViewReset(bohStringView* pStringView)
 
 bohStringView* bohStringViewAssignCStr(bohStringView* pDst, const char* pStr)
 {
-    assert(pDst);
+    BOH_ASSERT(pDst);
 
     pDst->pData = pStr ? pStr : "";
     pDst->size = pStr ? strlen(pStr) : 0;
@@ -80,10 +80,10 @@ bohStringView* bohStringViewAssignCStr(bohStringView* pDst, const char* pStr)
 
 bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, const char* pStr, size_t size)
 {
-    assert(pDst);
+    BOH_ASSERT(pDst);
 
     if (!pStr) {
-        assert(size == 0 && "pStr is NULL but size is not 0");
+        BOH_ASSERT(size == 0 && "pStr is NULL but size is not 0");
     }
 
     pDst->pData = pStr ? pStr : "";
@@ -101,8 +101,8 @@ bohStringView* bohStringViewAssignStringView(bohStringView* pDst, bohStringView 
 
 bohStringView* bohStringViewAssignStringViewPtr(bohStringView* pDst, const bohStringView* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     pDst->pData = pSrc->pData;
     pDst->size = pSrc->size;
@@ -113,8 +113,8 @@ bohStringView* bohStringViewAssignStringViewPtr(bohStringView* pDst, const bohSt
 
 bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* pStr)
 {
-    assert(pDst);
-    assert(pStr);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pStr);
 
     pDst->pData = pStr->pData;
     pDst->size = pStr->size;
@@ -125,8 +125,8 @@ bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* p
 
 bohStringView* bohStringViewMove(bohStringView* pDst, bohStringView* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringViewAssignStringViewPtr(pDst, pSrc);
     bohStringViewReset(pSrc);
@@ -137,23 +137,23 @@ bohStringView* bohStringViewMove(bohStringView* pDst, bohStringView* pSrc)
 
 const char* bohStringViewGetData(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
     return pStrView->pData;
 }
 
 
 size_t bohStringViewGetSize(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
     return pStrView->size;
 }
 
 
 char bohStringViewAt(const bohStringView* pStrView, size_t index)
 {
-    assert(pStrView);
-    assert(pStrView->pData);
-    assert(index < pStrView->size);
+    BOH_ASSERT(pStrView);
+    BOH_ASSERT(pStrView->pData);
+    BOH_ASSERT(index < pStrView->size);
 
     return pStrView->pData[index];
 }
@@ -161,7 +161,7 @@ char bohStringViewAt(const bohStringView* pStrView, size_t index)
 
 bool bohStringViewIsEmpty(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
     return pStrView->size == 0;
 }
 
@@ -174,8 +174,8 @@ int32_t bohStringViewCmp(const bohStringView* pLeft, bohStringView right)
 
 int32_t bohStringViewCmpPtr(const bohStringView *pLeft, const bohStringView *pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     const size_t minSize = (pLeft->size < pRight->size) ? pLeft->size : pRight->size;
 

@@ -18,20 +18,20 @@ bohString bohStringCreate(void)
 
 bohString bohStringCreateCStr(const char* pCStr)
 {
-    assert(pCStr);
+    BOH_ASSERT(pCStr);
     return bohStringCreateFromTo(pCStr, pCStr + strlen(pCStr));
 }
 
 
 bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd)
 {
-    assert(pBegin);
-    assert(pEnd);
+    BOH_ASSERT(pBegin);
+    BOH_ASSERT(pEnd);
 
     const uintptr_t beginAddr = (uintptr_t)pBegin;
     const uintptr_t endAddr = (uintptr_t)pEnd;
 
-    assert(endAddr >= beginAddr);
+    BOH_ASSERT(endAddr >= beginAddr);
 
     const size_t length = endAddr - beginAddr;
 
@@ -60,7 +60,7 @@ bohString bohStringCreateStringView(bohStringView strView)
 
 bohString bohStringCreateStringViewPtr(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
 
     const char* pStr = bohStringViewGetData(pStrView);
     const size_t size = bohStringViewGetSize(pStrView);
@@ -71,7 +71,7 @@ bohString bohStringCreateStringViewPtr(const bohStringView* pStrView)
 
 bohString bohStringCreateString(const bohString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     bohString string;
     bohStringAssign(&string, pString);
@@ -82,7 +82,7 @@ bohString bohStringCreateString(const bohString* pString)
 
 void bohStringDestroy(bohString* pStr)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
 
     if (pStr->capacity > 0) {
         free(pStr->pData);
@@ -96,8 +96,8 @@ void bohStringDestroy(bohString* pStr)
 
 bohString* bohStringAssign(bohString* pDst, const bohString* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringDestroy(pDst);
 
@@ -118,7 +118,7 @@ bohString* bohStringAssign(bohString* pDst, const bohString* pSrc)
 
 bohString* bohStringAssignSizedCStr(bohString* pDst, const char* pCStr, size_t length)
 {
-    assert(pDst);
+    BOH_ASSERT(pDst);
 
     const size_t cStrCapacity = length + 1;
 
@@ -163,7 +163,7 @@ bohString* bohStringAssignStringViewPtr(bohString* pDst, const bohStringView* pS
 
 bohString* bohStringReserve(bohString* pStr, size_t newCapacity)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
 
     if (newCapacity <= pStr->capacity) {
         return pStr;
@@ -184,7 +184,7 @@ bohString* bohStringReserve(bohString* pStr, size_t newCapacity)
 
 bohString* bohStringResize(bohString* pStr, size_t newLength)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
 
     if (newLength == pStr->size) {
         return pStr;
@@ -205,8 +205,8 @@ bohString* bohStringResize(bohString* pStr, size_t newLength)
 
 bohString* bohStringMove(bohString* pDst, bohString* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringDestroy(pDst);
 
@@ -224,30 +224,30 @@ bohString* bohStringMove(bohString* pDst, bohString* pSrc)
 
 const char* bohStringGetCStr(const bohString* pStr)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
     return pStr->pData;
 }
 
 
 size_t bohStringGetSize(const bohString* pStr)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
     return pStr->size;
 }
 
 
 size_t bohStringGetCapacity(const bohString* pStr)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
     return pStr->capacity;
 }
 
 
 char bohStringAt(const bohString* pStr, size_t index)
 {
-    assert(pStr);
-    assert(pStr->pData);
-    assert(index < pStr->size);
+    BOH_ASSERT(pStr);
+    BOH_ASSERT(pStr->pData);
+    BOH_ASSERT(index < pStr->size);
 
     return pStr->pData[index];
 }
@@ -255,15 +255,15 @@ char bohStringAt(const bohString* pStr, size_t index)
 
 bool bohStringIsEmpty(const bohString* pStr)
 {
-    assert(pStr);
+    BOH_ASSERT(pStr);
     return pStr->size == 0;
 }
 
 
 bool bohStringEqual(const bohString* pLeft, const bohString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
@@ -280,8 +280,8 @@ bool bohStringNotEqual(const bohString* pLeft, const bohString* pRight)
 
 bool bohStringLess(const bohString* pLeft, const bohString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
@@ -292,8 +292,8 @@ bool bohStringLess(const bohString* pLeft, const bohString* pRight)
 
 bool bohStringLessEqual(const bohString* pLeft, const bohString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
@@ -304,8 +304,8 @@ bool bohStringLessEqual(const bohString* pLeft, const bohString* pRight)
 
 bool bohStringGreater(const bohString* pLeft, const bohString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
@@ -316,8 +316,8 @@ bool bohStringGreater(const bohString* pLeft, const bohString* pRight)
 
 bool bohStringGreaterEqual(const bohString* pLeft, const bohString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     bohStringView left = bohStringViewCreateString(pLeft);
     bohStringView right = bohStringViewCreateString(pRight);
@@ -351,8 +351,8 @@ bohString bohStringViewAddString(const bohStringView* pLStrView, const bohString
 
 bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohStringView* pRStrView)
 {
-    assert(pLStrView);
-    assert(pRStrView);
+    BOH_ASSERT(pLStrView);
+    BOH_ASSERT(pRStrView);
 
     const size_t leftStringSize = bohStringViewGetSize(pLStrView);
     const size_t rightStringSize = bohStringViewGetSize(pRStrView);

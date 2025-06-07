@@ -72,18 +72,20 @@ typedef struct ValueExpr
         bohNumber number;
         bohBoharesString string;
     };
-
     bohValueExprType type;
+
+    bohLineNmb line;
+    bohColumnNmb column;
 } bohValueExpr;
 
 
 void bohValueExprDestroy(bohValueExpr* pExpr);
 
-bohValueExpr bohValueExprCreate(void);
-bohValueExpr bohValueExprCreateNumber(bohNumber number);
-bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber);
-bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString);
-bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString);
+bohValueExpr bohValueExprCreate(bohLineNmb line, bohColumnNmb column);
+bohValueExpr bohValueExprCreateNumber(bohNumber number, bohLineNmb line, bohColumnNmb column);
+bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber, bohLineNmb line, bohColumnNmb column);
+bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString, bohLineNmb line, bohColumnNmb column);
+bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString, bohLineNmb line, bohColumnNmb column);
 
 bool bohValueExprIsNumber(const bohValueExpr* pExpr);
 bool bohValueExprIsNumberI64(const bohValueExpr* pExpr);
@@ -106,12 +108,15 @@ typedef struct UnaryExpr
 {
     bohExprIdx exprIdx;
     bohExprOperator op;
+
+    bohLineNmb line;
+    bohColumnNmb column;
 } bohUnaryExpr;
 
 
 void bohUnaryExprDestroy(bohUnaryExpr* pExpr);
 
-bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx);
+bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column);
 
 bohExprIdx bohUnaryExprGetExprIdx(const bohUnaryExpr* pExpr);
 bohExprOperator bohUnaryExprGetOp(const bohUnaryExpr* pExpr);
@@ -125,12 +130,16 @@ typedef struct BinaryExpr
     bohExprIdx leftExprIdx;
     bohExprIdx rightExprIdx;
     bohExprOperator op;
+
+    bohLineNmb line;
+    bohColumnNmb column;
 } bohBinaryExpr;
 
 
 void bohBinaryExprDestroy(bohBinaryExpr* pExpr);
 
-bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx);
+bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx,
+    bohLineNmb line, bohColumnNmb column);
 
 bohExprIdx bohBinaryExprGetLeftExprIdx(const bohBinaryExpr* pExpr);
 bohExprIdx bohBinaryExprGetRightExprIdx(const bohBinaryExpr* pExpr);
@@ -158,6 +167,7 @@ typedef struct Expr
     };
     
     bohExprType type;
+    bohExprIdx selfIdx;
 } bohExpr;
 
 
@@ -165,13 +175,13 @@ void bohExprDestroy(bohExpr* pExpr);
 
 bohExpr bohExprCreate(void);
 
-bohExpr bohExprCreateNumberValueExpr(bohNumber number);
-bohExpr bohExprCreateNumberValueExprPtr(const bohNumber* pNumber);
-bohExpr bohExprCreateStringValueExpr(const bohBoharesString* pString);
-bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString);
+bohExpr bohExprCreateNumberValueExpr(bohNumber number, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column);
+bohExpr bohExprCreateNumberValueExprPtr(const bohNumber* pNumber, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column);
+bohExpr bohExprCreateStringValueExpr(const bohBoharesString* pString, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column);
+bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column);
 
-bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx exprIdx);
-bohExpr bohExprCreateBinaryExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx);
+bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column);
+bohExpr bohExprCreateBinaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx, bohLineNmb line, bohColumnNmb column);
 
 bool bohExprIsValueExpr(const bohExpr* pExpr);
 bool bohExprIsUnaryExpr(const bohExpr* pExpr);
@@ -181,6 +191,8 @@ const bohValueExpr* bohExprGetValueExpr(const bohExpr* pExpr);
 const bohUnaryExpr* bohExprGetUnaryExpr(const bohExpr* pExpr);
 const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr);
 
+bohExprIdx bohExprGetStorageIdx(const bohExpr* pExpr);
+
 bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc);
 bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc);
 
@@ -188,12 +200,15 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc);
 typedef struct RawExprStmt
 {
     bohExprIdx exprIdx;
+
+    bohLineNmb line;
+    bohColumnNmb column;
 } bohRawExprStmt;
 
 
 void bohRawExprStmtDestroy(bohRawExprStmt* pStmt);
 
-bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx);
+bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column);
 
 bohExprIdx bohRawExprStmtGetExprIdx(const bohRawExprStmt* pStmt);
 
@@ -203,13 +218,16 @@ bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc);
 
 typedef struct PrintStmt
 {
-    bohStmtIdx stmtIdx;
+    bohStmtIdx argStmtIdx;
+
+    bohLineNmb line;
+    bohColumnNmb column;
 } bohPrintStmt;
 
 
 void bohPrintStmtDestroy(bohPrintStmt* pStmt);
 
-bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx stmtIdx);
+bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column);
 
 bohStmtIdx bohPrintStmtGetStmtIdx(const bohPrintStmt* pStmt);
 
@@ -234,14 +252,15 @@ typedef struct Stmt
     };
     
     bohStmtType type;
+    bohStmtIdx selfIdx;
 } bohStmt;
 
 
 void bohStmtDestroy(bohStmt* pStmt);
 
 bohStmt bohStmtCreate(void);
-bohStmt bohStmtCreateRawExpr(bohExprIdx exprIdx);
-bohStmt bohStmtCreatePrint(bohStmtIdx stmtIdx);
+bohStmt bohStmtCreateRawExpr(bohStmtIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column);
+bohStmt bohStmtCreatePrint(bohStmtIdx selfIdx, bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column);
 
 bohStmtType bohStmtGetType(const bohStmt* pStmt);
 
@@ -258,15 +277,6 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc);
 
 typedef bohDynArray bohStmtStorage;
 typedef bohDynArray bohExprStorage;
-
-typedef struct AST
-{
-    bohStmtStorage stmts;
-    bohExprStorage exprs;
-} bohAST;
-
-
-void bohAstDestroy(bohAST* pAST);
 
 
 typedef struct StmtStorageCreateInfo
@@ -285,12 +295,34 @@ typedef struct ExprStorageCreateInfo
 } bohExprStorageCreateInfo;
 
 
-bohAST bohASTCreate(
+typedef struct AST
+{
+    bohStmtStorage stmts;
+    bohExprStorage exprs;
+} bohAST;
+
+
+void bohAstDestroy(bohAST* pAST);
+
+bohAST bohAstCreate(
     const bohStmtStorageCreateInfo* pStmtStorageCreateInfo, 
     const bohExprStorageCreateInfo* pExprStorageCreateInfo
 );
 
-bool bohAstIsEmpty(const bohAST* pAST);
+bohExpr* bohAstAllocateExpr(bohAST* pAst);
+bohStmt* bohAstAllocateStmt(bohAST* pAst);
+
+bohStmtStorage* bohAstGetStmts(bohAST* pAst);
+const bohStmtStorage* bohAstGetStmtsConst(const bohAST* pAst);
+
+const bohStmt* bohAstGetStmtByIdx(const bohAST* pAst, size_t index);
+
+bohExprStorage* bohAstGetExprs(bohAST* pAst);
+const bohExprStorage* bohAstGetExprsConst(const bohAST* pAst);
+
+const bohExpr* bohAstGetExprByIdx(const bohAST* pAst, size_t index);
+
+bool bohAstIsEmpty(const bohAST* pAst);
 
 
 typedef bohDynArray bohTokenStorage;

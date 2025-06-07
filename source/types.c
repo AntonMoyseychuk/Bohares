@@ -22,7 +22,7 @@ bohBoharesString bohBoharesStringCreateStringViewStringView(bohStringView strVie
 
 bohBoharesString bohBoharesStringCreateStringViewStringViewPtr(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
 
     bohBoharesString str;
 
@@ -46,7 +46,7 @@ bohBoharesString bohBoharesStringCreateString(void)
 
 bohBoharesString bohBoharesStringCreateStringString(const bohString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     bohBoharesString str;
 
@@ -65,7 +65,7 @@ bohBoharesString bohBoharesStringCreateStringStringView(bohStringView strView)
 
 bohBoharesString bohBoharesStringCreateStringStringViewPtr(const bohStringView* pStrView)
 {
-    assert(pStrView);
+    BOH_ASSERT(pStrView);
 
     bohBoharesString str;
 
@@ -78,7 +78,7 @@ bohBoharesString bohBoharesStringCreateStringStringViewPtr(const bohStringView* 
 
 void bohBoharesStringDestroy(bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     if (bohBoharesStringIsString(pString)) {
         bohStringDestroy(&pString->string);
@@ -92,8 +92,8 @@ void bohBoharesStringDestroy(bohBoharesString* pString)
 
 bohBoharesString* bohBoharesStringAssign(bohBoharesString* pDst, const bohBoharesString* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohBoharesStringDestroy(pDst);
 
@@ -117,8 +117,8 @@ bohBoharesString* bohBoharesStringStringAssignStringView(bohBoharesString* pDst,
 
 bohBoharesString* bohBoharesStringStringAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohBoharesStringDestroy(pDst);
 
@@ -143,8 +143,8 @@ bohBoharesString* bohBoharesStringStringViewAssignStringView(bohBoharesString* p
 
 bohBoharesString* bohBoharesStringStringViewAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohBoharesStringDestroy(pDst);
 
@@ -163,8 +163,8 @@ bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst,
 
 bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohBoharesStringDestroy(pDst);
     
@@ -177,22 +177,22 @@ bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString*
 
 bool bohBoharesStringIsStringView(const bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
     return pString->type == BOH_STRING_TYPE_VIEW;
 }
 
 
 bool bohBoharesStringIsString(const bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
     return pString->type == BOH_STRING_TYPE_STRING;
 }
 
 
 const bohStringView* bohBoharesStringGetStringView(const bohBoharesString* pString)
 {
-    assert(pString);
-    assert(bohBoharesStringIsStringView(pString));
+    BOH_ASSERT(pString);
+    BOH_ASSERT(bohBoharesStringIsStringView(pString));
 
     return &pString->view;
 }
@@ -200,8 +200,8 @@ const bohStringView* bohBoharesStringGetStringView(const bohBoharesString* pStri
 
 const bohString* bohBoharesStringGetString(const bohBoharesString* pString)
 {
-    assert(pString);
-    assert(bohBoharesStringIsString(pString));
+    BOH_ASSERT(pString);
+    BOH_ASSERT(bohBoharesStringIsString(pString));
 
     return &pString->string;
 }
@@ -209,7 +209,7 @@ const bohString* bohBoharesStringGetString(const bohBoharesString* pString)
 
 const char* bohBoharesStringGetData(const bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     if (bohBoharesStringIsString(pString)) {
         return bohStringGetCStr(&pString->string);
@@ -221,7 +221,7 @@ const char* bohBoharesStringGetData(const bohBoharesString* pString)
 
 size_t bohBoharesStringGetSize(const bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     if (bohBoharesStringIsString(pString)) {
         return bohStringGetSize(&pString->string);
@@ -233,7 +233,7 @@ size_t bohBoharesStringGetSize(const bohBoharesString* pString)
 
 char bohBoharesStringAt(const bohBoharesString* pString, size_t index)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     if (bohBoharesStringIsString(pString)) {
         return bohStringAt(&pString->string, index);
@@ -245,7 +245,7 @@ char bohBoharesStringAt(const bohBoharesString* pString, size_t index)
 
 bool bohBoharesStringIsEmpty(const bohBoharesString* pString)
 {
-    assert(pString);
+    BOH_ASSERT(pString);
 
     if (bohBoharesStringIsString(pString)) {
         return bohStringIsEmpty(&pString->string);
@@ -257,8 +257,8 @@ bool bohBoharesStringIsEmpty(const bohBoharesString* pString)
 
 int32_t bohBoharesStringCmp(const bohBoharesString* pLeft, const bohBoharesString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     const bohStringView left = bohBoharesStringIsString(pLeft) ? bohStringViewCreateString(&pLeft->string) : pLeft->view;
     const bohStringView right = bohBoharesStringIsString(pRight) ? bohStringViewCreateString(&pRight->string) : pRight->view;
@@ -305,8 +305,8 @@ bool bohBoharesStringGreaterEqual(const bohBoharesString* pLeft, const bohBohare
 
 bohBoharesString bohBoharesStringAdd(const bohBoharesString* pLeft, const bohBoharesString* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     bohBoharesString result = bohBoharesStringCreateString();
 
@@ -359,22 +359,22 @@ bohNumber bohNumberCreateF64(double value)
 
 bool bohNumberIsI64(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     return pNumber->type == BOH_NUMBER_TYPE_INTEGER;
 }
 
 
 bool bohNumberIsF64(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     return pNumber->type == BOH_NUMBER_TYPE_FLOAT;
 }
 
 
 int64_t bohNumberGetI64(const bohNumber* pNumber)
 {
-    assert(pNumber);
-    assert(bohNumberIsI64(pNumber));
+    BOH_ASSERT(pNumber);
+    BOH_ASSERT(bohNumberIsI64(pNumber));
     
     return pNumber->i64;
 }
@@ -382,22 +382,22 @@ int64_t bohNumberGetI64(const bohNumber* pNumber)
 
 bool bohNumberIsIntegral(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     return bohNumberIsI64(pNumber);
 }
 
 
 bool bohNumberIsFloatingPoint(const bohNumber *pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     return bohNumberIsF64(pNumber);
 }
 
 
 double bohNumberGetF64(const bohNumber* pNumber)
 {
-    assert(pNumber);
-    assert(bohNumberIsF64(pNumber));
+    BOH_ASSERT(pNumber);
+    BOH_ASSERT(bohNumberIsF64(pNumber));
     
     return pNumber->f64;
 }
@@ -405,7 +405,7 @@ double bohNumberGetF64(const bohNumber* pNumber)
 
 void bohNumberSetI64(bohNumber* pNumber, int64_t value)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     
     pNumber->type = BOH_NUMBER_TYPE_INTEGER;
     pNumber->i64 = value;
@@ -414,7 +414,7 @@ void bohNumberSetI64(bohNumber* pNumber, int64_t value)
 
 void bohNumberSetF64(bohNumber* pNumber, double value)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     
     pNumber->type = BOH_NUMBER_TYPE_FLOAT;
     pNumber->f64 = value;
@@ -423,8 +423,8 @@ void bohNumberSetF64(bohNumber* pNumber, double value)
 
 bohNumber* bohNumberAssign(bohNumber* pDst, const bohNumber* pNumber)
 {
-    assert(pDst);
-    assert(pNumber);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pNumber);
 
     if (bohNumberIsI64(pNumber)) {
         bohNumberSetI64(pDst, bohNumberGetI64(pNumber));
@@ -438,8 +438,8 @@ bohNumber* bohNumberAssign(bohNumber* pDst, const bohNumber* pNumber)
 
 bool bohNumberEqual(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
     
     return BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) == BOH_NUMBER_GET_UNDERLYING_VALUE(pRight);
 }
@@ -453,8 +453,8 @@ bool bohNumberNotEqual(const bohNumber* pLeft, const bohNumber* pRight)
 
 bool bohNumberLess(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
     
     return BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) < BOH_NUMBER_GET_UNDERLYING_VALUE(pRight);
 }
@@ -462,8 +462,8 @@ bool bohNumberLess(const bohNumber* pLeft, const bohNumber* pRight)
 
 bool bohNumberGreater(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
     
     return BOH_NUMBER_GET_UNDERLYING_VALUE(pLeft) > BOH_NUMBER_GET_UNDERLYING_VALUE(pRight);
 }
@@ -483,7 +483,7 @@ bool bohNumberGreaterEqual(const bohNumber* pLeft, const bohNumber* pRight)
 
 bool bohNumberIsZero(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     
     if (bohNumberIsF64(pNumber)) {
         const bohNumber zeroF64 = bohNumberCreateF64(0.0);
@@ -497,7 +497,7 @@ bool bohNumberIsZero(const bohNumber* pNumber)
 
 bohNumber bohNumberGetOpposite(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     
     if (bohNumberIsF64(pNumber)) {
         return bohNumberCreateF64(-bohNumberGetF64(pNumber));
@@ -518,7 +518,7 @@ bohNumber* bohNumberMakeOpposite(bohNumber* pNumber)
 
 bohNumber bohNumberGetNegation(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
     
     if (bohNumberIsF64(pNumber)) {
         return bohNumberCreateF64(!bohNumberGetF64(pNumber));
@@ -539,8 +539,8 @@ bohNumber* bohNumberMakeNegation(bohNumber* pNumber)
 
 bohNumber bohNumberAdd(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     if (bohNumberIsF64(pLeft)) {
         return bohNumberCreateF64(bohNumberGetF64(pLeft) + BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
@@ -563,8 +563,8 @@ bohNumber* bohNumberAddAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberSub(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     if (bohNumberIsF64(pLeft)) {
         return bohNumberCreateF64(bohNumberGetF64(pLeft) - BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
@@ -587,8 +587,8 @@ bohNumber* bohNumberSubAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberMult(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     if (bohNumberIsF64(pLeft)) {
         return bohNumberCreateF64(bohNumberGetF64(pLeft) * BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
@@ -611,8 +611,8 @@ bohNumber* bohNumberMultAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberDiv(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     if (bohNumberIsF64(pLeft)) {
         return bohNumberCreateF64(bohNumberGetF64(pLeft) / BOH_NUMBER_GET_UNDERLYING_VALUE(pRight));
@@ -635,8 +635,8 @@ bohNumber* bohNumberDivAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberMod(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
 
     if (bohNumberIsF64(pLeft)) {
         return bohNumberCreateF64(fmod(bohNumberGetF64(pLeft), BOH_NUMBER_GET_UNDERLYING_VALUE(pRight)));
@@ -659,8 +659,8 @@ bohNumber* bohNumberModAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberGetBitwiseNegation(const bohNumber* pNumber)
 {
-    assert(pNumber);
-    assert(bohNumberIsI64(pNumber));
+    BOH_ASSERT(pNumber);
+    BOH_ASSERT(bohNumberIsI64(pNumber));
 
     return bohNumberCreateI64(~bohNumberGetI64(pNumber));
 }
@@ -675,10 +675,10 @@ bohNumber* bohNumberMakeBitwiseNegation(bohNumber* pNumber)
 
 bohNumber bohNumberBitwiseAnd(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
-    assert(bohNumberIsI64(pLeft));
-    assert(bohNumberIsI64(pRight));
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
+    BOH_ASSERT(bohNumberIsI64(pLeft));
+    BOH_ASSERT(bohNumberIsI64(pRight));
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) & bohNumberGetI64(pRight));
 }
@@ -693,10 +693,10 @@ bohNumber* bohNumberBitwiseAndAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberBitwiseOr(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
-    assert(bohNumberIsI64(pLeft));
-    assert(bohNumberIsI64(pRight));
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
+    BOH_ASSERT(bohNumberIsI64(pLeft));
+    BOH_ASSERT(bohNumberIsI64(pRight));
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) | bohNumberGetI64(pRight));
 }
@@ -711,10 +711,10 @@ bohNumber* bohNumberBitwiseOrAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberBitwiseXor(const bohNumber* pLeft, const bohNumber* pRight)
 {
-    assert(pLeft);
-    assert(pRight);
-    assert(bohNumberIsI64(pLeft));
-    assert(bohNumberIsI64(pRight));
+    BOH_ASSERT(pLeft);
+    BOH_ASSERT(pRight);
+    BOH_ASSERT(bohNumberIsI64(pLeft));
+    BOH_ASSERT(bohNumberIsI64(pRight));
 
     return bohNumberCreateI64(bohNumberGetI64(pLeft) ^ bohNumberGetI64(pRight));
 }
@@ -729,10 +729,10 @@ bohNumber* bohNumberBitwiseXorAssign(bohNumber* pDst, const bohNumber* pValue)
 
 bohNumber bohNumberBitwiseLShift(const bohNumber* pValue, const bohNumber* pBits)
 {
-    assert(pValue);
-    assert(pBits);
-    assert(bohNumberIsI64(pValue));
-    assert(bohNumberIsI64(pBits));
+    BOH_ASSERT(pValue);
+    BOH_ASSERT(pBits);
+    BOH_ASSERT(bohNumberIsI64(pValue));
+    BOH_ASSERT(bohNumberIsI64(pBits));
 
     return bohNumberCreateI64(bohNumberGetI64(pValue) << bohNumberGetI64(pBits));
 }
@@ -747,10 +747,10 @@ bohNumber* bohNumberBitwiseLShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 
 bohNumber bohNumberBitwiseRShift(const bohNumber* pValue, const bohNumber* pBits)
 {
-    assert(pValue);
-    assert(pBits);
-    assert(bohNumberIsI64(pValue));
-    assert(bohNumberIsI64(pBits));
+    BOH_ASSERT(pValue);
+    BOH_ASSERT(pBits);
+    BOH_ASSERT(bohNumberIsI64(pValue));
+    BOH_ASSERT(bohNumberIsI64(pBits));
 
     return bohNumberCreateI64(bohNumberGetI64(pValue) >> bohNumberGetI64(pBits));
 }
@@ -765,7 +765,7 @@ bohNumber *bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits)
 
 bohString bohNumberToString(const bohNumber* pNumber)
 {
-    assert(pNumber);
+    BOH_ASSERT(pNumber);
 
     char buff[256] = { 0 };
     sprintf_s(buff, sizeof(buff) - 1, bohNumberIsF64(pNumber) ? "%.10f" : "%lld", BOH_NUMBER_GET_UNDERLYING_VALUE(pNumber));
@@ -776,8 +776,8 @@ bohString bohNumberToString(const bohNumber* pNumber)
 
 bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohNumberAssign(pDst, pSrc);
 
@@ -789,7 +789,7 @@ bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc)
             bohNumberSetF64(pSrc, 0.0);
             break;
         default:
-            assert(false && "Invalid number type");
+            BOH_ASSERT(false && "Invalid number type");
             break;
     }
 

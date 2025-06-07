@@ -73,7 +73,7 @@ bohLexerError bohLexerErrorCreate(void)
 
 void bohLexerErrorDestroy(bohLexerError* pError)
 {
-    assert(pError);
+    BOH_ASSERT(pError);
 
     bohStringViewReset(&pError->filepath);
     bohStringDestroy(&pError->message);
@@ -84,8 +84,8 @@ void bohLexerErrorDestroy(bohLexerError* pError)
 
 bohLexerError* bohLexerErrorAssign(bohLexerError* pDst, const bohLexerError* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringViewAssignStringViewPtr(&pDst->filepath, &pSrc->filepath);
     bohStringAssign(&pDst->message, &pSrc->message);
@@ -110,7 +110,7 @@ bohParserError bohParserErrorCreate(void)
 
 void bohParserErrorDestroy(bohParserError* pError)
 {
-    assert(pError);
+    BOH_ASSERT(pError);
 
     bohStringViewReset(&pError->filepath);
     bohStringDestroy(&pError->message);
@@ -121,8 +121,8 @@ void bohParserErrorDestroy(bohParserError* pError)
 
 bohParserError* bohParserErrorAssign(bohParserError* pDst, const bohParserError* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringViewAssignStringViewPtr(&pDst->filepath, &pSrc->filepath);
     bohStringAssign(&pDst->message, &pSrc->message);
@@ -147,7 +147,7 @@ bohInterpreterError bohInterpreterErrorCreate(void)
 
 void bohInterpreterErrorDestroy(bohInterpreterError* pError)
 {
-    assert(pError);
+    BOH_ASSERT(pError);
 
     bohStringViewReset(&pError->filepath);
     bohStringDestroy(&pError->message);
@@ -158,8 +158,8 @@ void bohInterpreterErrorDestroy(bohInterpreterError* pError)
 
 bohInterpreterError* bohInterpreterErrorAssign(bohInterpreterError* pDst, const bohInterpreterError* pSrc)
 {
-    assert(pDst);
-    assert(pSrc);
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
 
     bohStringViewAssignStringViewPtr(&pDst->filepath, &pSrc->filepath);
     bohStringAssign(&pDst->message, &pSrc->message);
@@ -177,7 +177,7 @@ void bohGlobalStateInit(void)
     }
 
     pBohState = (bohState*)malloc(sizeof(bohState));
-    assert(pBohState);
+    BOH_ASSERT(pBohState);
 
     pBohState->lexerErrors = bohDynArrayCreate(sizeof(bohLexerError),
         lexErrorDefaultConstructor, lexErrorDestructor, lexErrorCopyFunc);
@@ -218,14 +218,14 @@ bohState* bohGlobalStateGet(void)
 
 void bohStateSetCurrProcessingFile(bohState* pState, bohStringView filepath)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     bohStringViewAssignStringViewPtr(&pState->currProcessingFile, &filepath);
 }
 
 
 void bohStateEmplaceLexerError(bohState* pState, uint64_t line, uint64_t column, const char* pMessage)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
 
     bohLexerError* pError = (bohLexerError*)bohDynArrayPushBackDummy(&pState->lexerErrors);
     
@@ -238,7 +238,7 @@ void bohStateEmplaceLexerError(bohState* pState, uint64_t line, uint64_t column,
 
 void bohStateEmplaceParserError(bohState* pState, uint64_t line, uint64_t column, const char* pMessage)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
 
     bohParserError* pError = (bohParserError*)bohDynArrayPushBackDummy(&pState->parserErrors);
     
@@ -251,7 +251,7 @@ void bohStateEmplaceParserError(bohState* pState, uint64_t line, uint64_t column
 
 void bohStateEmplaceInterpreterError(bohState *pState, uint64_t line, uint64_t column, const char *pMessage)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
 
     bohInterpreterError* pError = (bohInterpreterError*)bohDynArrayPushBackDummy(&pState->interpreterErrors);
     
@@ -264,21 +264,21 @@ void bohStateEmplaceInterpreterError(bohState *pState, uint64_t line, uint64_t c
 
 size_t bohStateGetLexerErrorsCount(const bohState* pState)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     return bohDynArrayGetSize(&pState->lexerErrors);
 }
 
 
 size_t bohStateGetParserErrorsCount(const bohState* pState)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     return bohDynArrayGetSize(&pState->parserErrors);
 }
 
 
 size_t bohStateGetInterpreterErrorsCount(const bohState* pState)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     return bohDynArrayGetSize(&pState->interpreterErrors);
 }
 
@@ -303,20 +303,20 @@ bool bohStateHasInterpreterErrors(const bohState* pState)
 
 const bohLexerError* bohStateLexerErrorAt(const bohState* pState, size_t index)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     return bohDynArrayAtConst(&pState->lexerErrors, index);
 }
 
 
 const bohParserError* bohStateParserErrorAt(const bohState* pState, size_t index)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     return bohDynArrayAtConst(&pState->parserErrors, index);
 }
 
 
 const bohInterpreterError *bohStateInterpreterErrorAt(const bohState *pState, size_t index)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
     return bohDynArrayAtConst(&pState->interpreterErrors, index);
 }

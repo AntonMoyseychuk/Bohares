@@ -4,6 +4,8 @@
 #include "utils/ds/string_view.h"
 #include "utils/ds/dyn_array.h"
 
+#include "types.h"
+
 
 typedef enum TokenType
 {
@@ -82,13 +84,13 @@ typedef struct Token
 {
     bohStringView lexeme;
     bohTokenType type;
-    uint32_t line;
-    uint32_t column;
+    bohLineNmb line;
+    bohColumnNmb column;
 } bohToken;
 
 
 bohToken bohTokenCreate(void);
-bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, uint32_t line, uint32_t column);
+bohToken bohTokenCreateParams(bohStringView lexeme, bohTokenType type, bohLineNmb line, bohColumnNmb column);
 
 void bohTokenDestroy(bohToken* pToken);
 
@@ -108,8 +110,8 @@ typedef struct Lexer
     size_t startPos; // Begin of current lexeme
     size_t currPos;  // Current position inside current lexeme
 
-    size_t line;     // Lexeme line
-    size_t column;   // Lexeme column
+    bohLineNmb line;     // Lexeme line
+    bohColumnNmb column;   // Lexeme column
 
     bohTokenStorage tokens;
 } bohLexer;

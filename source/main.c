@@ -7,22 +7,32 @@
 #include "interpreter/interpreter.h"
 
 
+static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen);
+
+
+#define BOH_OUTPUT_COLOR_VALUE          BOH_OUTPUT_COLOR_WHITE
+#define BOH_OUTPUT_COLOR_OPERATOR       BOH_OUTPUT_COLOR_GREEN
+#define BOH_OUTPUT_COLOR_OPERATOR_EXPR  BOH_OUTPUT_COLOR_YELLOW
+
+#define BOH_OUTPUT_COLOR_ERROR          BOH_OUTPUT_COLOR_RED
+
+
 static void PrintLexerError(const bohLexerError* pError)
 {
-    assert(pError);
+    BOH_ASSERT(pError);
 
     const bohStringView* pFilepath = &pError->filepath;
 
     fprintf_s(stderr, "[LEXER ERROR]: %.*s (%u, %u): ", 
         bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
     
-    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_ERROR, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
 }
 
 
 static void PrintLexerErrors(const bohState* pState)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
 
     const size_t lexerErrorsCount = bohStateGetLexerErrorsCount(pState);
         
@@ -35,20 +45,20 @@ static void PrintLexerErrors(const bohState* pState)
 
 static void PrintParserError(const bohParserError* pError)
 {
-    assert(pError);
+    BOH_ASSERT(pError);
 
     const bohStringView* pFilepath = &pError->filepath;
 
     fprintf_s(stderr, "[PARSER ERROR]: %.*s (%u, %u): ", 
         bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
     
-    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_ERROR, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
 }
 
 
 static void PrintParserErrors(const bohState* pState)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
 
     const size_t parserErrorsCount = bohStateGetParserErrorsCount(pState);
         
@@ -61,20 +71,20 @@ static void PrintParserErrors(const bohState* pState)
 
 static void PrintInterpreterError(const bohInterpreterError* pError)
 {
-    assert(pError);
+    BOH_ASSERT(pError);
 
     const bohStringView* pFilepath = &pError->filepath;
 
     fprintf_s(stderr, "[INTERPRETER ERROR]: %.*s (%u, %u): ", 
         bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
     
-    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_RED, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_ERROR, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
 }
 
 
 static void PrintInterpreterErrors(const bohState* pState)
 {
-    assert(pState);
+    BOH_ASSERT(pState);
 
     const size_t interpErrorsCount = bohStateGetInterpreterErrorsCount(pState);
         
@@ -92,106 +102,193 @@ static void PrintOffset(FILE* pStream, uint64_t length)
     }
 }
 
-#if 0
-static void PrintAstNode(const bohAstNode* pNode, uint64_t offsetLen)
+
+static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
 {
-    if (!pNode) {
-        return;
-    }
-    
-    switch (pNode->type) {
-        case BOH_AST_NODE_TYPE_NUMBER:
-        {
-            if (bohNumberIsI64(&pNode->number)) {
-                fprintf_s(stdout, "%sI64[%d]%s", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetI64(&pNode->number), BOH_OUTPUT_COLOR_RESET);
+    BOH_ASSERT(pAst);
+
+    const bohValueExpr* pExpr = bohExprGetValueExpr(bohAstGetExprByIdx(pAst, exprIdx));
+
+    switch (pExpr->type) {
+        case BOH_VALUE_EXPR_TYPE_NUMBER:
+            if (bohNumberIsI64(&pExpr->number)) {
+                fprintf_s(stdout, "%sI64[%d]%s", BOH_OUTPUT_COLOR_VALUE, bohNumberGetI64(&pExpr->number), BOH_OUTPUT_COLOR_RESET);
             } else {
-                fprintf_s(stdout, "%sF64[%f]%s", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetF64(&pNode->number), BOH_OUTPUT_COLOR_RESET);
+                fprintf_s(stdout, "%sF64[%f]%s", BOH_OUTPUT_COLOR_VALUE, bohNumberGetF64(&pExpr->number), BOH_OUTPUT_COLOR_RESET);
             }
             break;
-        }
-        case BOH_AST_NODE_TYPE_STRING:
-        {
-            if (bohBoharesStringIsString(&pNode->string)) {
-                const bohString* pString = bohBoharesStringGetString(&pNode->string);
-                fprintf_s(stdout, "%sStr[\"%s\"]%s", BOH_OUTPUT_COLOR_YELLOW, bohStringGetCStr(pString), BOH_OUTPUT_COLOR_RESET);
+        case BOH_VALUE_EXPR_TYPE_STRING:
+            if (bohBoharesStringIsString(&pExpr->string)) {
+                const bohString* pString = bohBoharesStringGetString(&pExpr->string);
+                fprintf_s(stdout, "%sStr[\"%s\"]%s", BOH_OUTPUT_COLOR_VALUE, bohStringGetCStr(pString), BOH_OUTPUT_COLOR_RESET);
             } else {
-                const bohStringView* pStrView = bohBoharesStringGetStringView(&pNode->string);
+                const bohStringView* pStrView = bohBoharesStringGetStringView(&pExpr->string);
                 fprintf_s(stdout, "%sStrView[\"%.*s\"]%s", 
-                    BOH_OUTPUT_COLOR_YELLOW, bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView), BOH_OUTPUT_COLOR_RESET);
+                    BOH_OUTPUT_COLOR_VALUE, bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView), BOH_OUTPUT_COLOR_RESET);
             }
             break;
-        }
-        case BOH_AST_NODE_TYPE_UNARY:
-        {
-            const bohAstNodeUnary* pUnary = bohAstNodeGetUnary(pNode);
-
-            const uint64_t nextlevelOffsetLen = offsetLen + 4;
-            const bool isOperandNumber = bohAstNodeIsNumber(pUnary->pNode);
-
-            fputs("UnOp(", stdout);
-            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsExprOperatorToStr(pUnary->op), BOH_OUTPUT_COLOR_RESET);
-            fputs(isOperandNumber ? ", " : ",\n", stdout);
-
-            if (!isOperandNumber) {
-                PrintOffset(stdout, nextlevelOffsetLen);
-            }
-
-            PrintAstNode(pUnary->pNode, nextlevelOffsetLen);
-            
-            if (!isOperandNumber) {
-                fputc('\n', stdout);
-                PrintOffset(stdout, offsetLen);
-            }
-            fputc(')', stdout);
-
-            break;
-        }
-        case BOH_AST_NODE_TYPE_BINARY:
-        {
-            const bohAstNodeBinary* pBinary = bohAstNodeGetBinary(pNode);
-
-            const uint64_t nextlevelOffsetLen = offsetLen + 4;
-            const bool areLeftAndRightNodesNumbers = bohAstNodeIsNumber(pBinary->pLeftNode) && bohAstNodeIsNumber(pBinary->pRightNode);
-            
-            fputs("BinOp(", stdout);
-            fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_GREEN, bohParsExprOperatorToStr(pBinary->op), BOH_OUTPUT_COLOR_RESET);
-            fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
-
-            if (!areLeftAndRightNodesNumbers) {
-                PrintOffset(stdout, nextlevelOffsetLen);
-            }
-
-            PrintAstNode(pBinary->pLeftNode, nextlevelOffsetLen);
-            
-            fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
-
-            if (!areLeftAndRightNodesNumbers) {
-                PrintOffset(stdout, nextlevelOffsetLen);
-            }
-
-            PrintAstNode(pBinary->pRightNode, nextlevelOffsetLen);
-            
-            if (!areLeftAndRightNodesNumbers) {
-                fputc('\n', stdout);
-                PrintOffset(stdout, offsetLen);
-            }
-            fputc(')', stdout);
-            
-            break;
-        }
         default:
-            assert(false && "Invalid AST node type");
+            BOH_ASSERT(false && "Invalid value expression type");
             break;
     }
 }
 
 
-static void PrintAst(const bohAST* pAST)
+static void PrintUnaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
 {
-    assert(pAST);
-    PrintAstNode(pAST->pRoot, 0);
+    BOH_ASSERT(pAst);
+
+    const uint64_t nextlevelOffsetLen = offsetLen + 4;
+    
+    const bohExpr* pExpr = bohAstGetExprByIdx(pAst, exprIdx);
+    const bohUnaryExpr* pUnaryExpr = bohExprGetUnaryExpr(pExpr);
+    const bohExpr* pOperandExpr = bohAstGetExprByIdx(pAst, pUnaryExpr->exprIdx);
+
+    const bool isOperandValueExpr = bohExprIsValueExpr(pOperandExpr);
+    const bool isOperandNumber = isOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pOperandExpr));
+
+    fprintf_s(stdout, "%sUnOp%s(", BOH_OUTPUT_COLOR_OPERATOR_EXPR, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_OPERATOR, bohParsExprOperatorToStr(pUnaryExpr->op), BOH_OUTPUT_COLOR_RESET);
+    fputs(isOperandNumber ? ", " : ",\n", stdout);
+
+    if (!isOperandNumber) {
+        PrintOffset(stdout, nextlevelOffsetLen);
+    }
+
+    PrintExpr(pAst, pOperandExpr->selfIdx, nextlevelOffsetLen);
+            
+    if (!isOperandNumber) {
+        fputc('\n', stdout);
+        PrintOffset(stdout, offsetLen);
+    }
+    fputc(')', stdout);
 }
-#endif
+
+
+static void PrintBinaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
+{
+    BOH_ASSERT(pAst);
+
+    const uint64_t nextlevelOffsetLen = offsetLen + 4;
+    
+    const bohExpr* pExpr = bohAstGetExprByIdx(pAst, exprIdx);
+    const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
+
+    const bohExpr* pLeftExpr = bohAstGetExprByIdx(pAst, pBinaryExpr->leftExprIdx);
+    const bool isLeftOperandValueExpr = bohExprIsValueExpr(pLeftExpr);
+    const bool isLeftOperandNumber = isLeftOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pLeftExpr));
+
+    const bohExpr* pRightExpr = bohAstGetExprByIdx(pAst, pBinaryExpr->rightExprIdx);
+    const bool isRightOperandValueExpr = bohExprIsValueExpr(pRightExpr);
+    const bool isRightOperandNumber = isRightOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pRightExpr));
+
+    const bool areLeftAndRightNodesNumbers = isLeftOperandNumber && isRightOperandNumber;
+    
+    fprintf_s(stdout, "%sBinOp%s(", BOH_OUTPUT_COLOR_OPERATOR_EXPR, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_OPERATOR, bohParsExprOperatorToStr(pBinaryExpr->op), BOH_OUTPUT_COLOR_RESET);
+    fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
+
+    if (!areLeftAndRightNodesNumbers) {
+        PrintOffset(stdout, nextlevelOffsetLen);
+    }
+
+    PrintExpr(pAst, pLeftExpr->selfIdx, nextlevelOffsetLen);
+            
+    fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
+
+    if (!areLeftAndRightNodesNumbers) {
+        PrintOffset(stdout, nextlevelOffsetLen);
+    }
+
+    PrintExpr(pAst, pRightExpr->selfIdx, nextlevelOffsetLen);
+            
+    if (!areLeftAndRightNodesNumbers) {
+        fputc('\n', stdout);
+        PrintOffset(stdout, offsetLen);
+    }
+    fputc(')', stdout);
+}
+
+
+static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
+{
+    BOH_ASSERT(pAst);
+
+    const bohExpr* pExpr = bohAstGetExprByIdx(pAst, exprIdx);
+
+    switch (pExpr->type) {
+        case BOH_EXPR_TYPE_VALUE:
+            PrintValueExpr(pAst, pExpr->selfIdx, offsetLen);
+            break;
+        case BOH_EXPR_TYPE_UNARY:
+            PrintUnaryExpr(pAst, pExpr->selfIdx, offsetLen);
+            break;
+        case BOH_EXPR_TYPE_BINARY:
+            PrintBinaryExpr(pAst, pExpr->selfIdx, offsetLen);
+            break;
+        default:
+            BOH_ASSERT(false && "Invalid AST node type");
+            break;
+    }
+}
+
+static void PrintAstRawExprStmt(const bohAST* pAst, bohStmtIdx rawExprStmtIdx, uint64_t offsetLen)
+{
+    BOH_ASSERT(pAst);
+
+    const uint64_t nextlevelOffsetLen = offsetLen + 4;
+
+    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, rawExprStmtIdx);
+    BOH_ASSERT(pStmt);
+
+    const bohRawExprStmt* pRawExprStmt = bohStmtGetRawExpr(pStmt);
+
+    fputs("RawExprStmt(\n", stdout);
+    PrintOffset(stdout, nextlevelOffsetLen);
+
+    PrintExpr(pAst, pRawExprStmt->exprIdx, nextlevelOffsetLen);
+
+    fputc('\n', stdout);
+    PrintOffset(stdout, offsetLen);
+    fputc(')', stdout);
+}
+
+
+static void PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen)
+{
+    BOH_ASSERT(pAst);
+
+    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, stmtIdx);
+    BOH_ASSERT(pStmt);
+    
+    switch (pStmt->type) {
+        // case BOH_STMT_TYPE_EMPTY:
+        //     break;
+        case BOH_STMT_TYPE_RAW_EXPR:
+            PrintAstRawExprStmt(pAst, pStmt->selfIdx, offsetLen);
+            break;
+        // case BOH_STMT_TYPE_PRINT:
+        //     break;
+        default:
+            BOH_ASSERT(false && "Invalid statement type");
+            break;
+    }
+}
+
+
+static void PrintAst(const bohAST* pAst)
+{
+    BOH_ASSERT(pAst);
+    
+    const bohStmtStorage* pStmts = bohAstGetStmtsConst(pAst);
+    const size_t stmtCount = bohDynArrayGetSize(pStmts);
+
+    uint64_t offsetLen = 0;
+
+    for (size_t stmtIdx = 0; stmtIdx < stmtCount; ++stmtIdx) {
+        PrintAstStmt(pAst, stmtIdx, offsetLen);
+    }
+}
 
 
 int main(int argc, char* argv[])
@@ -250,7 +347,7 @@ int main(int argc, char* argv[])
 
     const size_t tokensCount = bohDynArrayGetSize(pTokens);
     for (size_t i = 0; i < tokensCount; ++i) {
-        const bohToken* pToken = bohDynArrayAt(pTokens, i);
+        const bohToken* pToken = bohDynArrayAtConst(pTokens, i);
 
         const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
 
@@ -267,9 +364,10 @@ int main(int argc, char* argv[])
         exit(-2);
     }
 
-#if 0
     fprintf_s(stdout, "%s\nAST:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
-    PrintAst(&ast);
+    PrintAst(bohParserGetAST(&parser));
+
+#if 0
 
     bohInterpreter interp = bohInterpCreate(&ast);
 

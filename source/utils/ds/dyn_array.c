@@ -11,10 +11,10 @@ bohDynArray bohDynArrayCreate(size_t elementSize,
     const bohDynArrElemDestr pDestr, 
     const bohDynArrElemCopyFunc pCopyFunc)
 {
-    assert(elementSize > 0);
-    assert(pConstr);
-    assert(pDestr);
-    assert(pCopyFunc);
+    BOH_ASSERT(elementSize > 0);
+    BOH_ASSERT(pConstr);
+    BOH_ASSERT(pDestr);
+    BOH_ASSERT(pCopyFunc);
 
     bohDynArray array;
     array.pData = NULL;
@@ -32,7 +32,7 @@ bohDynArray bohDynArrayCreate(size_t elementSize,
 
 void bohDynArrayDestroy(bohDynArray* pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
 
     bohDynArrayResize(pArray, 0);
 
@@ -48,7 +48,7 @@ void bohDynArrayDestroy(bohDynArray* pArray)
 
 void bohDynArrayReserve(bohDynArray* pArray, size_t newCapacity)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
 
     if (newCapacity <= pArray->capacity) {
         return;
@@ -57,7 +57,7 @@ void bohDynArrayReserve(bohDynArray* pArray, size_t newCapacity)
     const size_t newCapacityInBytes = newCapacity * pArray->elementSize;
 
     void* pNewBuffer = malloc(newCapacityInBytes);
-    assert(pNewBuffer);
+    BOH_ASSERT(pNewBuffer);
 
     memset(pNewBuffer, 0, newCapacityInBytes);
 
@@ -89,7 +89,7 @@ void bohDynArrayReserve(bohDynArray* pArray, size_t newCapacity)
 
 void bohDynArrayResize(bohDynArray* pArray, size_t newSize)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
 
     const size_t oldSize = pArray->size;
 
@@ -125,14 +125,14 @@ void bohDynArrayResize(bohDynArray* pArray, size_t newSize)
 
 void bohDynArrayClear(bohDynArray* pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
     bohDynArrayResize(pArray, 0);
 }
 
 
 void* bohDynArrayPushBackDummy(bohDynArray *pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
 
     const size_t currSize = pArray->size; 
     const size_t currCapacity = pArray->capacity; 
@@ -152,8 +152,8 @@ void* bohDynArrayPushBackDummy(bohDynArray *pArray)
 
 void* bohDynArrayPushBack(bohDynArray* pArray, const void *pData)
 {
-    assert(bohDynArrayIsValid(pArray));
-    assert(pData);
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(pData);
 
     void* pLastElem = bohDynArrayPushBackDummy(pArray);
     pArray->pElemCopyFunc(pLastElem, pData);
@@ -164,8 +164,8 @@ void* bohDynArrayPushBack(bohDynArray* pArray, const void *pData)
 
 void* bohDynArrayAt(bohDynArray* pArray, size_t index)
 {
-    assert(bohDynArrayIsValid(pArray));
-    assert(index < pArray->size);
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(index < pArray->size);
 
     return BOH_GET_DYN_ARRAY_ELEMENT_PTR(pArray->pData, index, pArray->elementSize);
 }
@@ -173,8 +173,8 @@ void* bohDynArrayAt(bohDynArray* pArray, size_t index)
 
 const void* bohDynArrayAtConst(const bohDynArray *pArray, size_t index)
 {
-    assert(bohDynArrayIsValid(pArray));
-    assert(index < pArray->size);
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(index < pArray->size);
 
     return BOH_GET_DYN_ARRAY_ELEMENT_PTR(pArray->pData, index, pArray->elementSize);
 }
@@ -182,27 +182,27 @@ const void* bohDynArrayAtConst(const bohDynArray *pArray, size_t index)
 
 size_t bohDynArrayGetSize(const bohDynArray* pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
     return pArray->size;
 }
 
 size_t bohDynArrayGetCapacity(const bohDynArray* pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
     return pArray->capacity;
 }
 
 
 bool bohDynArrayIsEmpty(const bohDynArray* pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
     return pArray->size == 0;
 }
 
 
 size_t bohDynArrayGetMemorySize(const bohDynArray* pArray)
 {
-    assert(bohDynArrayIsValid(pArray));
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
     return pArray->size * pArray->elementSize;
 }
 

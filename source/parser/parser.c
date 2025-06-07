@@ -1558,6 +1558,7 @@ void bohAstDestroy(bohAST* pAST)
 {
     BOH_ASSERT(pAST);
     bohDynArrayDestroy(&pAST->stmts);
+    bohDynArrayDestroy(&pAST->exprs);
 }
 
 

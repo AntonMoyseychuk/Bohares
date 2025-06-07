@@ -15,6 +15,7 @@ typedef struct FileContent
 {
     void* pData;
     size_t dataSize;
+    size_t unescapedDataSize;
 
     bohFileContentErrorCode error;
 } bohFileContent;

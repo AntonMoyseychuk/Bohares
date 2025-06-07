@@ -109,6 +109,22 @@ static void PrintOffset(FILE* pStream, uint64_t length)
 }
 
 
+static void PrintEscapedCString(FILE* pStream, const char* pString, size_t strLen)
+{
+    BOH_ASSERT(pStream);
+    BOH_ASSERT(pString);
+
+    for (size_t i = 0; i < strLen; ++i) {
+        if (pString[i] == '\n') {
+            fputc('\\', pStream);
+            fputc('n', pStream);
+        } else {
+            fputc(pString[i], pStream);
+        }
+    }
+}
+
+
 static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx)
 {
     BOH_ASSERT(pAst);
@@ -126,11 +142,15 @@ static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx)
         case BOH_VALUE_EXPR_TYPE_STRING:
             if (bohBoharesStringIsString(&pExpr->string)) {
                 const bohString* pString = bohBoharesStringGetString(&pExpr->string);
-                fprintf_s(stdout, "%sStr[\"%s\"]%s", BOH_OUTPUT_COLOR_VALUE, bohStringGetCStr(pString), BOH_OUTPUT_COLOR_RESET);
+                fprintf_s(stdout, "%sStr[\"", BOH_OUTPUT_COLOR_VALUE);
+                PrintEscapedCString(stdout, bohStringGetCStr(pString), bohStringGetSize(pString));
+                fprintf_s(stdout, "\"]%s", BOH_OUTPUT_COLOR_RESET);
             } else {
                 const bohStringView* pStrView = bohBoharesStringGetStringView(&pExpr->string);
-                fprintf_s(stdout, "%sStrView[\"%.*s\"]%s", 
-                    BOH_OUTPUT_COLOR_VALUE, bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView), BOH_OUTPUT_COLOR_RESET);
+
+                fprintf_s(stdout, "%sStrView[\"", BOH_OUTPUT_COLOR_VALUE);
+                PrintEscapedCString(stdout, bohStringViewGetData(pStrView), bohStringViewGetSize(pStrView));
+                fprintf_s(stdout, "\"]%s", BOH_OUTPUT_COLOR_RESET);
             }
             break;
         default:
@@ -319,6 +339,7 @@ static void PrintAst(const bohAST* pAst)
 
     for (bohStmtIdx stmtIdx = 0; stmtIdx < stmtCount; ++stmtIdx) {
         stmtIdx = PrintAstStmt(pAst, stmtIdx, offsetLen);
+        fputc('\n', stdout);
     }
 }
 
@@ -358,7 +379,7 @@ int main(int argc, char* argv[])
     }
 
     const char* pSourceCode = (const char*)fileContent.pData;
-    const size_t sourceCodeSize = fileContent.dataSize;
+    const size_t sourceCodeSize = fileContent.unescapedDataSize;
 
     fprintf_s(stdout, "%sSOURCE:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     if (sourceCodeSize > 0) {
@@ -384,7 +405,9 @@ int main(int argc, char* argv[])
         const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
 
         fprintf_s(stdout, "(%s%s%s, ", BOH_OUTPUT_COLOR_YELLOW, bohTokenGetTypeStr(pToken), BOH_OUTPUT_COLOR_RESET);
-        fprintf_s(stdout, "%s%.*s%s", BOH_OUTPUT_COLOR_GREEN, bohStringViewGetSize(pLexeme), bohStringViewGetData(pLexeme), BOH_OUTPUT_COLOR_RESET);
+        fprintf_s(stdout, BOH_OUTPUT_COLOR_GREEN);
+        PrintEscapedCString(stdout, bohStringViewGetData(pLexeme), bohStringViewGetSize(pLexeme));
+        fprintf_s(stdout, BOH_OUTPUT_COLOR_RESET);
         fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
     }
 
@@ -399,42 +422,17 @@ int main(int argc, char* argv[])
     fprintf_s(stdout, "%s\nAST:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     PrintAst(bohParserGetAST(&parser));
 
-#if 0
-
-    bohInterpreter interp = bohInterpCreate(&ast);
+    bohInterpreter interp = bohInterpCreate(bohParserGetAST(&parser));
 
     fprintf_s(stdout, "\n\n%sINTERPRETER:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
-    bohRawExprInterpResult interpResult = bohInterpInterpret(&interp);
+    bohInterpInterpret(&interp);
 
     if (bohStateHasInterpreterErrors(pState)) {
         PrintInterpreterErrors(pState);        
         exit(-3);
     }
 
-    if (bohRawExprInterpResultIsNumber(&interpResult)) {
-        const bohNumber* pNumber = bohRawExprInterpResultGetNumber(&interpResult);
-
-        if (bohNumberIsI64(pNumber)) {
-            fprintf_s(stdout, "%sresult: %d%s\n", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetI64(pNumber), BOH_OUTPUT_COLOR_RESET);
-        } else {
-            fprintf_s(stdout, "%sresult: %f%s\n", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetF64(pNumber), BOH_OUTPUT_COLOR_RESET);
-        }
-    } else if (bohRawExprInterpResultIsString(&interpResult)) {
-        const bohBoharesString* pString = bohRawExprInterpResultGetString(&interpResult);
-
-        if (bohBoharesStringIsStringView(pString)) {
-            const bohStringView* pStrView = bohBoharesStringGetStringView(pString);
-            fprintf_s(stdout, "%sresult: %.*s%s\n", 
-                BOH_OUTPUT_COLOR_YELLOW, bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView), BOH_OUTPUT_COLOR_RESET);
-        } else {
-            const bohString* pStrStr = bohBoharesStringGetString(pString);
-            fprintf_s(stdout, "%sresult: %s%s\n", BOH_OUTPUT_COLOR_YELLOW, bohStringGetCStr(pStrStr), BOH_OUTPUT_COLOR_RESET);
-        }
-    }
-
-    bohInterpreterDestroy(&interp);
-#endif
-
+    bohInterpDestroy(&interp);
     bohParserDestroy(&parser);
     bohLexerDestroy(&lexer);
 

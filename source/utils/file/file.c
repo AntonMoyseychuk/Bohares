@@ -46,9 +46,44 @@ static bohFileContent ReadFile(const char* pPath, const char* pMode)
 }
 
 
+static void bohFileContentUnescapeFileData(bohFileContent* pContent)
+{
+    BOH_ASSERT(pContent);
+
+    char* pRead = (char*)pContent->pData;
+    char* pWrite = (char*)pContent->pData;
+
+    size_t unescapedDataSize = 0;
+
+    for (size_t i = 0; i < pContent->dataSize; ) {
+        if (pRead[i] == '\\' && (i < pContent->dataSize && pRead[i + 1] == 'n')) {
+            pWrite[unescapedDataSize] = '\n';  // Unescape '\\n' to '\n'
+            i += 2;  // Skip the '\\' and 'n'
+        } else if (pRead[i] == '\\' && (i < pContent->dataSize && pRead[i + 1] == 't')) {
+            pWrite[unescapedDataSize] = '\t';  // Unescape '\\t' to '\t'
+            i += 2;  // Skip the '\\' and 't'
+        } else if (pRead[i] == '\\' && (i < pContent->dataSize && pRead[i + 1] == '\"')) {
+            pWrite[unescapedDataSize] = '\"';  // Unescape '\\\"' to '\"'
+            i += 2;  // Skip the '\\' and '\"'
+        } else {
+            pWrite[unescapedDataSize] = pRead[i];
+            ++i;
+        }
+
+        ++unescapedDataSize;
+    }
+
+    pWrite[unescapedDataSize] = '\0';
+    pContent->unescapedDataSize = unescapedDataSize;
+}
+
+
 bohFileContent bohReadTextFile(const char* pPath)
 {
-    return ReadFile(pPath, "r");
+    bohFileContent content = ReadFile(pPath, "r");
+    bohFileContentUnescapeFileData(&content);
+
+    return content;
 }
 
 

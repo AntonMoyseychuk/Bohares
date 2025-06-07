@@ -6,6 +6,8 @@
 #include "parser/parser.h"
 #include "interpreter/interpreter.h"
 
+#include "core.h"
+
 
 static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen);
 
@@ -315,7 +317,7 @@ static void PrintAst(const bohAST* pAst)
 
     uint64_t offsetLen = 0;
 
-    for (size_t stmtIdx = 0; stmtIdx < stmtCount; ++stmtIdx) {
+    for (bohStmtIdx stmtIdx = 0; stmtIdx < stmtCount; ++stmtIdx) {
         stmtIdx = PrintAstStmt(pAst, stmtIdx, offsetLen);
     }
 }
@@ -402,23 +404,23 @@ int main(int argc, char* argv[])
     bohInterpreter interp = bohInterpCreate(&ast);
 
     fprintf_s(stdout, "\n\n%sINTERPRETER:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
-    bohInterpResult interpResult = bohInterpInterpret(&interp);
+    bohRawExprInterpResult interpResult = bohInterpInterpret(&interp);
 
     if (bohStateHasInterpreterErrors(pState)) {
         PrintInterpreterErrors(pState);        
         exit(-3);
     }
 
-    if (bohInterpResultIsNumber(&interpResult)) {
-        const bohNumber* pNumber = bohInterpResultGetNumber(&interpResult);
+    if (bohRawExprInterpResultIsNumber(&interpResult)) {
+        const bohNumber* pNumber = bohRawExprInterpResultGetNumber(&interpResult);
 
         if (bohNumberIsI64(pNumber)) {
             fprintf_s(stdout, "%sresult: %d%s\n", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetI64(pNumber), BOH_OUTPUT_COLOR_RESET);
         } else {
             fprintf_s(stdout, "%sresult: %f%s\n", BOH_OUTPUT_COLOR_YELLOW, bohNumberGetF64(pNumber), BOH_OUTPUT_COLOR_RESET);
         }
-    } else if (bohInterpResultIsString(&interpResult)) {
-        const bohBoharesString* pString = bohInterpResultGetString(&interpResult);
+    } else if (bohRawExprInterpResultIsString(&interpResult)) {
+        const bohBoharesString* pString = bohRawExprInterpResultGetString(&interpResult);
 
         if (bohBoharesStringIsStringView(pString)) {
             const bohStringView* pStrView = bohBoharesStringGetStringView(pString);

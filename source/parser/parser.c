@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "core.h"
+
 #include "parser.h"
 #include "lexer/lexer.h"
 

@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "core.h"
+
 #include "dyn_array.h"
 
 

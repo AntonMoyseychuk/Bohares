@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "core.h"
+
 #include "string_view.h"
 #include "string.h"
 

@@ -132,7 +132,7 @@ bohBoharesString* bohBoharesStringStringAssignStringViewPtr(bohBoharesString* pD
 
 bohBoharesString* bohBoharesStringStringAssignString(bohBoharesString* pDst, const bohString* pSrc)
 {
-    return bohBoharesStringStringAssignStringView(pDst, bohStringViewCreateString(pSrc));
+    return bohBoharesStringStringAssignStringView(pDst, bohStringViewCreateConstString(pSrc));
 }
 
 
@@ -158,7 +158,7 @@ bohBoharesString* bohBoharesStringStringViewAssignStringViewPtr(bohBoharesString
 
 bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst, const bohString* pSrc)
 {
-    return bohBoharesStringStringViewAssignStringView(pDst, bohStringViewCreateString(pSrc));
+    return bohBoharesStringStringViewAssignStringView(pDst, bohStringViewCreateConstString(pSrc));
 }
 
 
@@ -261,8 +261,8 @@ int32_t bohBoharesStringCmp(const bohBoharesString* pLeft, const bohBoharesStrin
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    const bohStringView left = bohBoharesStringIsString(pLeft) ? bohStringViewCreateString(&pLeft->string) : pLeft->view;
-    const bohStringView right = bohBoharesStringIsString(pRight) ? bohStringViewCreateString(&pRight->string) : pRight->view;
+    const bohStringView left = bohBoharesStringIsString(pLeft) ? bohStringViewCreateConstString(&pLeft->string) : pLeft->view;
+    const bohStringView right = bohBoharesStringIsString(pRight) ? bohStringViewCreateConstString(&pRight->string) : pRight->view;
 
     return bohStringViewCmpPtr(&left, &right);
 }

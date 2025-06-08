@@ -1,18 +1,12 @@
 #include "pch.h"
 
-#include "state.h"
+#include "error.h"
 
 #include "lexer/lexer.h"
 #include "parser/parser.h"
 #include "interpreter/interpreter.h"
 
 #include "core.h"
-
-
-static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen);
-
-// Returns last printed stmt
-static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen);
 
 
 #define BOH_OUTPUT_COLOR_VALUE          BOH_OUTPUT_COLOR_WHITE
@@ -23,82 +17,10 @@ static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t 
 #define BOH_OUTPUT_COLOR_ERROR          BOH_OUTPUT_COLOR_RED
 
 
-static void PrintLexerError(const bohLexerError* pError)
-{
-    BOH_ASSERT(pError);
+static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen);
 
-    const bohStringView* pFilepath = &pError->filepath;
-
-    fprintf_s(stderr, "[LEXER ERROR]: %.*s (%u, %u): ", 
-        bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
-    
-    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_ERROR, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
-}
-
-
-static void PrintLexerErrors(const bohState* pState)
-{
-    BOH_ASSERT(pState);
-
-    const size_t lexerErrorsCount = bohStateGetLexerErrorsCount(pState);
-        
-    for (size_t i = 0; i < lexerErrorsCount; ++i) {
-        const bohLexerError* pError = bohStateLexerErrorAt(pState, i);
-        PrintLexerError(pError);
-    }
-}
-
-
-static void PrintParserError(const bohParserError* pError)
-{
-    BOH_ASSERT(pError);
-
-    const bohStringView* pFilepath = &pError->filepath;
-
-    fprintf_s(stderr, "[PARSER ERROR]: %.*s (%u, %u): ", 
-        bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
-    
-    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_ERROR, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
-}
-
-
-static void PrintParserErrors(const bohState* pState)
-{
-    BOH_ASSERT(pState);
-
-    const size_t parserErrorsCount = bohStateGetParserErrorsCount(pState);
-        
-    for (size_t i = 0; i < parserErrorsCount; ++i) {
-        const bohParserError* pError = bohStateParserErrorAt(pState, i);
-        PrintParserError(pError);
-    }
-}
-
-
-static void PrintInterpreterError(const bohInterpreterError* pError)
-{
-    BOH_ASSERT(pError);
-
-    const bohStringView* pFilepath = &pError->filepath;
-
-    fprintf_s(stderr, "[INTERPRETER ERROR]: %.*s (%u, %u): ", 
-        bohStringViewGetSize(pFilepath), bohStringViewGetData(pFilepath), pError->line, pError->column);
-    
-    fprintf_s(stderr, "%s%s%s\n", BOH_OUTPUT_COLOR_ERROR, bohStringGetCStr(&pError->message), BOH_OUTPUT_COLOR_RESET);
-}
-
-
-static void PrintInterpreterErrors(const bohState* pState)
-{
-    BOH_ASSERT(pState);
-
-    const size_t interpErrorsCount = bohStateGetInterpreterErrorsCount(pState);
-        
-    for (size_t i = 0; i < interpErrorsCount; ++i) {
-        const bohInterpreterError* pError = bohStateInterpreterErrorAt(pState, i);
-        PrintInterpreterError(pError);
-    }
-}
+// Returns last printed stmt
+static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen);
 
 
 static void PrintOffset(FILE* pStream, uint64_t offsetLen)
@@ -122,6 +44,18 @@ static void PrintEscapedCString(FILE* pStream, const char* pString, size_t strLe
         if (pString[i] == '\n') {
             fputc('\\', pStream);
             fputc('n', pStream);
+        } else if (pString[i] == '\t') {
+            fputc('\\', pStream);
+            fputc('t', pStream);
+        } else if (pString[i] == '\"') {
+            fputc('\\', pStream);
+            fputc('\"', pStream);
+        } else if (pString[i] == '\'') {
+            fputc('\\', pStream);
+            fputc('\'', pStream);
+        } else if (pString[i] == '\r') {
+            fputc('\\', pStream);
+            fputc('r', pStream);
         } else {
             fputc(pString[i], pStream);
         }
@@ -129,6 +63,43 @@ static void PrintEscapedCString(FILE* pStream, const char* pString, size_t strLe
 
     if (strLen > 0) {
         fflush(pStream);
+    }
+}
+
+
+static void PrintToken(const bohToken* pToken)
+{
+    BOH_ASSERT(pToken);
+
+    const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
+
+    fprintf_s(stdout, "(%s%s%s, ", BOH_OUTPUT_COLOR_YELLOW, bohTokenGetTypeStr(pToken), BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, BOH_OUTPUT_COLOR_GREEN);
+    
+    const bool isTokenString = bohTokenGetType(pToken) == BOH_TOKEN_TYPE_STRING;
+
+    if (isTokenString) {
+        fputc('\"', stdout);
+    }
+    
+    PrintEscapedCString(stdout, bohStringViewGetData(pLexeme), bohStringViewGetSize(pLexeme));
+    
+    if (isTokenString) {
+        fputc('\"', stdout);
+    }
+
+    fprintf_s(stdout, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
+}
+
+
+static void PrintTokens(const bohTokenStorage* pTokens)
+{
+    BOH_ASSERT(pTokens);
+
+    const size_t tokensCount = bohDynArrayGetSize(pTokens);
+    for (size_t i = 0; i < tokensCount; ++i) {
+        PrintToken(bohDynArrayAtConst(pTokens, i));
     }
 }
 
@@ -352,31 +323,12 @@ static void PrintAst(const bohAST* pAst)
 }
 
 
-static void PrintToken(const bohToken* pToken)
-{
-    BOH_ASSERT(pToken);
-
-    const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
-
-    fprintf_s(stdout, "(%s%s%s, ", BOH_OUTPUT_COLOR_YELLOW, bohTokenGetTypeStr(pToken), BOH_OUTPUT_COLOR_RESET);
-    fprintf_s(stdout, BOH_OUTPUT_COLOR_GREEN);
-    
-    PrintEscapedCString(stdout, bohStringViewGetData(pLexeme), bohStringViewGetSize(pLexeme));
-    
-    fprintf_s(stdout, BOH_OUTPUT_COLOR_RESET);
-    fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
-}
-
-
 int main(int argc, char* argv[])
 {
-    bohGlobalStateInit();
-    bohState* pState = bohGlobalStateGet();
-
 #define DEBUG_NO_ARGS
 #ifndef DEBUG_NO_ARGS
     if (argc != 2) {
-        bohColorPrintf(stderr, BOH_OUTPUT_COLOR_RED, "Invalid command line arguments count: %d\n", argc);
+        fprintf_s(stderr, BOH_OUTPUT_COLOR_RED, "Invalid command line arguments count: %d\n", argc);
         return EXIT_FAILURE;
     }
 
@@ -388,7 +340,8 @@ int main(int argc, char* argv[])
     const char* pFilePath = "../test/test.boh";
 #endif
 
-    bohStateSetCurrProcessingFile(pState, bohStringViewCreateCStr(pFilePath));
+    bohErrorsStateInit();
+    bohErrorsStateSetCurrProcessingFile(bohErrorsStateGet(), bohStringViewCreateConstCStr(pFilePath));
 
     bohFileContent fileContent = bohReadTextFile(pFilePath);
     switch (bohFileContentGetErrorCode(&fileContent)) {
@@ -403,7 +356,7 @@ int main(int argc, char* argv[])
     }
 
     const char* pSourceCode = (const char*)fileContent.pData;
-    const size_t sourceCodeSize = fileContent.unescapedDataSize;
+    const size_t sourceCodeSize = fileContent.dataSize;
 
     fprintf_s(stdout, "%sSOURCE:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     if (sourceCodeSize > 0) {
@@ -413,38 +366,31 @@ int main(int argc, char* argv[])
     bohLexer lexer = bohLexerCreate(pSourceCode, sourceCodeSize);
     bohLexerTokenize(&lexer);
 
-    if (bohStateHasLexerErrors(pState)) {
-        PrintLexerErrors(pState);        
-        exit(-1);
-    }
-
-    fprintf_s(stdout, "\n%sLEXER TOKENS:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
-
     const bohTokenStorage* pTokens = bohLexerGetTokens(&lexer);
 
-    const size_t tokensCount = bohDynArrayGetSize(pTokens);
-    for (size_t i = 0; i < tokensCount; ++i) {
-        PrintToken(bohDynArrayAtConst(pTokens, i));
+    fprintf_s(stdout, "\n%sLEXER TOKENS:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
+    PrintTokens(pTokens);
+
+    if (bohErrorsStateHasLexerErrorGlobal()) {
+        exit(-1);
     }
 
     bohParser parser = bohParserCreate(pTokens);
     bohParserParse(&parser);
 
-    if (bohStateHasParserErrors(pState)) {
-        PrintParserErrors(pState);        
-        exit(-2);
-    }
-
     fprintf_s(stdout, "%s\nAST:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     PrintAst(bohParserGetAST(&parser));
+
+    if (bohErrorsStateHasParserErrorGlobal()) {
+        exit(-2);
+    }
 
     bohInterpreter interp = bohInterpCreate(bohParserGetAST(&parser));
 
     fprintf_s(stdout, "\n\n%sINTERPRETER:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     bohInterpInterpret(&interp);
 
-    if (bohStateHasInterpreterErrors(pState)) {
-        PrintInterpreterErrors(pState);        
+    if (bohErrorsStateHasInterpreterErrorGlobal()) {   
         exit(-3);
     }
 
@@ -452,7 +398,7 @@ int main(int argc, char* argv[])
     bohParserDestroy(&parser);
     bohLexerDestroy(&lexer);
 
-    bohGlobalStateDestroy();
+    bohErrorsStateDestroy();
 
     return EXIT_SUCCESS;
 }

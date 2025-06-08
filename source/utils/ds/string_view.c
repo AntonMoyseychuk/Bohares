@@ -6,42 +6,76 @@
 #include "string.h"
 
 
+#define BOH_STRING_VIEW_MAX_SIZE (((size_t)1) << (BOH_STRING_VIEW_BITS_PER_SIZE))
+
+
+size_t bohStringViewGetMaxSize(void)
+{
+    return BOH_STRING_VIEW_MAX_SIZE;
+}
+
+
 bohStringView bohStringViewCreate(void)
 {
     bohStringView stringView;
 
-    stringView.pData = "";
+    stringView.pConstData = "";
+    stringView.isConstantPtr = true;
     stringView.size = 0;
 
     return stringView;
 }
 
 
-bohStringView bohStringViewCreateCStr(const char* pStr)
+bohStringView bohStringViewCreateCStr(char *pStr)
 {
-    bohStringView stringView;
-
+    bohStringView stringView = bohStringViewCreate();
     bohStringViewAssignCStr(&stringView, pStr);
 
     return stringView;
 }
 
 
-bohStringView bohStringViewCreateCStrSized(const char* pStr, size_t size)
+bohStringView bohStringViewCreateConstCStr(const char* pStr)
 {
-    bohStringView stringView;
+    bohStringView stringView = bohStringViewCreate();
+    bohStringViewAssignConstCStr(&stringView, pStr);
 
+    return stringView;
+}
+
+
+bohStringView bohStringViewCreateCStrSized(char *pStr, size_t size)
+{
+    bohStringView stringView = bohStringViewCreate();
     bohStringViewAssignCStrSized(&stringView, pStr, size);
 
     return stringView;
 }
 
 
-bohStringView bohStringViewCreateString(const bohString* pStr)
+bohStringView bohStringViewCreateConstCStrSized(const char* pStr, size_t size)
 {
-    bohStringView stringView;
+    bohStringView stringView = bohStringViewCreate();
+    bohStringViewAssignConstCStrSized(&stringView, pStr, size);
 
+    return stringView;
+}
+
+
+bohStringView bohStringViewCreateString(bohString* pStr)
+{
+    bohStringView stringView = bohStringViewCreate();
     bohStringViewAssignString(&stringView, pStr);
+
+    return stringView;
+}
+
+
+bohStringView bohStringViewCreateConstString(const bohString* pStr)
+{
+    bohStringView stringView = bohStringViewCreate();
+    bohStringViewAssignConstString(&stringView, pStr);
 
     return stringView;
 }
@@ -49,7 +83,7 @@ bohStringView bohStringViewCreateString(const bohString* pStr)
 
 bohStringView bohStringViewCreateStringView(bohStringView strView)
 {
-    return strView;
+    return bohStringViewCreateStringViewPtr(&strView);
 }
 
 
@@ -63,33 +97,61 @@ bohStringView bohStringViewCreateStringViewPtr(const bohStringView* pStrView)
 void bohStringViewReset(bohStringView* pStringView)
 {
     BOH_ASSERT(pStringView);
-
-    pStringView->pData = "";
-    pStringView->size = 0;
+    *pStringView = bohStringViewCreate();
 }
 
 
-bohStringView* bohStringViewAssignCStr(bohStringView* pDst, const char* pStr)
+bohStringView* bohStringViewAssignCStr(bohStringView* pDst, char* pStr)
 {
     BOH_ASSERT(pDst);
 
-    pDst->pData = pStr ? pStr : "";
-    pDst->size = pStr ? strlen(pStr) : 0;
+    const size_t size = strlen(pStr);
+    BOH_ASSERT(size < BOH_STRING_VIEW_MAX_SIZE);
+
+    pDst->pConstData = pStr ? pStr : "";
+    pDst->size = pStr ? size : 0;
+    pDst->isConstantPtr = false;
 
     return pDst;
 }
 
 
-bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, const char* pStr, size_t size)
+bohStringView* bohStringViewAssignConstCStr(bohStringView* pDst, const char* pStr)
 {
     BOH_ASSERT(pDst);
 
-    if (!pStr) {
-        BOH_ASSERT(size == 0 && "pStr is NULL but size is not 0");
-    }
+    const size_t size = strlen(pStr);
+    BOH_ASSERT(size < BOH_STRING_VIEW_MAX_SIZE);
 
-    pDst->pData = pStr ? pStr : "";
+    pDst->pConstData = pStr ? pStr : "";
+    pDst->size = pStr ? size : 0;
+    pDst->isConstantPtr = true;
+
+    return pDst;
+}
+
+
+bohStringView* bohStringViewAssignCStrSized(bohStringView* pDst, char* pStr, size_t size)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(size < BOH_STRING_VIEW_MAX_SIZE);
+
+    pDst->pConstData = pStr ? pStr : "";
     pDst->size = size;
+    pDst->isConstantPtr = false;
+
+    return pDst;
+}
+
+
+bohStringView* bohStringViewAssignConstCStrSized(bohStringView* pDst, const char* pStr, size_t size)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(size < BOH_STRING_VIEW_MAX_SIZE);
+
+    pDst->pConstData = pStr ? pStr : "";
+    pDst->size = size;
+    pDst->isConstantPtr = true;
 
     return pDst;
 }
@@ -106,20 +168,42 @@ bohStringView* bohStringViewAssignStringViewPtr(bohStringView* pDst, const bohSt
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    pDst->pData = pSrc->pData;
+    if (pSrc->isConstantPtr) {
+        pDst->pConstData = pSrc->pConstData;
+    } else {
+        pDst->pData = pSrc->pData;
+    }
+
     pDst->size = pSrc->size;
+    pDst->isConstantPtr = pSrc->isConstantPtr;
 
     return pDst;
 }
 
 
-bohStringView* bohStringViewAssignString(bohStringView* pDst, const bohString* pStr)
+bohStringView* bohStringViewAssignString(bohStringView* pDst, bohString* pStr)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pStr);
+    BOH_ASSERT(pStr->size < BOH_STRING_VIEW_MAX_SIZE);
 
-    pDst->pData = pStr->pData;
+    pDst->pConstData = pStr->pData;
     pDst->size = pStr->size;
+    pDst->isConstantPtr = false;
+
+    return pDst;
+}
+
+
+bohStringView* bohStringViewAssignConstString(bohStringView* pDst, const bohString* pStr)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pStr);
+    BOH_ASSERT(pStr->size < BOH_STRING_VIEW_MAX_SIZE);
+
+    pDst->pConstData = pStr->pData;
+    pDst->size = pStr->size;
+    pDst->isConstantPtr = true;
 
     return pDst;
 }
@@ -288,4 +372,51 @@ bool bohStringViewGreaterEqualPtr(const bohStringView* pLeft, const bohStringVie
     }
 
     return cmpResult > 0;
+}
+
+
+void bohStringViewReplaceSymbols(bohStringView* pStrView, char targetSymb, char newSymb)
+{
+    BOH_ASSERT(pStrView);
+    BOH_ASSERT(!pStrView->isConstantPtr);
+    
+    const size_t strViewSize = pStrView->size;
+    char* pStrViewData = pStrView->pData;
+
+    for (size_t i = 0; i < strViewSize; ++i) {
+        if (pStrViewData[i] == targetSymb) {
+            pStrViewData[i] = newSymb;
+        }
+    }
+}
+
+
+void bohStringViewRemoveSymbols(bohStringView* pStrView, char symb)
+{
+    BOH_ASSERT(pStrView);
+    BOH_ASSERT(!pStrView->isConstantPtr);
+    
+    const size_t strViewSize = pStrView->size;
+    char* pStrViewData = pStrView->pData;
+
+    size_t i = 0;
+    size_t j = 0;
+    size_t newSize = strViewSize;
+
+    while (i < strViewSize) {
+        const char ch = pStrViewData[i];
+
+        if (ch == symb) {
+            newSize = newSize > 0 ? newSize - 1 : 0;
+        } else {
+            pStrViewData[j] = pStrViewData[i];
+            ++j;
+        }
+
+        ++i;
+    }
+
+    memset(pStrViewData + newSize, 0, strViewSize - newSize);
+
+    pStrView->size = newSize;
 }

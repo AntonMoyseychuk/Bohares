@@ -167,6 +167,3 @@ bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc);
 
 #define BOH_NUMBER_GET_UNDERLYING_VALUE(NUMBER_PTR) (bohNumberIsI64(NUMBER_PTR) ? (NUMBER_PTR)->i64 : (NUMBER_PTR)->f64)
 
-
-typedef uint32_t bohLineNmb;
-typedef uint32_t bohColumnNmb;

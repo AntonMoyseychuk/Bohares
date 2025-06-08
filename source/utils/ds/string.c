@@ -267,8 +267,8 @@ bool bohStringEqual(const bohString* pLeft, const bohString* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    bohStringView left = bohStringViewCreateString(pLeft);
-    bohStringView right = bohStringViewCreateString(pRight);
+    bohStringView left = bohStringViewCreateConstString(pLeft);
+    bohStringView right = bohStringViewCreateConstString(pRight);
 
     return bohStringViewEqualPtr(&left, &right);
 }
@@ -285,8 +285,8 @@ bool bohStringLess(const bohString* pLeft, const bohString* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    bohStringView left = bohStringViewCreateString(pLeft);
-    bohStringView right = bohStringViewCreateString(pRight);
+    bohStringView left = bohStringViewCreateConstString(pLeft);
+    bohStringView right = bohStringViewCreateConstString(pRight);
 
     return bohStringViewLessPtr(&left, &right);
 }
@@ -297,8 +297,8 @@ bool bohStringLessEqual(const bohString* pLeft, const bohString* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    bohStringView left = bohStringViewCreateString(pLeft);
-    bohStringView right = bohStringViewCreateString(pRight);
+    bohStringView left = bohStringViewCreateConstString(pLeft);
+    bohStringView right = bohStringViewCreateConstString(pRight);
 
     return bohStringViewLessEqualPtr(&left, &right);
 }
@@ -309,8 +309,8 @@ bool bohStringGreater(const bohString* pLeft, const bohString* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    bohStringView left = bohStringViewCreateString(pLeft);
-    bohStringView right = bohStringViewCreateString(pRight);
+    bohStringView left = bohStringViewCreateConstString(pLeft);
+    bohStringView right = bohStringViewCreateConstString(pRight);
 
     return bohStringViewGreaterPtr(&left, &right);
 }
@@ -321,8 +321,8 @@ bool bohStringGreaterEqual(const bohString* pLeft, const bohString* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    bohStringView left = bohStringViewCreateString(pLeft);
-    bohStringView right = bohStringViewCreateString(pRight);
+    bohStringView left = bohStringViewCreateConstString(pLeft);
+    bohStringView right = bohStringViewCreateConstString(pRight);
 
     return bohStringViewGreaterEqualPtr(&left, &right);
 }
@@ -330,8 +330,8 @@ bool bohStringGreaterEqual(const bohString* pLeft, const bohString* pRight)
 
 bohString bohStringAdd(const bohString* pLeft, const bohString* pRight)
 {
-    const bohStringView leftStrView = bohStringViewCreateString(pLeft);
-    const bohStringView rightStrView = bohStringViewCreateString(pRight);
+    const bohStringView leftStrView = bohStringViewCreateConstString(pLeft);
+    const bohStringView rightStrView = bohStringViewCreateConstString(pRight);
     
     return bohStringViewAddStringView(&leftStrView, &rightStrView);
 }
@@ -339,14 +339,14 @@ bohString bohStringAdd(const bohString* pLeft, const bohString* pRight)
 
 bohString bohStringAddStringView(const bohString* pLeft, const bohStringView* pRStrView)
 {
-    const bohStringView leftStrView = bohStringViewCreateString(pLeft);
+    const bohStringView leftStrView = bohStringViewCreateConstString(pLeft);
     return bohStringViewAddStringView(&leftStrView, pRStrView);
 }
 
 
 bohString bohStringViewAddString(const bohStringView* pLStrView, const bohString* pRight)
 {
-    const bohStringView rightStrView = bohStringViewCreateString(pRight);
+    const bohStringView rightStrView = bohStringViewCreateConstString(pRight);
     return bohStringViewAddStringView(pLStrView, &rightStrView);
 }
 

@@ -6,15 +6,16 @@
 #include "parser/parser.h"
 
 #include "types.h"
-#include "state.h"
+#include "error.h"
 
 
-#define BOH_CHECK_INTERPRETER_COND(COND, LINE, COLUMN, FMT, ...)                 \
-    if (!(COND)) {                                                               \
-        char msg[1024] = {0};                                                    \
-        sprintf_s(msg, sizeof(msg) - 1, FMT, __VA_ARGS__);                       \
-        bohStateEmplaceInterpreterError(bohGlobalStateGet(), LINE, COLUMN, msg); \
-        return bohRawExprStmtInterpResultCreateNumberI64(-1);                        \
+#define BOH_INTERP_PRINT_ERROR(LINE, COLUMN, FMT, ...) \
+    bohErrorsStatePrintError(stderr, bohErrorsStateGerCurrProcessingFileGlobal(), LINE, COLUMN, "INTERPRETER ERROR", FMT, __VA_ARGS__)
+
+#define BOH_INTERP_EXPECT(COND, LINE, COLUMN, FMT, ...)         \
+    if (!(COND)) {                                              \
+        BOH_INTERP_PRINT_ERROR(LINE, COLUMN, FMT, __VA_ARGS__); \
+        bohErrorsStatePushInterpreterErrorGlobal();             \
     }
 
 
@@ -82,7 +83,7 @@ bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringStringView(bohRaw
 bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringCStr(bohRawExprStmtInterpResult* pResult, const char* pCStr)
 {
     BOH_ASSERT(pCStr);
-    return bohRawExprStmtInterpResultSetStringStringView(pResult, bohStringViewCreateCStr(pCStr));
+    return bohRawExprStmtInterpResultSetStringStringView(pResult, bohStringViewCreateConstCStr(pCStr));
 }
 
 
@@ -498,7 +499,7 @@ static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, c
     const bohRawExprStmtInterpResult result = interpInterpretExpr(pAst, pOperandExpr);
     
     const char* pOperatorStr = bohParsExprOperatorToStr(pUnaryExpr->op);
-    BOH_CHECK_INTERPRETER_COND(bohRawExprStmtInterpResultIsNumber(&result), pUnaryExpr->line, pUnaryExpr->column, 
+    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&result), pUnaryExpr->line, pUnaryExpr->column, 
         "can't use unary %s operator with non numbers types", pOperatorStr);
 
     const bohNumber* pResultNumber = bohRawExprStmtInterpResultGetNumber(&result);
@@ -508,7 +509,7 @@ static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, c
         case BOH_OP_MINUS:          return bohRawExprStmtInterpResultCreateNumber(bohNumberGetOpposite(pResultNumber));
         case BOH_OP_NOT:            return bohRawExprStmtInterpResultCreateNumber(bohNumberGetNegation(pResultNumber));
         case BOH_OP_BITWISE_NOT:
-            BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(pResultNumber), pUnaryExpr->line, pUnaryExpr->column, 
+            BOH_INTERP_EXPECT(bohNumberIsI64(pResultNumber), pUnaryExpr->line, pUnaryExpr->column, 
                 "can't use ~ operator with non integral type");
             return bohRawExprStmtInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
     
@@ -616,7 +617,7 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, 
 
     const char* pOperatorStr = bohParsExprOperatorToStr(pBinaryExpr->op);
 
-    BOH_CHECK_INTERPRETER_COND(left.type == right.type, pBinaryExpr->line, pBinaryExpr->column, 
+    BOH_INTERP_EXPECT(left.type == right.type, pBinaryExpr->line, pBinaryExpr->column, 
         "invalid operation: %s %s %s", 
         bohRawExprStmtInterpResultTypeToStr(left.type), 
         pOperatorStr, 
@@ -677,13 +678,13 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, 
             break;
     }
 
-    BOH_CHECK_INTERPRETER_COND(bohRawExprStmtInterpResultIsNumber(&left), pBinaryExpr->line, pBinaryExpr->column, 
+    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&left), pBinaryExpr->line, pBinaryExpr->column, 
         "can't use binary %s operator with non numbers types", pOperatorStr);
-    BOH_CHECK_INTERPRETER_COND(bohRawExprStmtInterpResultIsNumber(&right), pBinaryExpr->line, pBinaryExpr->column, 
+    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&right), pBinaryExpr->line, pBinaryExpr->column, 
         "can't use binary %s operator with non numbers types", pOperatorStr);
 
     if (bohParsIsBitwiseExprOperator(pBinaryExpr->op)) {
-        BOH_CHECK_INTERPRETER_COND(bohNumberIsI64(pLeftNumber) && bohNumberIsI64(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, 
+        BOH_INTERP_EXPECT(bohNumberIsI64(pLeftNumber) && bohNumberIsI64(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, 
             "can't use %s bitwise operator with non integral types", pOperatorStr);
     }
 
@@ -693,10 +694,10 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, 
         case BOH_OP_MULT:
             return bohRawExprStmtInterpResultCreateNumber(bohNumberMult(pLeftNumber, pRightNumber));
         case BOH_OP_DIV:
-            BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, "right operand of / is zero");
+            BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, "right operand of / is zero");
             return bohRawExprStmtInterpResultCreateNumber(bohNumberDiv(pLeftNumber, pRightNumber));
         case BOH_OP_MOD:
-            BOH_CHECK_INTERPRETER_COND(!bohNumberIsZero(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, "right operand of % is zero");
+            BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, "right operand of % is zero");
             return bohRawExprStmtInterpResultCreateNumber(bohNumberMod(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_AND:
             return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseAnd(pLeftNumber, pRightNumber));

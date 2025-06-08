@@ -80,6 +80,9 @@ typedef enum TokenType
 } bohTokenType;
 
 
+const char* bohLexerConvertTokenTypeToStr(bohTokenType type);
+
+
 typedef struct Token
 {
     bohStringView lexeme;
@@ -123,6 +126,3 @@ void bohLexerDestroy(bohLexer* pLexer);
 const bohTokenStorage* bohLexerGetTokens(const bohLexer* pLexer);
 
 void bohLexerTokenize(bohLexer* pLexer);
-
-
-const char* bohLexerConvertTokenTypeToStr(bohTokenType type);

@@ -5,32 +5,17 @@
 #include "parser.h"
 #include "lexer/lexer.h"
 
-#include "state.h"
+#include "error.h"
 
 
-// static void parsPushError(bohLineNmb line, bohColumnNmb column, const char* pFmt, ...)
-// {
-//     BOH_ASSERT(pFmt);
+#define BOH_PARSER_PRINT_ERROR(LINE, COLUMN, FMT, ...) \
+    bohErrorsStatePrintError(stderr, bohErrorsStateGerCurrProcessingFileGlobal(), LINE, COLUMN, "PARSER ERROR", FMT, __VA_ARGS__)
 
-//     va_list args;
-//     va_start(args, pFmt);
-
-//     char msg[1024] = {0};
-
-//     vsprintf_s(msg, sizeof(msg), pFmt, args);
-//     va_end(args);
-    
-//     bohStateEmplaceParserError(bohGlobalStateGet(), line, column, msg);
-// }
-
-
-// #define BOH_CHECK_PARSER_COND(COND, AST_PTR, LINE, COLUMN, FMT, ...)          \
-//     if (!(COND)) {                                                            \
-//         parsPushError(LINE, NUMBER, FMT, __VA_ARGS__);                        \
-//         bohExpr* _pExpr = bohAstAllocateExpr(&pParser->ast);                  \
-//         *_pExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(_pExpr), LINE, COLUMN); \
-//         return *_pExpr;                                                       \
-//     }
+#define BOH_PARSER_EXPECT(COND, LINE, COLUMN, FMT, ...)         \
+    if (!(COND)) {                                              \
+        BOH_PARSER_PRINT_ERROR(LINE, COLUMN, FMT, __VA_ARGS__); \
+        bohErrorsStatePushParserErrorGlobal();                  \
+    }
 
 
 static void stmtDefConstr(void* pElement)
@@ -1141,21 +1126,22 @@ static bohExpr parsParsPrimary(bohParser* pParser)
 
         return *pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
-        // const uint32_t line = parsPeekCurrToken(pParser)->line;
-        // const uint32_t column = parsPeekCurrToken(pParser)->column;
+        const uint32_t line = parsPeekCurrToken(pParser)->line;
+        const uint32_t column = parsPeekCurrToken(pParser)->column;
 
         *pPrimaryExpr = parsParsExpr(pParser);
-        parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN);
-        // BOH_CHECK_PARSER_COND(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN), line, column, "missed closing \')\'");
-
+        BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN), line, column, "missed closing \')\'");
+        
         return *pPrimaryExpr;
     }
 
-    // BOH_CHECK_PARSER_COND(false, pCurrToken->line, pCurrToken->column, "invalid primary token: %.*s",
-    //     bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
+    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+    BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "invalid primary token: %.*s",
+        bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
 
-    return bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
-        parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
+    *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
+        pCurrToken->line, pCurrToken->column);
+    return *pPrimaryExpr;
 }
 
 
@@ -1174,8 +1160,8 @@ static bohExpr parsParsUnary(bohParser* pParser)
         bohExpr operandExpr = parsParsUnary(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, "unknown unary operator: %.*s", 
-        //     bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, "unknown unary operator: %.*s", 
+            bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
         
         bohExpr* pUnaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pUnaryExpr = bohExprCreateUnaryExpr(op, pUnaryExpr->selfIdx, operandExpr.selfIdx, pOperatorToken->line, pOperatorToken->column);
@@ -1203,8 +1189,8 @@ static bohExpr parsParsMultiplication(bohParser* pParser)
         const bohExpr rightExpr = parsParsUnary(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown term operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown term operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1232,8 +1218,8 @@ static bohExpr parsParsAddition(bohParser* pParser)
         const bohExpr rightExpr = parsParsMultiplication(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1261,8 +1247,8 @@ static bohExpr parsParsBitwiseShift(bohParser* pParser)
         const bohExpr rightExpr = parsParsAddition(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1292,8 +1278,8 @@ static bohExpr parsParsComparison(bohParser* pParser)
         const bohExpr rightExpr = parsParsBitwiseShift(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1321,8 +1307,8 @@ static bohExpr parsParsEquality(bohParser* pParser)
         const bohExpr rightExpr = parsParsComparison(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1347,8 +1333,8 @@ static bohExpr parsParsBitwiseAnd(bohParser* pParser)
         const bohExpr rightExpr = parsParsEquality(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1373,8 +1359,8 @@ static bohExpr parsParsBitwiseXor(bohParser* pParser)
         const bohExpr rightExpr = parsParsBitwiseAnd(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1399,8 +1385,8 @@ static bohExpr parsParsBitwiseOr(bohParser* pParser)
         const bohExpr rightExpr = parsParsBitwiseXor(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1425,8 +1411,8 @@ static bohExpr parsParsAnd(bohParser* pParser)
         const bohExpr rightExpr = parsParsBitwiseOr(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
@@ -1451,8 +1437,8 @@ static bohExpr parsParsOr(bohParser* pParser)
         const bohExpr rightExpr = parsParsAnd(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
-        // BOH_CHECK_PARSER_COND(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
-        //     "unknown expr operator: %s", bohStringViewGetData(&pOperatorToken->lexeme));
+        BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
+            "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
         *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdio.h>
+
+
 #define BOH_OUTPUT_COLOR_BLACK   "\033[30m"
 #define BOH_OUTPUT_COLOR_RED     "\033[31m"
 #define BOH_OUTPUT_COLOR_GREEN   "\033[32m"
@@ -19,6 +22,7 @@
     #error Currently, only MSVC and Clang are supported
 #endif
 
+
 #if defined(_DEBUG) || !defined(NDEBUG)
     #define BOH_ASSERT(COND)                                                                                              \
         if (!(COND)) {                                                                                                    \
@@ -28,3 +32,7 @@
 #else
     #define BOH_ASSERT(COND)
 #endif
+
+
+typedef uint32_t bohLineNmb;
+typedef uint32_t bohColumnNmb;

@@ -101,10 +101,14 @@ static void PrintInterpreterErrors(const bohState* pState)
 }
 
 
-static void PrintOffset(FILE* pStream, uint64_t length)
+static void PrintOffset(FILE* pStream, uint64_t offsetLen)
 {
-    for (uint64_t i = 0; i < length; ++i) {
+    for (uint64_t i = 0; i < offsetLen; ++i) {
         fputc(' ', pStream);
+    }
+
+    if (offsetLen > 0) {
+        fflush(pStream);
     }
 }
 
@@ -121,6 +125,10 @@ static void PrintEscapedCString(FILE* pStream, const char* pString, size_t strLe
         } else {
             fputc(pString[i], pStream);
         }
+    }
+
+    if (strLen > 0) {
+        fflush(pStream);
     }
 }
 
@@ -344,6 +352,22 @@ static void PrintAst(const bohAST* pAst)
 }
 
 
+static void PrintToken(const bohToken* pToken)
+{
+    BOH_ASSERT(pToken);
+
+    const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
+
+    fprintf_s(stdout, "(%s%s%s, ", BOH_OUTPUT_COLOR_YELLOW, bohTokenGetTypeStr(pToken), BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, BOH_OUTPUT_COLOR_GREEN);
+    
+    PrintEscapedCString(stdout, bohStringViewGetData(pLexeme), bohStringViewGetSize(pLexeme));
+    
+    fprintf_s(stdout, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
+}
+
+
 int main(int argc, char* argv[])
 {
     bohGlobalStateInit();
@@ -400,15 +424,7 @@ int main(int argc, char* argv[])
 
     const size_t tokensCount = bohDynArrayGetSize(pTokens);
     for (size_t i = 0; i < tokensCount; ++i) {
-        const bohToken* pToken = bohDynArrayAtConst(pTokens, i);
-
-        const bohStringView* pLexeme = bohTokenGetLexeme(pToken);
-
-        fprintf_s(stdout, "(%s%s%s, ", BOH_OUTPUT_COLOR_YELLOW, bohTokenGetTypeStr(pToken), BOH_OUTPUT_COLOR_RESET);
-        fprintf_s(stdout, BOH_OUTPUT_COLOR_GREEN);
-        PrintEscapedCString(stdout, bohStringViewGetData(pLexeme), bohStringViewGetSize(pLexeme));
-        fprintf_s(stdout, BOH_OUTPUT_COLOR_RESET);
-        fprintf_s(stdout, ", %u, %u)\n", pToken->line, pToken->column);
+        PrintToken(bohDynArrayAtConst(pTokens, i));
     }
 
     bohParser parser = bohParserCreate(pTokens);

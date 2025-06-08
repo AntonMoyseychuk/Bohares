@@ -31,7 +31,7 @@ bohString* bohStringAssignStringView(bohString* pDst, bohStringView strView);
 bohString* bohStringAssignStringViewPtr(bohString* pDst, const bohStringView* pStrView);
 
 bohString* bohStringReserve(bohString* pStr, size_t newCapacity);
-bohString* bohStringResize(bohString* pStr, size_t newLength);
+bohString* bohStringResize(bohString* pStr, size_t newSize);
 
 bohString* bohStringMove(bohString* pDst, bohString* pSrc);
 
@@ -40,6 +40,7 @@ size_t bohStringGetSize(const bohString* pStr);
 size_t bohStringGetCapacity(const bohString* pStr);
 
 char bohStringAt(const bohString* pStr, size_t index);
+void bohStringSetAt(bohString* pStr, char ch, size_t index);
 
 bool bohStringIsEmpty(const bohString* pStr);
 

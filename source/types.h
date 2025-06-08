@@ -43,6 +43,8 @@ bohBoharesString* bohBoharesStringStringViewAssignStringView(bohBoharesString* p
 bohBoharesString* bohBoharesStringStringViewAssignStringViewPtr(bohBoharesString* pDst, const bohStringView* pSrc);
 bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst, const bohString* pSrc);
 
+bohBoharesString* bohBoharesStringResize(bohBoharesString* pString, size_t newSize);
+
 bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString* pSrc);
 
 bool bohBoharesStringIsStringView(const bohBoharesString* pString);
@@ -55,8 +57,10 @@ const char* bohBoharesStringGetData(const bohBoharesString* pString);
 size_t bohBoharesStringGetSize(const bohBoharesString* pString);
 
 char bohBoharesStringAt(const bohBoharesString* pString, size_t index);
+void bohBoharesStringSetAt(bohBoharesString* pString, char ch, size_t index);
 
 bool bohBoharesStringIsEmpty(const bohBoharesString* pString);
+bool bohBoharesStringIsConstStringView(const bohBoharesString* pString);
 
 int32_t bohBoharesStringCmp(const bohBoharesString* pLeft, const bohBoharesString* pRight);
 

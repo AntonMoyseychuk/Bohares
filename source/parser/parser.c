@@ -18,6 +18,59 @@
     }
 
 
+static bohBoharesString parsGetUnescapedString(const bohBoharesString* pString)
+{
+    BOH_ASSERT(pString);
+
+    const size_t strSize = bohBoharesStringGetSize(pString);
+
+    bohBoharesString str = bohBoharesStringCreateString();
+    if (strSize == 0) {
+        return str;
+    }
+
+    bohBoharesStringResize(&str, strSize);
+
+    size_t j = 0;
+
+    for (size_t i = 0; i < strSize; ++i, ++j) {
+        const char currSymb = bohBoharesStringAt(pString, i);
+
+        if (currSymb == '\\') {
+            const char nextSymb = bohBoharesStringAt(pString, i + 1);
+
+            if (nextSymb == 't') {
+                bohBoharesStringSetAt(&str, '\t', j);
+                ++i;
+            } else if (nextSymb == '\"') {
+                bohBoharesStringSetAt(&str, '\"', j);
+                ++i;
+            } else if (nextSymb == '\'') {
+                bohBoharesStringSetAt(&str, '\'', j);
+                ++i;
+            } else if (nextSymb == 'r') {
+                bohBoharesStringSetAt(&str, '\r', j);
+                ++i;
+            } else if (nextSymb == 'n') {
+                bohBoharesStringSetAt(&str, '\n', j);
+                ++i;
+            } else if (nextSymb == '\\') {
+                bohBoharesStringSetAt(&str, '\\', j);
+                ++i;
+            } else {
+                bohBoharesStringSetAt(&str, currSymb, j);
+            }
+        } else {
+            bohBoharesStringSetAt(&str, currSymb, j);
+        }
+    }
+
+    bohBoharesStringResize(&str, j);
+
+    return str;
+}
+
+
 static void stmtDefConstr(void* pElement)
 {
     BOH_ASSERT(pElement);
@@ -1095,25 +1148,31 @@ static bohExpr parsParsPrimary(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
-
     if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_TRUE)) {
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+
         *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(1), bohExprGetStorageIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
         
         return *pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FALSE)) {
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+
         *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
 
         return *pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+
         const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
         *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(value), bohExprGetStorageIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
 
         return *pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+
         const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
         *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateF64(value), bohExprGetStorageIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
@@ -1121,7 +1180,13 @@ static bohExpr parsParsPrimary(bohParser* pParser)
         return *pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_STRING)) {
         bohBoharesString lexeme = bohBoharesStringCreateStringViewStringViewPtr(&parsPeekPrevToken(pParser)->lexeme);
-        *pPrimaryExpr = bohExprCreateStringValueExprMove(&lexeme, bohExprGetStorageIdx(pPrimaryExpr), 
+        bohBoharesString unescapedLexeme = parsGetUnescapedString(&lexeme);
+
+        bohBoharesStringDestroy(&lexeme);
+        
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+
+        *pPrimaryExpr = bohExprCreateStringValueExprMove(&unescapedLexeme, bohExprGetStorageIdx(pPrimaryExpr), 
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
 
         return *pPrimaryExpr;
@@ -1129,19 +1194,24 @@ static bohExpr parsParsPrimary(bohParser* pParser)
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
 
-        *pPrimaryExpr = parsParsExpr(pParser);
+        bohExpr expr = parsParsExpr(pParser);
         BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN), line, column, "missed closing \')\'");
         
-        return *pPrimaryExpr;
+        return expr;
     }
 
-    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
-    BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "invalid primary token: %.*s",
-        bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
+    {
+        const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+        BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "invalid primary token: %.*s",
+            bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
+    
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+    
+        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
+            pCurrToken->line, pCurrToken->column);
 
-    *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
-        pCurrToken->line, pCurrToken->column);
-    return *pPrimaryExpr;
+        return *pPrimaryExpr;
+    }
 }
 
 

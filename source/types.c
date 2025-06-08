@@ -87,7 +87,7 @@ void bohBoharesStringDestroy(bohBoharesString* pString)
         bohStringViewReset(&pString->view);
     }
 
-    memset(pString, 0, sizeof(bohBoharesString));
+    pString->type = BOH_STRING_TYPE_VIEW;
 }
 
 
@@ -162,15 +162,34 @@ bohBoharesString* bohBoharesStringStringViewAssignString(bohBoharesString* pDst,
 }
 
 
+bohBoharesString* bohBoharesStringResize(bohBoharesString* pString, size_t newSize)
+{
+    BOH_ASSERT(pString);
+
+    if (bohBoharesStringIsString(pString)) {
+        bohStringResize(&pString->string, newSize);
+    } else {
+        bohStringViewResize(&pString->view, newSize);
+    }
+
+    return pString;
+}
+
+
 bohBoharesString* bohBoharesStringMove(bohBoharesString* pDst, bohBoharesString* pSrc)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
     bohBoharesStringDestroy(pDst);
-    
-    memcpy_s(pDst, sizeof(bohBoharesString), pSrc, sizeof(bohBoharesString));
-    memset(pSrc, 0, sizeof(bohBoharesString));
+
+    pDst->type = pSrc->type;
+
+    if (bohBoharesStringIsString(pSrc)) {
+        bohStringMove(&pDst->string, &pSrc->string);
+    } else {
+        bohStringViewMove(&pDst->view, &pSrc->view);
+    }
 
     return pDst;
 }
@@ -244,6 +263,16 @@ char bohBoharesStringAt(const bohBoharesString* pString, size_t index)
 }
 
 
+void bohBoharesStringSetAt(bohBoharesString* pString, char ch, size_t index)
+{
+    if (bohBoharesStringIsString(pString)) {
+        bohStringSetAt(&pString->string, ch, index);
+    } else {
+        bohStringViewSetAt(&pString->view, ch, index);
+    }
+}
+
+
 bool bohBoharesStringIsEmpty(const bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
@@ -253,6 +282,12 @@ bool bohBoharesStringIsEmpty(const bohBoharesString* pString)
     } else {
         return bohStringViewIsEmpty(&pString->view);
     }
+}
+
+
+bool bohBoharesStringIsConstStringView(const bohBoharesString* pString)
+{
+    return bohBoharesStringIsStringView(pString) && bohStringViewIsConst(bohBoharesStringGetStringView(pString));
 }
 
 

@@ -10,7 +10,7 @@ bohString bohStringCreate(void)
 {
     bohString str;
 
-    str.pData = "";
+    str.pData = NULL;
     str.size = 0;
     str.capacity = 0;
 
@@ -39,7 +39,7 @@ bohString bohStringCreateFromTo(const char* pBegin, const char* pEnd)
 
     bohString str;
 
-    str.pData = "";
+    str.pData = NULL;
     str.size = length;
     str.capacity = str.size > 0 ? str.size + 1 : 0;
 
@@ -86,11 +86,9 @@ void bohStringDestroy(bohString* pStr)
 {
     BOH_ASSERT(pStr);
 
-    if (pStr->capacity > 0) {
-        free(pStr->pData);
-    }
+    free(pStr->pData);
 
-    pStr->pData = "";
+    pStr->pData = NULL;
     pStr->size = 0;
     pStr->capacity = 0;
 }
@@ -167,16 +165,24 @@ bohString* bohStringReserve(bohString* pStr, size_t newCapacity)
 {
     BOH_ASSERT(pStr);
 
-    if (newCapacity <= pStr->capacity) {
+    const size_t strSize = pStr->size;
+    const size_t strCapacity = pStr->capacity;
+
+    if (newCapacity <= strCapacity) {
         return pStr;
     }
 
     char* pNewBuff = (char*)malloc(newCapacity);
-    strcpy_s(pNewBuff, newCapacity * sizeof(char), pStr->pData);
+    BOH_ASSERT(pNewBuff);
 
-    free(pStr->pData);
-    pStr->capacity = newCapacity;
+    strncpy_s(pNewBuff, newCapacity * sizeof(char), pStr->pData, strSize);
+    memset(pNewBuff + strSize, 0, newCapacity - strSize);
+
+    bohStringDestroy(pStr);
+
     pStr->pData = pNewBuff;
+    pStr->size = strSize;
+    pStr->capacity = newCapacity;
 
     pNewBuff = NULL;
 
@@ -227,7 +233,7 @@ bohString* bohStringMove(bohString* pDst, bohString* pSrc)
 const char* bohStringGetCStr(const bohString* pStr)
 {
     BOH_ASSERT(pStr);
-    return pStr->pData;
+    return pStr->pData ? pStr->pData : "";
 }
 
 
@@ -252,6 +258,16 @@ char bohStringAt(const bohString* pStr, size_t index)
     BOH_ASSERT(index < pStr->size);
 
     return pStr->pData[index];
+}
+
+
+void bohStringSetAt(bohString *pStr, char ch, size_t index)
+{
+    BOH_ASSERT(pStr);
+    BOH_ASSERT(pStr->pData);
+    BOH_ASSERT(index < pStr->size);
+
+    pStr->pData[index] = ch;
 }
 
 

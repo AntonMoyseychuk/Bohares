@@ -125,12 +125,6 @@ static bool lexIsNotEndLineChar(char ch)
 }
 
 
-static bool lexIsNotDoubleQuoteOrEndChar(char ch)
-{
-    return ch != '\"' && ch != '\0';
-}
-
-
 static bool lexIsNotMultilineCommentEndOrEndChar(char ch)
 {
     return ch != ']' && ch != '\0';
@@ -224,6 +218,27 @@ static char lexAdvanceCurrPos(bohLexer* pLexer)
     pLexer->column = nextCharIdx > dataSize ? pLexer->column : pLexer->column + 1;
 
     return nextCharIdx > dataSize ? '\0' : bohStringViewAt(&pLexer->data, pLexer->currPos++);
+}
+
+
+static char lexProcessString(bohLexer* pLexer)
+{
+    BOH_ASSERT(pLexer);
+    
+    char currCh = lexPickCurrPosChar(pLexer);
+    
+    while(currCh != '\0' && currCh != '\"') {
+        if (currCh == '\\') {
+            if (lexPickNextNStepChar(pLexer, 1) == '\"') {
+                lexAdvanceCurrPos(pLexer);
+            }
+        }
+
+        lexAdvanceCurrPos(pLexer);
+        currCh = lexPickCurrPosChar(pLexer);
+    }
+
+    return currCh;
 }
 
 
@@ -487,7 +502,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
             break;
         case '\"':
         {
-            const char currCh = lexAdvanceCurrPosWhile(pLexer, lexIsNotDoubleQuoteOrEndChar);
+            const char currCh = lexProcessString(pLexer);
             BOH_LEXER_EXPECT(currCh == '\"', pLexer->line, pLexer->column, "missed closing double quotes");
 
             lexAdvanceCurrPos(pLexer); // Consume '"' symbol

@@ -460,8 +460,8 @@ bohPrintStmtInterpResult* bohPrintStmtInterpResultAssign(bohPrintStmtInterpResul
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, const bohBinaryExpr* pExpr);
-static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, const bohUnaryExpr* pExpr);
+static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, const bohExpr* pExpr);
+static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, const bohExpr* pExpr);
 
 
 static bohRawExprStmtInterpResult interpInterpretExpr(const bohAST* pAst, const bohExpr* pExpr)
@@ -470,9 +470,9 @@ static bohRawExprStmtInterpResult interpInterpretExpr(const bohAST* pAst, const 
     BOH_ASSERT(pExpr);
 
     if (bohExprIsBinaryExpr(pExpr)) {
-        return interpInterpretBinaryExpr(pAst, bohExprGetBinaryExpr(pExpr));
+        return interpInterpretBinaryExpr(pAst, pExpr);
     } else if (bohExprIsUnaryExpr(pExpr)) {
-        return interpInterpretUnaryExpr(pAst, bohExprGetUnaryExpr(pExpr));
+        return interpInterpretUnaryExpr(pAst, pExpr);
     }
 
     if (bohExprIsValueExpr(pExpr)) {
@@ -490,16 +490,18 @@ static bohRawExprStmtInterpResult interpInterpretExpr(const bohAST* pAst, const 
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, const bohUnaryExpr* pUnaryExpr)
+static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, const bohExpr* pExpr)
 {
     BOH_ASSERT(pAst);
-    BOH_ASSERT(pUnaryExpr);
+    BOH_ASSERT(bohExprIsUnaryExpr(pExpr));
+
+    const bohUnaryExpr* pUnaryExpr = bohExprGetUnaryExpr(pExpr);
 
     const bohExpr* pOperandExpr = bohAstGetExprByIdx(pAst, bohUnaryExprGetExprIdx(pUnaryExpr));
     const bohRawExprStmtInterpResult result = interpInterpretExpr(pAst, pOperandExpr);
     
     const char* pOperatorStr = bohParsExprOperatorToStr(pUnaryExpr->op);
-    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&result), pUnaryExpr->line, pUnaryExpr->column, 
+    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&result), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "can't use unary %s operator with non numbers types", pOperatorStr);
 
     const bohNumber* pResultNumber = bohRawExprStmtInterpResultGetNumber(&result);
@@ -509,7 +511,7 @@ static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, c
         case BOH_OP_MINUS:          return bohRawExprStmtInterpResultCreateNumber(bohNumberGetOpposite(pResultNumber));
         case BOH_OP_NOT:            return bohRawExprStmtInterpResultCreateNumber(bohNumberGetNegation(pResultNumber));
         case BOH_OP_BITWISE_NOT:
-            BOH_INTERP_EXPECT(bohNumberIsI64(pResultNumber), pUnaryExpr->line, pUnaryExpr->column, 
+            BOH_INTERP_EXPECT(bohNumberIsI64(pResultNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
                 "can't use ~ operator with non integral type");
             return bohRawExprStmtInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
     
@@ -520,11 +522,13 @@ static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohAST* pAst, c
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretLogicalAnd(const bohAST* pAst, const bohBinaryExpr* pBinaryExpr)
+static bohRawExprStmtInterpResult interpInterpretLogicalAnd(const bohAST* pAst, const bohExpr* pExpr)
 {
     BOH_ASSERT(pAst);
-    BOH_ASSERT(pBinaryExpr);
+    BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
+    const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
+
     const bohRawExprStmtInterpResult leftInterpResult = 
         interpInterpretExpr(pAst, bohAstGetExprByIdx(pAst, bohBinaryExprGetLeftExprIdx(pBinaryExpr)));
 
@@ -555,10 +559,12 @@ static bohRawExprStmtInterpResult interpInterpretLogicalAnd(const bohAST* pAst, 
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretLogicalOr(const bohAST* pAst, const bohBinaryExpr* pBinaryExpr)
+static bohRawExprStmtInterpResult interpInterpretLogicalOr(const bohAST* pAst, const bohExpr* pExpr)
 {
     BOH_ASSERT(pAst);
-    BOH_ASSERT(pBinaryExpr);
+    BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
+    
+    const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
     const bohRawExprStmtInterpResult leftInterpResult = 
         interpInterpretExpr(pAst, bohAstGetExprByIdx(pAst, bohBinaryExprGetLeftExprIdx(pBinaryExpr)));
@@ -590,15 +596,17 @@ static bohRawExprStmtInterpResult interpInterpretLogicalOr(const bohAST* pAst, c
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, const bohBinaryExpr* pBinaryExpr)
+static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, const bohExpr* pExpr)
 {
     BOH_ASSERT(pAst);
-    BOH_ASSERT(pBinaryExpr);
+    BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
+    
+    const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
     if (pBinaryExpr->op == BOH_OP_AND) {
-        return interpInterpretLogicalAnd(pAst, pBinaryExpr);
+        return interpInterpretLogicalAnd(pAst, pExpr);
     } else if (pBinaryExpr->op == BOH_OP_OR) {
-        return interpInterpretLogicalOr(pAst, pBinaryExpr);
+        return interpInterpretLogicalOr(pAst, pExpr);
     }
 
     const bohRawExprStmtInterpResult left = interpInterpretExpr(pAst, bohAstGetExprByIdx(pAst, bohBinaryExprGetLeftExprIdx(pBinaryExpr)));
@@ -617,7 +625,7 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, 
 
     const char* pOperatorStr = bohParsExprOperatorToStr(pBinaryExpr->op);
 
-    BOH_INTERP_EXPECT(left.type == right.type, pBinaryExpr->line, pBinaryExpr->column, 
+    BOH_INTERP_EXPECT(left.type == right.type, bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "invalid operation: %s %s %s", 
         bohRawExprStmtInterpResultTypeToStr(left.type), 
         pOperatorStr, 
@@ -678,13 +686,13 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, 
             break;
     }
 
-    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&left), pBinaryExpr->line, pBinaryExpr->column, 
+    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&left), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "can't use binary %s operator with non numbers types", pOperatorStr);
-    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&right), pBinaryExpr->line, pBinaryExpr->column, 
+    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&right), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "can't use binary %s operator with non numbers types", pOperatorStr);
 
     if (bohParsIsBitwiseExprOperator(pBinaryExpr->op)) {
-        BOH_INTERP_EXPECT(bohNumberIsI64(pLeftNumber) && bohNumberIsI64(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, 
+        BOH_INTERP_EXPECT(bohNumberIsI64(pLeftNumber) && bohNumberIsI64(pRightNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
             "can't use %s bitwise operator with non integral types", pOperatorStr);
     }
 
@@ -694,10 +702,10 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohAST* pAst, 
         case BOH_OP_MULT:
             return bohRawExprStmtInterpResultCreateNumber(bohNumberMult(pLeftNumber, pRightNumber));
         case BOH_OP_DIV:
-            BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, "right operand of / is zero");
+            BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), "right operand of / is zero");
             return bohRawExprStmtInterpResultCreateNumber(bohNumberDiv(pLeftNumber, pRightNumber));
         case BOH_OP_MOD:
-            BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), pBinaryExpr->line, pBinaryExpr->column, "right operand of % is zero");
+            BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), "right operand of % is zero");
             return bohRawExprStmtInterpResultCreateNumber(bohNumberMod(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_AND:
             return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseAnd(pLeftNumber, pRightNumber));

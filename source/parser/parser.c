@@ -179,57 +179,53 @@ void bohValueExprDestroy(bohValueExpr* pExpr)
     }
 
     pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
-    pExpr->line = 0;
-    pExpr->column = 0;
 }
 
 
-bohValueExpr bohValueExprCreate(bohLineNmb line, bohColumnNmb column)
+bohValueExpr bohValueExprCreate(void)
 {
-    bohValueExpr expr;
+    bohValueExpr expr = {0};
 
-    expr.number = bohNumberCreateI64(0);
     expr.type = BOH_VALUE_EXPR_TYPE_NUMBER;
-    expr.line = line;
-    expr.column = column;
+    expr.number = bohNumberCreateI64(0);
 
     return expr;
 }
 
 
-bohValueExpr bohValueExprCreateNumber(bohNumber number, bohLineNmb line, bohColumnNmb column)
+bohValueExpr bohValueExprCreateNumber(bohNumber number)
 {
-    return bohValueExprCreateNumberNumberPtr(&number, line, column);
+    return bohValueExprCreateNumberNumberPtr(&number);
 }
 
 
-bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber, bohLineNmb line, bohColumnNmb column)
+bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber)
 {
     BOH_ASSERT(pNumber);
 
-    bohValueExpr expr = bohValueExprCreate(line, column);
+    bohValueExpr expr = bohValueExprCreate();
     bohValueExprSetNumberNumberPtr(&expr, pNumber);
 
     return expr;
 }
 
 
-bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString, bohLineNmb line, bohColumnNmb column)
+bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
 
-    bohValueExpr expr = bohValueExprCreate(line, column);
+    bohValueExpr expr = bohValueExprCreate();
     bohValueExprSetStringStringPtr(&expr, pString);
 
     return expr;
 }
 
 
-bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString, bohLineNmb line, bohColumnNmb column)
+bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
 
-    bohValueExpr expr = bohValueExprCreate(line, column);
+    bohValueExpr expr = bohValueExprCreate();
     bohValueExprSetStringStringMove(&expr, pString);
 
     return expr;
@@ -289,15 +285,10 @@ void bohValueExprSetNumberNumberPtr(bohValueExpr* pExpr, const bohNumber* pNumbe
     BOH_ASSERT(pExpr);
     BOH_ASSERT(pNumber);
 
-    const bohLineNmb line = pExpr->line;
-    const bohColumnNmb column = pExpr->column;
-
     bohValueExprDestroy(pExpr);
 
-    bohNumberAssign(&pExpr->number, pNumber);
     pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
-    pExpr->line = line;
-    pExpr->column = column;
+    bohNumberAssign(&pExpr->number, pNumber);
 }
 
 
@@ -306,15 +297,10 @@ void bohValueExprSetStringStringPtr(bohValueExpr* pExpr, const bohBoharesString*
     BOH_ASSERT(pExpr);
     BOH_ASSERT(pString);
 
-    const bohLineNmb line = pExpr->line;
-    const bohColumnNmb column = pExpr->column;
-
     bohValueExprDestroy(pExpr);
 
-    bohBoharesStringAssign(&pExpr->string, pString);
     pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
-    pExpr->line = line;
-    pExpr->column = column;
+    bohBoharesStringAssign(&pExpr->string, pString);
 }
 
 
@@ -323,15 +309,10 @@ void bohValueExprSetStringStringMove(bohValueExpr* pExpr, bohBoharesString* pStr
     BOH_ASSERT(pExpr);
     BOH_ASSERT(pString);
 
-    const bohLineNmb line = pExpr->line;
-    const bohColumnNmb column = pExpr->column;
-
     bohValueExprDestroy(pExpr);
 
-    bohBoharesStringMove(&pExpr->string, pString);
     pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
-    pExpr->line = line;
-    pExpr->column = column;
+    bohBoharesStringMove(&pExpr->string, pString);
 }
 
 
@@ -343,8 +324,6 @@ bohValueExpr* bohValueExprAssign(bohValueExpr* pDst, const bohValueExpr* pSrc)
     bohValueExprDestroy(pDst);
 
     pDst->type = pSrc->type;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_VALUE_EXPR_TYPE_NUMBER:
@@ -370,8 +349,6 @@ bohValueExpr* bohValueExprMove(bohValueExpr* pDst, bohValueExpr* pSrc)
     bohValueExprDestroy(pDst);
 
     pDst->type = pSrc->type;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_VALUE_EXPR_TYPE_NUMBER:
@@ -386,8 +363,6 @@ bohValueExpr* bohValueExprMove(bohValueExpr* pDst, bohValueExpr* pSrc)
     }
 
     pSrc->type = BOH_VALUE_EXPR_TYPE_NUMBER;
-    pSrc->line = 0;
-    pSrc->column = 0;
 
     return pDst;
 }
@@ -399,19 +374,15 @@ void bohUnaryExprDestroy(bohUnaryExpr* pExpr)
 
     pExpr->exprIdx = BOH_EXPR_IDX_INVALID;
     pExpr->op = BOH_OP_UNKNOWN;
-    pExpr->line = 0;
-    pExpr->column = 0;
 }
 
 
-bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column)
+bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx)
 {
     bohUnaryExpr expr;
     
     expr.exprIdx = exprIdx;
     expr.op = op;
-    expr.line = line;
-    expr.column = column;
 
     return expr;
 }
@@ -440,8 +411,6 @@ bohUnaryExpr* bohUnaryExprAssign(bohUnaryExpr* pDst, const bohUnaryExpr* pSrc)
 
     pDst->exprIdx = pSrc->exprIdx;
     pDst->op = pSrc->op;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     return pDst;
 }
@@ -456,8 +425,6 @@ bohUnaryExpr* bohUnaryExprMove(bohUnaryExpr* pDst, bohUnaryExpr* pSrc)
     
     pSrc->exprIdx = BOH_EXPR_IDX_INVALID;
     pSrc->op = BOH_OP_UNKNOWN;
-    pSrc->line = 0;
-    pSrc->column = 0;
 
     return pDst;
 }
@@ -470,21 +437,16 @@ void bohBinaryExprDestroy(bohBinaryExpr* pExpr)
     pExpr->leftExprIdx = BOH_EXPR_IDX_INVALID;
     pExpr->rightExprIdx = BOH_EXPR_IDX_INVALID;
     pExpr->op = BOH_OP_UNKNOWN;
-    pExpr->line = 0;
-    pExpr->column = 0;
 }
 
 
-bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx,
-    bohLineNmb line, bohColumnNmb column)
+bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx)
 {
     bohBinaryExpr expr;
 
     expr.leftExprIdx = leftExprIdx;
     expr.rightExprIdx = rightExprIdx;
     expr.op = op;
-    expr.line = line;
-    expr.column = column;
 
     return expr;
 }
@@ -521,8 +483,6 @@ bohBinaryExpr* bohBinaryExprAssign(bohBinaryExpr* pDst, const bohBinaryExpr* pSr
     pDst->leftExprIdx = pSrc->leftExprIdx;
     pDst->rightExprIdx = pSrc->rightExprIdx;
     pDst->op = pSrc->op;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     return pDst;
 }
@@ -538,8 +498,6 @@ bohBinaryExpr* bohBinaryExprMove(bohBinaryExpr* pDst, bohBinaryExpr* pSrc)
     pSrc->leftExprIdx = BOH_EXPR_IDX_INVALID;
     pSrc->rightExprIdx = BOH_EXPR_IDX_INVALID;
     pSrc->op = BOH_OP_UNKNOWN;
-    pSrc->line = 0;
-    pSrc->column = 0;
 
     return pDst;
 }
@@ -566,16 +524,26 @@ void bohExprDestroy(bohExpr* pExpr)
 
     pExpr->type = BOH_EXPR_TYPE_VALUE;
     pExpr->selfIdx = BOH_EXPR_IDX_INVALID;
+    pExpr->line = 0;
+    pExpr->column = 0;
 }
 
 
 bohExpr bohExprCreate(void)
 {
-    bohExpr expr;
+    return bohExprCreateSelfIdxLineColumn(BOH_EXPR_IDX_INVALID, 0, 0);
+}
+
+
+bohExpr bohExprCreateSelfIdxLineColumn(bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+{
+    bohExpr expr = {0};
 
     expr.type = BOH_EXPR_TYPE_VALUE;
-    expr.valueExpr = bohValueExprCreateNumber(bohNumberCreateI64(0), 0, 0);
-    expr.selfIdx = BOH_EXPR_IDX_INVALID;
+    expr.valueExpr = bohValueExprCreateNumber(bohNumberCreateI64(0));
+    expr.selfIdx = selfIdx;
+    expr.line = line;
+    expr.column = column;
 
     return expr;
 }
@@ -591,11 +559,10 @@ bohExpr bohExprCreateNumberValueExprPtr(const bohNumber* pNumber, bohExprIdx sel
 {
     BOH_ASSERT(pNumber);
 
-    bohExpr expr = bohExprCreate();
+    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
 
-    expr.valueExpr = bohValueExprCreateNumberNumberPtr(pNumber, line, column);
+    expr.valueExpr = bohValueExprCreateNumberNumberPtr(pNumber);
     expr.type = BOH_EXPR_TYPE_VALUE;
-    expr.selfIdx = selfIdx;
 
     return expr;
 }
@@ -605,11 +572,10 @@ bohExpr bohExprCreateStringValueExpr(const bohBoharesString* pString, bohExprIdx
 {
     BOH_ASSERT(pString);
 
-    bohExpr expr = bohExprCreate();
+    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
 
-    expr.valueExpr = bohValueExprCreateStringStringPtr(pString, line, column);
+    expr.valueExpr = bohValueExprCreateStringStringPtr(pString);
     expr.type = BOH_EXPR_TYPE_VALUE;
-    expr.selfIdx = selfIdx;
 
     return expr;
 }
@@ -619,11 +585,10 @@ bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString, bohExprIdx s
 {
     BOH_ASSERT(pString);
 
-    bohExpr expr = bohExprCreate();
+    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
 
-    expr.valueExpr = bohValueExprCreateStringStringMove(pString, line, column);
+    expr.valueExpr = bohValueExprCreateStringStringMove(pString);
     expr.type = BOH_EXPR_TYPE_VALUE;
-    expr.selfIdx = selfIdx;
 
     return expr;
 }
@@ -631,11 +596,10 @@ bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString, bohExprIdx s
 
 bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column)
 {
-    bohExpr expr = bohExprCreate();
+    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
 
-    expr.unaryExpr = bohUnaryExprCreateOpExpr(op, exprIdx, line, column);
+    expr.unaryExpr = bohUnaryExprCreateOpExpr(op, exprIdx);
     expr.type = BOH_EXPR_TYPE_UNARY;
-    expr.selfIdx = selfIdx;
 
     return expr;
 }
@@ -643,11 +607,10 @@ bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprId
 
 bohExpr bohExprCreateBinaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx, bohLineNmb line, bohColumnNmb column)
 {
-    bohExpr expr = bohExprCreate();
+    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
 
-    expr.binaryExpr = bohBinaryExprCreateOpExpr(op, leftExprIdx, rightExprIdx, line, column);
+    expr.binaryExpr = bohBinaryExprCreateOpExpr(op, leftExprIdx, rightExprIdx);
     expr.type = BOH_EXPR_TYPE_BINARY;
-    expr.selfIdx = selfIdx;
 
     return expr;
 }
@@ -695,10 +658,24 @@ const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr)
 }
 
 
-bohExprIdx bohExprGetStorageIdx(const bohExpr* pExpr)
+bohExprIdx bohExprGetSelfIdx(const bohExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
     return pExpr->selfIdx;
+}
+
+
+bohLineNmb bohExprGetLine(const bohExpr *pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return pExpr->line;
+}
+
+
+bohColumnNmb bohExprGetColumn(const bohExpr *pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return pExpr->column;
 }
 
 
@@ -711,6 +688,8 @@ bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc)
 
     pDst->type = pSrc->type;
     pDst->selfIdx = pSrc->selfIdx;
+    pDst->line = pSrc->line;
+    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_EXPR_TYPE_VALUE:
@@ -740,6 +719,8 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
 
     pDst->type = pSrc->type;
     pDst->selfIdx = pSrc->selfIdx;
+    pDst->line = pSrc->line;
+    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_EXPR_TYPE_VALUE:
@@ -758,6 +739,8 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
 
     pSrc->type = BOH_EXPR_TYPE_VALUE;
     pSrc->selfIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->line = 0;
+    pSrc->column = 0;
 
     return pDst;
 }
@@ -767,17 +750,13 @@ void bohRawExprStmtDestroy(bohRawExprStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
     pStmt->exprIdx = BOH_EXPR_IDX_INVALID;
-    pStmt->line = 0;
-    pStmt->column = 0;
 }
 
 
-bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column)
+bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx)
 {
     bohRawExprStmt stmt;
     stmt.exprIdx = exprIdx;
-    stmt.line = line;
-    stmt.column = column;
 
     return stmt;
 }
@@ -796,10 +775,7 @@ bohRawExprStmt* bohRawExprStmtAssign(bohRawExprStmt* pDst, const bohRawExprStmt*
     BOH_ASSERT(pSrc);
 
     bohRawExprStmtDestroy(pDst);
-    
     pDst->exprIdx = pSrc->exprIdx;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     return pDst;
 }
@@ -811,10 +787,7 @@ bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohRawExprStmtAssign(pDst, pSrc);
-
     pSrc->exprIdx = BOH_EXPR_IDX_INVALID;
-    pSrc->line = 0;
-    pSrc->column = 0;
 
     return pDst;
 }
@@ -824,17 +797,13 @@ void bohPrintStmtDestroy(bohPrintStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
     pStmt->argStmtIdx = BOH_STMT_IDX_INVALID;
-    pStmt->line = 0;
-    pStmt->column = 0;
 }
 
 
-bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column)
+bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx argStmtIdx)
 {
     bohPrintStmt stmt;
     stmt.argStmtIdx = argStmtIdx;
-    stmt.line = line;
-    stmt.column = column;
 
     return stmt;
 }
@@ -853,10 +822,7 @@ bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohPrintStmtDestroy(pDst);
-
     pDst->argStmtIdx = pSrc->argStmtIdx;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     return pDst;
 }
@@ -868,10 +834,7 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohPrintStmtAssign(pDst, pSrc);
-
     pSrc->argStmtIdx = BOH_STMT_IDX_INVALID;
-    pSrc->line = 0;
-    pSrc->column = 0;
 
     return pDst;
 }
@@ -897,17 +860,25 @@ void bohStmtDestroy(bohStmt* pStmt)
 
     pStmt->type = BOH_STMT_TYPE_EMPTY;
     pStmt->selfIdx = BOH_STMT_IDX_INVALID;
+    pStmt->line = 0;
+    pStmt->column = 0;
 }
 
 
 bohStmt bohStmtCreate(void)
 {
-    bohStmt stmt;
+    return bohStmtCreateSelfIdxLineColumn(BOH_STMT_IDX_INVALID, 0, 0);
+}
 
-    memset(&stmt, 0, sizeof(bohStmt));
+
+bohStmt bohStmtCreateSelfIdxLineColumn(bohStmtIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+{
+    bohStmt stmt = {0};
 
     stmt.type = BOH_STMT_TYPE_EMPTY;
-    stmt.selfIdx = BOH_STMT_IDX_INVALID;
+    stmt.selfIdx = selfIdx;
+    stmt.line = line;
+    stmt.column = column;
 
     return stmt;
 }
@@ -915,11 +886,10 @@ bohStmt bohStmtCreate(void)
 
 bohStmt bohStmtCreateRawExpr(bohStmtIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column)
 {
-    bohStmt stmt = bohStmtCreate();
+    bohStmt stmt = bohStmtCreateSelfIdxLineColumn(selfIdx, line, column);
 
     stmt.type = BOH_STMT_TYPE_RAW_EXPR;
-    stmt.rawExpr = bohRawExprStmtCreateExprIdx(exprIdx, line, column);
-    stmt.selfIdx = selfIdx;
+    stmt.rawExpr = bohRawExprStmtCreateExprIdx(exprIdx);
 
     return stmt;
 }
@@ -927,11 +897,10 @@ bohStmt bohStmtCreateRawExpr(bohStmtIdx selfIdx, bohExprIdx exprIdx, bohLineNmb 
 
 bohStmt bohStmtCreatePrint(bohStmtIdx selfIdx, bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column)
 {
-    bohStmt stmt = bohStmtCreate();
+    bohStmt stmt = bohStmtCreateSelfIdxLineColumn(selfIdx, line, column);
 
     stmt.type = BOH_STMT_TYPE_PRINT;
-    stmt.printStmt = bohPrintStmtCreateStmtIdx(argStmtIdx, line, column);
-    stmt.selfIdx = selfIdx;
+    stmt.printStmt = bohPrintStmtCreateStmtIdx(argStmtIdx);
 
     return stmt;
 }
@@ -988,6 +957,8 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
 
     pDst->type = pSrc->type;
     pDst->selfIdx = pSrc->selfIdx;
+    pDst->line = pSrc->line;
+    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_STMT_TYPE_EMPTY:
@@ -1016,6 +987,8 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
 
     pDst->type = pSrc->type;
     pDst->selfIdx = pSrc->selfIdx;
+    pDst->line = pSrc->line;
+    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_STMT_TYPE_EMPTY:
@@ -1033,8 +1006,31 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
 
     pSrc->type = BOH_STMT_TYPE_EMPTY;
     pSrc->selfIdx = BOH_STMT_IDX_INVALID;
+    pSrc->line = 0;
+    pSrc->column = 0;
 
     return pDst;
+}
+
+
+bohStmtIdx bohStmtGetSelfIdx(const bohStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->selfIdx;
+}
+
+
+bohLineNmb bohStmtGetLine(const bohStmt *pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->line;
+}
+
+
+bohColumnNmb bohStmtGetColumn(const bohStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->column;
 }
 
 
@@ -1151,14 +1147,14 @@ static bohExpr parsParsPrimary(bohParser* pParser)
     if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_TRUE)) {
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(1), bohExprGetStorageIdx(pPrimaryExpr),
+        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(1), bohExprGetSelfIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
         
         return *pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FALSE)) {
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
+        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetSelfIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
 
         return *pPrimaryExpr;
@@ -1166,7 +1162,7 @@ static bohExpr parsParsPrimary(bohParser* pParser)
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
         const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(value), bohExprGetStorageIdx(pPrimaryExpr),
+        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(value), bohExprGetSelfIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
 
         return *pPrimaryExpr;
@@ -1174,7 +1170,7 @@ static bohExpr parsParsPrimary(bohParser* pParser)
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
         const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateF64(value), bohExprGetStorageIdx(pPrimaryExpr),
+        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateF64(value), bohExprGetSelfIdx(pPrimaryExpr),
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
         
         return *pPrimaryExpr;
@@ -1186,7 +1182,7 @@ static bohExpr parsParsPrimary(bohParser* pParser)
         
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
-        *pPrimaryExpr = bohExprCreateStringValueExprMove(&unescapedLexeme, bohExprGetStorageIdx(pPrimaryExpr), 
+        *pPrimaryExpr = bohExprCreateStringValueExprMove(&unescapedLexeme, bohExprGetSelfIdx(pPrimaryExpr), 
             parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
 
         return *pPrimaryExpr;
@@ -1207,7 +1203,7 @@ static bohExpr parsParsPrimary(bohParser* pParser)
     
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
     
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetStorageIdx(pPrimaryExpr),
+        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetSelfIdx(pPrimaryExpr),
             pCurrToken->line, pCurrToken->column);
 
         return *pPrimaryExpr;

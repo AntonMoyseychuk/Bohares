@@ -1705,8 +1705,9 @@ static bohStmt parsParsIfStmt(bohParser* pParser)
 
     const bohStmt conditionStmt = parsParsNextStmt(pParser);
     
-    BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), parsPeekCurrToken(pParser)->line,
-        parsPeekCurrToken(pParser)->column, "expected opening \'{\' in \'if\' statement block");
+    const bohToken* pLCurlyToken = parsPeekPrevToken(pParser);
+    BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), pLCurlyToken->line, pLCurlyToken->column, 
+        "expected opening \'{\' in \'if\' statement block");
 
     const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
     
@@ -1719,8 +1720,9 @@ static bohStmt parsParsIfStmt(bohParser* pParser)
         bohDynArrayPushBack(&innerStmtIdxStorage, &innerStmtIdx);
     }
 
-    BOH_PARSER_EXPECT(parsPeekPrevToken(pParser)->type == BOH_TOKEN_TYPE_RCURLY, parsPeekPrevToken(pParser)->line,
-        parsPeekPrevToken(pParser)->column, "expected closing \'}\' in \'if\' statement block");
+    const bohToken* pRCurlyToken = parsPeekPrevToken(pParser);
+    BOH_PARSER_EXPECT(pRCurlyToken->type == BOH_TOKEN_TYPE_RCURLY, pRCurlyToken->line, pRCurlyToken->column, 
+        "expected closing \'}\' in \'if\' statement block");
 
     bohStmt* pIfStmt = bohDynArrayAt(&pParser->ast.stmts, ifStmtIdx);
     *pIfStmt = bohStmtCreateIf(ifStmtIdx, bohStmtGetSelfIdx(&conditionStmt), &innerStmtIdxStorage,

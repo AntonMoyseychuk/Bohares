@@ -285,6 +285,52 @@ static bohStmtIdx PrintPrintStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, ui
 }
 
 
+static bohStmtIdx PrintIfStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint64_t offsetLen)
+{
+    BOH_ASSERT(pAst);
+
+    const uint64_t nextlevelOffsetLen = offsetLen + 4;
+
+    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, printStmtIdx);
+    BOH_ASSERT(pStmt);
+
+    const bohIfStmt* pIfStmt = bohStmtGetIf(pStmt);
+
+    fprintf_s(stdout, "%sIfStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
+    PrintOffset(stdout, nextlevelOffsetLen);
+    
+    const uint64_t nextlevelOffsetLen2 = nextlevelOffsetLen + 4;
+
+    fprintf_s(stdout, "%scondition:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+    PrintOffset(stdout, nextlevelOffsetLen2);
+
+    bohStmtIdx lastPrintedStmt = PrintAstStmt(pAst, pIfStmt->conditionStmtIdx, nextlevelOffsetLen2);
+
+    fputc('\n', stdout);
+    PrintOffset(stdout, nextlevelOffsetLen);
+
+    fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+    PrintOffset(stdout, nextlevelOffsetLen2);
+
+    const size_t innerStmtsCount = bohDynArrayGetSize(&pIfStmt->innerStmtIdxStorage);
+    for (size_t i = 0; i < innerStmtsCount; ++i) {
+        const bohStmtIdx stmtIdx = *(const bohStmtIdx*)bohDynArrayAtConst(&pIfStmt->innerStmtIdxStorage, i);
+        lastPrintedStmt = PrintAstStmt(pAst, stmtIdx, nextlevelOffsetLen2);
+
+        if (i + 1 < innerStmtsCount) {
+            fputc('\n', stdout);
+            PrintOffset(stdout, nextlevelOffsetLen2);
+        }
+    }
+
+    fputc('\n', stdout);
+    PrintOffset(stdout, offsetLen);
+    fputc(')', stdout);
+
+    return lastPrintedStmt;
+}
+
+
 // Returns last printed stmt
 static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen)
 {
@@ -300,6 +346,8 @@ static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t 
             return PrintAstRawExprStmt(pAst, pStmt->selfIdx, offsetLen);
         case BOH_STMT_TYPE_PRINT:
             return PrintPrintStmt(pAst, pStmt->selfIdx, offsetLen);
+        case BOH_STMT_TYPE_IF:
+            return PrintIfStmt(pAst, pStmt->selfIdx, offsetLen);
         default:
             BOH_ASSERT(false && "Invalid statement type");
             return stmtIdx;

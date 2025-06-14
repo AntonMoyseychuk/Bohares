@@ -206,6 +206,7 @@ bohString* bohStringResize(bohString* pStr, size_t newLength)
     }
 
     pStr->size = newLength;
+    pStr->pData[newLength] = '\0';
 
     return pStr;
 }

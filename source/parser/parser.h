@@ -57,6 +57,8 @@ typedef uint32_t bohExprIdx;
 typedef uint32_t bohStmtIdx;
 #define BOH_STMT_IDX_INVALID 0xffffffff
 
+#define bohStmtIdxStorageCreate bohDynArrayCreateUI32
+
 
 typedef enum ValueExprType
 {
@@ -228,6 +230,7 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
 
 typedef struct IfStmt
 {
+    bohStmtIdx conditionStmtIdx;
     bohDynArray innerStmtIdxStorage;
 } bohIfStmt;
 
@@ -235,10 +238,12 @@ typedef struct IfStmt
 void bohIfStmtDestroy(bohIfStmt* pStmt);
 
 bohIfStmt bohIfStmtCreate(void);
-bohIfStmt bohIfStmtCreateStmtsCount(size_t stmtsCount);
+bohIfStmt bohIfStmtCreateStmtsIdxStorageMove(bohStmtIdx conditionStmtIdx, bohDynArray* pStmtIdxStorage);
 
 bohStmtIdx* bohIfStmtPushIdx(bohIfStmt* pStmt, bohStmtIdx stmtIdx);
 const bohDynArray* bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt* pStmt);
+
+bohStmtIdx bohIfStmtGetConditionStmtIdx(const bohIfStmt* pStmt);
 
 bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc);
 bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);
@@ -277,7 +282,7 @@ bohStmt bohStmtCreateSelfIdxLineColumn(bohStmtIdx selfIdx, bohLineNmb line, bohC
 
 bohStmt bohStmtCreateRawExpr(bohStmtIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column);
 bohStmt bohStmtCreatePrint(bohStmtIdx selfIdx, bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column);
-bohStmt bohStmtCreateIf(bohStmtIdx selfIdx, bohLineNmb line, bohColumnNmb column);
+bohStmt bohStmtCreateIf(bohStmtIdx selfIdx, bohStmtIdx conditionStmtIdx, bohDynArray* pStmtIdxStorage, bohLineNmb line, bohColumnNmb column);
 
 bohStmtType bohStmtGetType(const bohStmt* pStmt);
 

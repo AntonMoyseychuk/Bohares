@@ -165,6 +165,7 @@ bohNumber  bohNumberBitwiseRShift(const bohNumber* pValue, const bohNumber* pBit
 bohNumber* bohNumberBitwiseRShiftAssign(bohNumber* pDst, const bohNumber* pBits);
 
 bohString bohNumberToString(const bohNumber* pNumber);
+bool bohNumberToBool(const bohNumber* pNumber);
 
 bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc);
 

@@ -1,2 +1,5 @@
-print("\"aaa\"" + " \' " + "\n\tbbb\n\\\n")
-print(((1 + 2 * 3) ^ 22 >> 2) < ((1 << 10) & 1024) and !(5 != 5 or 1 <= 1) | (6 >= 7 and 1 < 2) or "avs")
+if ((1 + 2.2) * 3.3) {
+    print("\"aaa\"" + " \' " + "\n\tbbb\n\\\n")
+}
+
+print("after if stmt\n")

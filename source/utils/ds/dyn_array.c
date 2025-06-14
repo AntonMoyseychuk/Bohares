@@ -264,7 +264,9 @@ bohDynArray* bohDynArrayAssign(bohDynArray* pDst, const bohDynArray* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    bohDynArrayDestroy(pDst);
+    if (bohDynArrayIsValid(pDst)) {
+        bohDynArrayDestroy(pDst);
+    }
 
     *pDst = bohDynArrayCreate(pSrc->elementSize, pSrc->pElemDefContr, pSrc->pElemDestr, pSrc->pElemCopyFunc);
 

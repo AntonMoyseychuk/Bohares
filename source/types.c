@@ -810,6 +810,12 @@ bohString bohNumberToString(const bohNumber* pNumber)
 }
 
 
+bool bohNumberToBool(const bohNumber* pNumber)
+{
+    return bohNumberIsI64(pNumber) ? pNumber->i64 != 0 : pNumber->f64 != 0.0;
+}
+
+
 bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc)
 {
     BOH_ASSERT(pDst);

@@ -843,6 +843,8 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
 void bohIfStmtDestroy(bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
+
+    pStmt->conditionStmtIdx = BOH_STMT_IDX_INVALID;
     bohDynArrayDestroy(&pStmt->innerStmtIdxStorage);
 }
 
@@ -850,16 +852,23 @@ void bohIfStmtDestroy(bohIfStmt* pStmt)
 bohIfStmt bohIfStmtCreate(void)
 {
     bohIfStmt stmt = {0};
-    stmt.innerStmtIdxStorage = bohDynArrayCreateUI32();
+
+    stmt.conditionStmtIdx = BOH_STMT_IDX_INVALID;
+    stmt.innerStmtIdxStorage = bohStmtIdxStorageCreate();
 
     return stmt;
 }
 
 
-bohIfStmt bohIfStmtCreateStmtsCount(size_t stmtsCount)
+bohIfStmt bohIfStmtCreateStmtsIdxStorageMove(bohStmtIdx conditionStmtIdx, bohDynArray* pStmtIdxStorage)
 {
+    BOH_ASSERT(conditionStmtIdx != BOH_STMT_IDX_INVALID);
+    BOH_ASSERT(pStmtIdxStorage);
+
     bohIfStmt stmt = bohIfStmtCreate();
-    bohDynArrayReserve(&stmt.innerStmtIdxStorage, stmtsCount);
+    
+    stmt.conditionStmtIdx = conditionStmtIdx;
+    bohDynArrayMove(&stmt.innerStmtIdxStorage, pStmtIdxStorage);
     
     return stmt;
 }
@@ -883,11 +892,19 @@ const bohDynArray *bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt *pStmt)
 }
 
 
+bohStmtIdx bohIfStmtGetConditionStmtIdx(const bohIfStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->conditionStmtIdx;
+}
+
+
 bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
+    pDst->conditionStmtIdx = pSrc->conditionStmtIdx;
     bohDynArrayAssign(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
 
     return pDst;
@@ -899,7 +916,10 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
+    pDst->conditionStmtIdx = pSrc->conditionStmtIdx;
     bohDynArrayMove(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+
+    pSrc->conditionStmtIdx = BOH_STMT_IDX_INVALID;
 
     return pDst;
 }
@@ -917,6 +937,9 @@ void bohStmtDestroy(bohStmt* pStmt)
             break;
         case BOH_STMT_TYPE_PRINT:
             bohPrintStmtDestroy(&pStmt->printStmt);
+            break;
+        case BOH_STMT_TYPE_IF:
+            bohIfStmtDestroy(&pStmt->ifStmt);
             break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
@@ -971,6 +994,17 @@ bohStmt bohStmtCreatePrint(bohStmtIdx selfIdx, bohStmtIdx argStmtIdx, bohLineNmb
 }
 
 
+bohStmt bohStmtCreateIf(bohStmtIdx selfIdx, bohStmtIdx conditionStmtIdx, bohDynArray* pStmtIdxStorage, bohLineNmb line, bohColumnNmb column)
+{
+    bohStmt stmt = bohStmtCreateSelfIdxLineColumn(selfIdx, line, column);
+
+    stmt.type = BOH_STMT_TYPE_IF;
+    stmt.ifStmt = bohIfStmtCreateStmtsIdxStorageMove(conditionStmtIdx, pStmtIdxStorage);
+
+    return stmt;
+}
+
+
 bohStmtType bohStmtGetType(const bohStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
@@ -999,6 +1033,13 @@ bool bohStmtIsPrint(const bohStmt* pStmt)
 }
 
 
+bool bohStmtIsIf(const bohStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->type == BOH_STMT_TYPE_IF;
+}
+
+
 const bohRawExprStmt* bohStmtGetRawExpr(const bohStmt* pStmt)
 {
     BOH_ASSERT(bohStmtIsRawExpr(pStmt));
@@ -1010,6 +1051,13 @@ const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt)
 {
     BOH_ASSERT(bohStmtIsPrint(pStmt));
     return &pStmt->printStmt;
+}
+
+
+const bohIfStmt* bohStmtGetIf(const bohStmt* pStmt)
+{
+    BOH_ASSERT(bohStmtIsIf(pStmt));
+    return &pStmt->ifStmt;
 }
 
 
@@ -1033,6 +1081,9 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
             break;
         case BOH_STMT_TYPE_PRINT:
             bohPrintStmtAssign(&pDst->printStmt, &pSrc->printStmt);
+            break;
+        case BOH_STMT_TYPE_IF:
+            bohIfStmtAssign(&pDst->ifStmt, &pSrc->ifStmt);
             break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
@@ -1063,6 +1114,9 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
             break;
         case BOH_STMT_TYPE_PRINT:
             bohPrintStmtMove(&pDst->printStmt, &pSrc->printStmt);
+            break;
+        case BOH_STMT_TYPE_IF:
+            bohIfStmtMove(&pDst->ifStmt, &pSrc->ifStmt);
             break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
@@ -1637,6 +1691,45 @@ static bohStmt parsParsPrintStmt(bohParser* pParser)
 }
 
 
+// <if_stmt> = "if" <stmt> { (<stmt>)* }
+static bohStmt parsParsIfStmt(bohParser* pParser)
+{
+    BOH_ASSERT(pParser);
+
+    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+
+    const bool isIfStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_IF);
+    BOH_ASSERT(isIfStmt);
+
+    const bohStmtIdx ifStmtIdx = bohStmtGetSelfIdx(bohAstAllocateStmt(&pParser->ast));
+
+    const bohStmt conditionStmt = parsParsNextStmt(pParser);
+    
+    BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), parsPeekCurrToken(pParser)->line,
+        parsPeekCurrToken(pParser)->column, "expected opening \'{\' in \'if\' statement block");
+
+    const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
+    
+    bohDynArray innerStmtIdxStorage = bohStmtIdxStorageCreate();
+
+    while(pParser->currTokenIdx < tokensCount && !parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
+        const bohStmt innerStmt = parsParsNextStmt(pParser);
+        const bohStmtIdx innerStmtIdx = bohStmtGetSelfIdx(&innerStmt);
+
+        bohDynArrayPushBack(&innerStmtIdxStorage, &innerStmtIdx);
+    }
+
+    BOH_PARSER_EXPECT(parsPeekPrevToken(pParser)->type == BOH_TOKEN_TYPE_RCURLY, parsPeekPrevToken(pParser)->line,
+        parsPeekPrevToken(pParser)->column, "expected closing \'}\' in \'if\' statement block");
+
+    bohStmt* pIfStmt = bohDynArrayAt(&pParser->ast.stmts, ifStmtIdx);
+    *pIfStmt = bohStmtCreateIf(ifStmtIdx, bohStmtGetSelfIdx(&conditionStmt), &innerStmtIdxStorage,
+        pCurrToken->line, pCurrToken->column);
+
+    return *pIfStmt;
+}
+
+
 static bohStmt parsParsNextStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
@@ -1651,6 +1744,8 @@ static bohStmt parsParsNextStmt(bohParser* pParser)
             return parsParsRawExprStmt(pParser);
         case BOH_TOKEN_TYPE_PRINT:
             return parsParsPrintStmt(pParser);
+        case BOH_TOKEN_TYPE_IF:
+            return parsParsIfStmt(pParser);
         default:
             BOH_ASSERT(false && "Invalid token type");
             return bohStmtCreate();

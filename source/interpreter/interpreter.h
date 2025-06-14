@@ -66,6 +66,8 @@ const bohNumber* bohRawExprStmtInterpResultGetNumber(const bohRawExprStmtInterpR
 int64_t bohRawExprStmtInterpResultGetNumberI64(const bohRawExprStmtInterpResult* pResult);
 double bohRawExprStmtInterpResultGetNumberF64(const bohRawExprStmtInterpResult* pResult);
 
+bool bohRawExprStmtInterpResultToBool(const bohRawExprStmtInterpResult* pResult);
+
 const bohBoharesString* bohRawExprStmtInterpResultGetString(const bohRawExprStmtInterpResult* pResult);
 const bohString* bohRawExprStmtInterpResultGetStringString(const bohRawExprStmtInterpResult* pResult);
 const bohStringView* bohRawExprStmtInterpResultGetStringStringView(const bohRawExprStmtInterpResult* pResult);
@@ -86,10 +88,23 @@ bohPrintStmtInterpResult* bohPrintStmtInterpResultMove(bohPrintStmtInterpResult*
 bohPrintStmtInterpResult* bohPrintStmtInterpResultAssign(bohPrintStmtInterpResult* pDst, bohPrintStmtInterpResult* pSrc);
 
 
+typedef struct IfStmtInterpResult
+{
+} bohIfStmtInterpResult;
+
+
+bohIfStmtInterpResult bohIfStmtInterpResultCreate(void);
+void bohIfStmtInterpResultDestroy(bohIfStmtInterpResult* pResult);
+
+bohIfStmtInterpResult* bohIfStmtInterpResultMove(bohIfStmtInterpResult* pDst, bohIfStmtInterpResult* pSrc);
+bohIfStmtInterpResult* bohIfStmtInterpResultAssign(bohIfStmtInterpResult* pDst, bohIfStmtInterpResult* pSrc);
+
+
 typedef enum StmtInterpResultType
 {
     BOH_INTERP_RES_TYPE_RAW_EXPR,
     BOH_INTERP_RES_TYPE_PRINT,
+    BOH_INTERP_RES_TYPE_IF,
 } bohStmtInterpResultType;
 
 
@@ -98,6 +113,7 @@ typedef struct StmtInterpResult
     union {
         bohRawExprStmtInterpResult rawExprStmtInterpResult;
         bohPrintStmtInterpResult printStmtInterpResult;
+        bohIfStmtInterpResult ifStmtInterpResult;
     };
 
     bohStmtInterpResultType type;
@@ -110,12 +126,15 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult);
 
 bool bohStmtInterpResultIsRawExprStmt(const bohStmtInterpResult* pResult);
 bool bohStmtInterpResultIsPrintStmt(const bohStmtInterpResult* pResult);
+bool bohStmtInterpResultIsIfStmt(const bohStmtInterpResult* pResult);
 
 const bohRawExprStmtInterpResult* bohStmtInterpResultGetRawExprStmtResult(const bohStmtInterpResult* pResult);
 const bohPrintStmtInterpResult* bohStmtInterpResultGetPrintStmtResult(const bohStmtInterpResult* pResult);
+const bohIfStmtInterpResult* bohStmtInterpResultGetIfStmtResult(const bohStmtInterpResult* pResult);
 
 bohStmtInterpResult bohStmtInterpResultCreateRawExprResultMove(bohRawExprStmtInterpResult* pResult, bohStmtIdx idx);
 bohStmtInterpResult bohStmtInterpResultCreatePrintStmtMove(bohPrintStmtInterpResult* pResult, bohStmtIdx idx);
+bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* pResult, bohStmtIdx idx);
 
 
 typedef struct AST bohAST;

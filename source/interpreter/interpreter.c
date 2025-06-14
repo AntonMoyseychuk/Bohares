@@ -346,6 +346,18 @@ double bohRawExprStmtInterpResultGetNumberF64(const bohRawExprStmtInterpResult* 
 }
 
 
+bool bohRawExprStmtInterpResultToBool(const bohRawExprStmtInterpResult* pResult)
+{
+    BOH_ASSERT(pResult);
+
+    if (bohRawExprStmtInterpResultIsString(pResult)) {
+        return true;
+    }
+
+    return bohNumberToBool(bohRawExprStmtInterpResultGetNumber(pResult));
+}
+
+
 const bohBoharesString* bohRawExprStmtInterpResultGetString(const bohRawExprStmtInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
@@ -450,6 +462,41 @@ bohPrintStmtInterpResult* bohPrintStmtInterpResultMove(bohPrintStmtInterpResult*
 
 
 bohPrintStmtInterpResult* bohPrintStmtInterpResultAssign(bohPrintStmtInterpResult* pDst, bohPrintStmtInterpResult* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    // Nothing to copy
+
+    return pDst;
+}
+
+
+bohIfStmtInterpResult bohIfStmtInterpResultCreate(void)
+{
+    bohIfStmtInterpResult result = {0};
+    return result;
+}
+
+
+void bohIfStmtInterpResultDestroy(bohIfStmtInterpResult *pResult)
+{
+    (void)pResult;
+}
+
+
+bohIfStmtInterpResult *bohIfStmtInterpResultMove(bohIfStmtInterpResult *pDst, bohIfStmtInterpResult *pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    // Nothing to move
+
+    return pDst;
+}
+
+
+bohIfStmtInterpResult *bohIfStmtInterpResultAssign(bohIfStmtInterpResult *pDst, bohIfStmtInterpResult *pSrc)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
@@ -752,6 +799,8 @@ static bohStmtInterpResult bohAstInterpretPrintStmt(const bohAST* pAst, bohStmtI
     const bohStmtIdx argStmtIdx = pPrintStmt->argStmtIdx;
     bohStmtInterpResult argInterpResult = bohAstInterpretStmt(pAst, argStmtIdx);
 
+    bohStmtIdx lastInterpretedStmtIdx = argInterpResult.lastInterpretedStmtIdx;
+
     BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(&argInterpResult) && "Only raw expr for now");
     const bohRawExprStmtInterpResult* pArgRawExprStmtResult = bohStmtInterpResultGetRawExprStmtResult(&argInterpResult);
 
@@ -780,7 +829,41 @@ static bohStmtInterpResult bohAstInterpretPrintStmt(const bohAST* pAst, bohStmtI
     bohStmtInterpResultDestroy(&argInterpResult);
 
     bohPrintStmtInterpResult interpResult = bohPrintStmtInterpResultCreate();
-    return bohStmtInterpResultCreatePrintStmtMove(&interpResult, stmtIdx);
+    return bohStmtInterpResultCreatePrintStmtMove(&interpResult, lastInterpretedStmtIdx);
+}
+
+
+static bohStmtInterpResult bohAstInterpretIfStmt(const bohAST* pAst, bohStmtIdx stmtIdx)
+{
+    BOH_ASSERT(pAst);
+
+    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, stmtIdx);
+    const bohIfStmt* pIfStmt = bohStmtGetIf(pStmt);
+
+    const bohStmtIdx condStmtIdx = bohIfStmtGetConditionStmtIdx(pIfStmt);
+    bohStmtInterpResult condInterpResult = bohAstInterpretStmt(pAst, condStmtIdx);
+
+    bohStmtIdx lastInterpretedStmtIdx = condInterpResult.lastInterpretedStmtIdx;
+
+    BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(&condInterpResult) && "Only raw expr for now");
+    const bohRawExprStmtInterpResult* pArgRawExprStmtResult = bohStmtInterpResultGetRawExprStmtResult(&condInterpResult);
+
+    const size_t innerStmtCount = bohDynArrayGetSize(&pIfStmt->innerStmtIdxStorage);
+
+    if (bohRawExprStmtInterpResultToBool(pArgRawExprStmtResult)) {
+        for (size_t i = 0; i < innerStmtCount; ++i) {
+            const bohStmtIdx idx = *(const bohStmtIdx*)bohDynArrayAtConst(&pIfStmt->innerStmtIdxStorage, i);
+            const bohStmtInterpResult interpResult = bohAstInterpretStmt(pAst, idx);
+            lastInterpretedStmtIdx = interpResult.lastInterpretedStmtIdx;
+        }
+    } else {
+        lastInterpretedStmtIdx += innerStmtCount;
+    }
+    
+    bohStmtInterpResultDestroy(&condInterpResult);
+
+    bohIfStmtInterpResult interpResult = bohIfStmtInterpResultCreate();
+    return bohStmtInterpResultCreateIfStmtMove(&interpResult, lastInterpretedStmtIdx);
 }
 
 
@@ -796,6 +879,8 @@ static bohStmtInterpResult bohAstInterpretStmt(const bohAST* pAst, bohStmtIdx st
             return bohAstInterpretRawExprStmt(pAst, stmtIdx);
         case BOH_STMT_TYPE_PRINT:
             return bohAstInterpretPrintStmt(pAst, stmtIdx);
+        case BOH_STMT_TYPE_IF:
+            return bohAstInterpretIfStmt(pAst, stmtIdx);
         default:
             BOH_ASSERT(false && "Invalid statement type");
             return bohStmtInterpResultCreate();
@@ -841,6 +926,9 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult)
         case BOH_INTERP_RES_TYPE_PRINT:
             bohPrintStmtInterpResultDestroy(&pResult->printStmtInterpResult);
             break;
+        case BOH_INTERP_RES_TYPE_IF:
+            bohIfStmtInterpResultDestroy(&pResult->ifStmtInterpResult);
+            break;
         default:
             BOH_ASSERT(false && "Invalid stmt interpretation result type");
             break;
@@ -865,6 +953,13 @@ bool bohStmtInterpResultIsPrintStmt(const bohStmtInterpResult *pResult)
 }
 
 
+bool bohStmtInterpResultIsIfStmt(const bohStmtInterpResult *pResult)
+{
+    BOH_ASSERT(pResult);
+    return pResult->type == BOH_INTERP_RES_TYPE_IF;
+}
+
+
 const bohRawExprStmtInterpResult* bohStmtInterpResultGetRawExprStmtResult(const bohStmtInterpResult* pResult)
 {
     BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(pResult));
@@ -876,6 +971,13 @@ const bohPrintStmtInterpResult* bohStmtInterpResultGetPrintStmtResult(const bohS
 {
     BOH_ASSERT(bohStmtInterpResultIsPrintStmt(pResult));
     return &pResult->printStmtInterpResult;
+}
+
+
+const bohIfStmtInterpResult *bohStmtInterpResultGetIfStmtResult(const bohStmtInterpResult *pResult)
+{
+    BOH_ASSERT(bohStmtInterpResultIsIfStmt(pResult));
+    return &pResult->ifStmtInterpResult;
 }
 
 
@@ -897,6 +999,18 @@ bohStmtInterpResult bohStmtInterpResultCreatePrintStmtMove(bohPrintStmtInterpRes
     
     bohPrintStmtInterpResultMove(&result.printStmtInterpResult, pResult);
     result.type = BOH_INTERP_RES_TYPE_PRINT;
+    result.lastInterpretedStmtIdx = idx;
+    
+    return result;
+}
+
+
+bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* pResult, bohStmtIdx idx)
+{
+    bohStmtInterpResult result = bohStmtInterpResultCreate();
+    
+    bohIfStmtInterpResultMove(&result.ifStmtInterpResult, pResult);
+    result.type = BOH_INTERP_RES_TYPE_IF;
     result.lastInterpretedStmtIdx = idx;
     
     return result;

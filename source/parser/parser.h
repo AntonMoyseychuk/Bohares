@@ -228,10 +228,30 @@ bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc);
 bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
 
 
+typedef struct StmtsBlock
+{
+    bohDynArray innerStmtIdxStorage;
+} bohStmtsBlock;
+
+
+void bohStmtsBlockDestroy(bohStmtsBlock* pBlock);
+
+bohStmtsBlock bohStmtsBlockCreate(void);
+bohStmtsBlock bohStmtsBlockCreateStmtsIdxStorageMove(bohDynArray* pStmtIdxStorage);
+
+bohStmtIdx* bohStmtsBlockPushIdx(bohStmtsBlock* pBlock, bohStmtIdx stmtIdx);
+const bohDynArray* bohStmtsBlockGetInnerStmtIdxStorage(const bohStmtsBlock* pBlock);
+
+bohStmtIdx bohStmtsBlockAt(const bohStmtsBlock* pBlock, size_t index);
+
+bohStmtsBlock* bohStmtsBlockAssign(bohStmtsBlock* pDst, const bohStmtsBlock* pSrc);
+bohStmtsBlock* bohStmtsBlockMove(bohStmtsBlock* pDst, bohStmtsBlock* pSrc);
+
+
 typedef struct IfStmt
 {
     bohStmtIdx conditionStmtIdx;
-    bohDynArray innerStmtIdxStorage;
+    bohStmtsBlock stmtBlock;
 } bohIfStmt;
 
 
@@ -244,6 +264,8 @@ bohStmtIdx* bohIfStmtPushIdx(bohIfStmt* pStmt, bohStmtIdx stmtIdx);
 const bohDynArray* bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt* pStmt);
 
 bohStmtIdx bohIfStmtGetConditionStmtIdx(const bohIfStmt* pStmt);
+
+bohStmtIdx bohIfStmtGetInnerStmtIdxAt(const bohIfStmt* pStmt, size_t index);
 
 bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc);
 bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);

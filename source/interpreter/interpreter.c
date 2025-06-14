@@ -848,12 +848,13 @@ static bohStmtInterpResult bohAstInterpretIfStmt(const bohAST* pAst, bohStmtIdx 
     BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(&condInterpResult) && "Only raw expr for now");
     const bohRawExprStmtInterpResult* pArgRawExprStmtResult = bohStmtInterpResultGetRawExprStmtResult(&condInterpResult);
 
-    const size_t innerStmtCount = bohDynArrayGetSize(&pIfStmt->innerStmtIdxStorage);
+    const size_t innerStmtCount = bohDynArrayGetSize(bohIfStmtGetInnerStmtIdxStorage(pIfStmt));
 
     if (bohRawExprStmtInterpResultToBool(pArgRawExprStmtResult)) {
         for (size_t i = 0; i < innerStmtCount; ++i) {
-            const bohStmtIdx idx = *(const bohStmtIdx*)bohDynArrayAtConst(&pIfStmt->innerStmtIdxStorage, i);
+            const bohStmtIdx idx = bohIfStmtGetInnerStmtIdxAt(pIfStmt, i);
             const bohStmtInterpResult interpResult = bohAstInterpretStmt(pAst, idx);
+
             lastInterpretedStmtIdx = interpResult.lastInterpretedStmtIdx;
         }
     } else {

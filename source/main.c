@@ -312,12 +312,11 @@ static bohStmtIdx PrintIfStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint6
     fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen2);
 
-    const size_t innerStmtsCount = bohDynArrayGetSize(&pIfStmt->innerStmtIdxStorage);
-    for (size_t i = 0; i < innerStmtsCount; ++i) {
-        const bohStmtIdx stmtIdx = *(const bohStmtIdx*)bohDynArrayAtConst(&pIfStmt->innerStmtIdxStorage, i);
-        lastPrintedStmt = PrintAstStmt(pAst, stmtIdx, nextlevelOffsetLen2);
+    const size_t innerStmtCount = bohDynArrayGetSize(bohIfStmtGetInnerStmtIdxStorage(pIfStmt));
+    for (size_t i = 0; i < innerStmtCount; ++i) {
+        lastPrintedStmt = PrintAstStmt(pAst, bohIfStmtGetInnerStmtIdxAt(pIfStmt, i), nextlevelOffsetLen2);
 
-        if (i + 1 < innerStmtsCount) {
+        if (i + 1 < innerStmtCount) {
             fputc('\n', stdout);
             PrintOffset(stdout, nextlevelOffsetLen2);
         }

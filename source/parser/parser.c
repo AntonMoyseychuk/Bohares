@@ -840,12 +840,86 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
 }
 
 
+void bohStmtsBlockDestroy(bohStmtsBlock* pBlock)
+{
+    BOH_ASSERT(pBlock);
+    bohDynArrayDestroy(&pBlock->innerStmtIdxStorage);
+}
+
+
+bohStmtsBlock bohStmtsBlockCreate(void)
+{
+    bohStmtsBlock block = {0};
+    block.innerStmtIdxStorage = bohStmtIdxStorageCreate();
+
+    return block;
+}
+
+
+bohStmtsBlock bohStmtsBlockCreateStmtsIdxStorageMove(bohDynArray* pStmtIdxStorage)
+{
+    BOH_ASSERT(pStmtIdxStorage);
+
+    bohStmtsBlock block = bohStmtsBlockCreate();
+    bohDynArrayMove(&block.innerStmtIdxStorage, pStmtIdxStorage);
+    
+    return block;
+}
+
+
+bohStmtIdx *bohStmtsBlockPushIdx(bohStmtsBlock* pBlock, bohStmtIdx stmtIdx)
+{
+    BOH_ASSERT(pBlock);
+
+    bohStmtIdx* pIdx = (bohStmtIdx*)bohDynArrayPushBackDummy(&pBlock->innerStmtIdxStorage);
+    *pIdx = stmtIdx;
+
+    return pIdx;
+}
+
+
+const bohDynArray* bohStmtsBlockGetInnerStmtIdxStorage(const bohStmtsBlock* pBlock)
+{
+    BOH_ASSERT(pBlock);
+    return &pBlock->innerStmtIdxStorage;
+}
+
+
+bohStmtIdx bohStmtsBlockAt(const bohStmtsBlock* pBlock, size_t index)
+{
+    BOH_ASSERT(pBlock);
+    return *(const bohStmtIdx*)bohDynArrayAtConst(&pBlock->innerStmtIdxStorage, index);
+}
+
+
+bohStmtsBlock* bohStmtsBlockAssign(bohStmtsBlock* pDst, const bohStmtsBlock* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohDynArrayAssign(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+
+    return pDst;
+}
+
+
+bohStmtsBlock* bohStmtsBlockMove(bohStmtsBlock* pDst, bohStmtsBlock* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohDynArrayMove(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+
+    return pDst;
+}
+
+
 void bohIfStmtDestroy(bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
 
     pStmt->conditionStmtIdx = BOH_STMT_IDX_INVALID;
-    bohDynArrayDestroy(&pStmt->innerStmtIdxStorage);
+    bohStmtsBlockDestroy(&pStmt->stmtBlock);
 }
 
 
@@ -854,7 +928,7 @@ bohIfStmt bohIfStmtCreate(void)
     bohIfStmt stmt = {0};
 
     stmt.conditionStmtIdx = BOH_STMT_IDX_INVALID;
-    stmt.innerStmtIdxStorage = bohStmtIdxStorageCreate();
+    stmt.stmtBlock = bohStmtsBlockCreate();
 
     return stmt;
 }
@@ -868,7 +942,7 @@ bohIfStmt bohIfStmtCreateStmtsIdxStorageMove(bohStmtIdx conditionStmtIdx, bohDyn
     bohIfStmt stmt = bohIfStmtCreate();
     
     stmt.conditionStmtIdx = conditionStmtIdx;
-    bohDynArrayMove(&stmt.innerStmtIdxStorage, pStmtIdxStorage);
+    stmt.stmtBlock = bohStmtsBlockCreateStmtsIdxStorageMove(pStmtIdxStorage);
     
     return stmt;
 }
@@ -877,18 +951,14 @@ bohIfStmt bohIfStmtCreateStmtsIdxStorageMove(bohStmtIdx conditionStmtIdx, bohDyn
 bohStmtIdx* bohIfStmtPushIdx(bohIfStmt* pStmt, bohStmtIdx stmtIdx)
 {
     BOH_ASSERT(pStmt);
-
-    bohStmtIdx* pIdx = (bohStmtIdx*)bohDynArrayPushBackDummy(&pStmt->innerStmtIdxStorage);
-    *pIdx = stmtIdx;
-
-    return pIdx;
+    return bohStmtsBlockPushIdx(&pStmt->stmtBlock, stmtIdx);
 }
 
 
-const bohDynArray *bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt *pStmt)
+const bohDynArray* bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt *pStmt)
 {
     BOH_ASSERT(pStmt);
-    return &pStmt->innerStmtIdxStorage;
+    return bohStmtsBlockGetInnerStmtIdxStorage(&pStmt->stmtBlock);
 }
 
 
@@ -899,13 +969,19 @@ bohStmtIdx bohIfStmtGetConditionStmtIdx(const bohIfStmt* pStmt)
 }
 
 
+bohStmtIdx bohIfStmtGetInnerStmtIdxAt(const bohIfStmt* pStmt, size_t index)
+{
+    return bohStmtsBlockAt(&pStmt->stmtBlock, index);
+}
+
+
 bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
     pDst->conditionStmtIdx = pSrc->conditionStmtIdx;
-    bohDynArrayAssign(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+    bohStmtsBlockAssign(&pDst->stmtBlock, &pSrc->stmtBlock);
 
     return pDst;
 }
@@ -917,7 +993,7 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     pDst->conditionStmtIdx = pSrc->conditionStmtIdx;
-    bohDynArrayMove(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+    bohStmtsBlockMove(&pDst->stmtBlock, &pSrc->stmtBlock);
 
     pSrc->conditionStmtIdx = BOH_STMT_IDX_INVALID;
 

@@ -110,7 +110,7 @@ bohString* bohStringAssign(bohString* pDst, const bohString* pSrc)
     pDst->capacity = pSrc->capacity;
 
     pDst->pData = (char*)malloc(pDst->capacity);
-    strcpy_s(pDst->pData, pDst->capacity, pSrc->pData);
+    memcpy_s(pDst->pData, pDst->capacity, pSrc->pData, pSrc->capacity);
 
     return pDst;
 }
@@ -119,12 +119,13 @@ bohString* bohStringAssign(bohString* pDst, const bohString* pSrc)
 bohString* bohStringAssignSizedCStr(bohString* pDst, const char* pCStr, size_t length)
 {
     BOH_ASSERT(pDst);
+    BOH_ASSERT(pCStr);
 
     const size_t cStrCapacity = length + 1;
 
     if (pDst->capacity >= cStrCapacity) {
-        memset(pDst->pData, 0, pDst->capacity);
-        strcpy_s(pDst->pData, pDst->capacity, pCStr);
+        memcpy_s(pDst->pData, pDst->capacity, pCStr, length);
+        pDst->pData[length] = '\0';
         pDst->size = length;
 
         return pDst;
@@ -132,12 +133,11 @@ bohString* bohStringAssignSizedCStr(bohString* pDst, const char* pCStr, size_t l
 
     bohStringDestroy(pDst);
 
-    if (!pCStr || length == 0) {
+    if (length == 0) {
         *pDst = bohStringCreate();
         return pDst;
     }
 
-    bohStringDestroy(pDst);
     *pDst = bohStringCreateCStr(pCStr);
     return pDst;
 }
@@ -175,8 +175,8 @@ bohString* bohStringReserve(bohString* pStr, size_t newCapacity)
     char* pNewBuff = (char*)malloc(newCapacity);
     BOH_ASSERT(pNewBuff);
 
-    strncpy_s(pNewBuff, newCapacity * sizeof(char), pStr->pData, strSize);
-    memset(pNewBuff + strSize, 0, newCapacity - strSize);
+    memcpy_s(pNewBuff, newCapacity, pStr->pData, strSize);
+    pNewBuff[strSize] = '\0';
 
     bohStringDestroy(pStr);
 
@@ -379,11 +379,12 @@ bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohSt
 
     bohString newString = bohStringCreate();
     
-    newString.pData = (char*)malloc(newStringSize);
-    memset(newString.pData, 0, newStringSize);
+    newString.pData = (char*)malloc(newStringCapacity);
+    memset(newString.pData, 0, newStringCapacity);
 
-    strncpy_s(newString.pData, newStringCapacity, pLStrView->pData, leftStringSize);
-    strncpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, pRStrView->pData, rightStringSize);
+    memcpy_s(newString.pData, newStringCapacity, bohStringViewGetData(pLStrView), leftStringSize);
+    memcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, bohStringGetCStr(pRStrView), rightStringSize);
+    newString.pData[newStringSize] = '\0';
 
     newString.size = newStringSize;
     newString.capacity = newStringCapacity;

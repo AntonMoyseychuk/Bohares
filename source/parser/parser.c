@@ -840,6 +840,71 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
 }
 
 
+void bohIfStmtDestroy(bohIfStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    bohDynArrayDestroy(&pStmt->innerStmtIdxStorage);
+}
+
+
+bohIfStmt bohIfStmtCreate(void)
+{
+    bohIfStmt stmt = {0};
+    stmt.innerStmtIdxStorage = bohDynArrayCreateUI32();
+
+    return stmt;
+}
+
+
+bohIfStmt bohIfStmtCreateStmtsCount(size_t stmtsCount)
+{
+    bohIfStmt stmt = bohIfStmtCreate();
+    bohDynArrayReserve(&stmt.innerStmtIdxStorage, stmtsCount);
+    
+    return stmt;
+}
+
+
+bohStmtIdx* bohIfStmtPushIdx(bohIfStmt* pStmt, bohStmtIdx stmtIdx)
+{
+    BOH_ASSERT(pStmt);
+
+    bohStmtIdx* pIdx = (bohStmtIdx*)bohDynArrayPushBackDummy(&pStmt->innerStmtIdxStorage);
+    *pIdx = stmtIdx;
+
+    return pIdx;
+}
+
+
+const bohDynArray *bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt *pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return &pStmt->innerStmtIdxStorage;
+}
+
+
+bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohDynArrayAssign(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+
+    return pDst;
+}
+
+
+bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohDynArrayMove(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+
+    return pDst;
+}
+
+
 void bohStmtDestroy(bohStmt* pStmt)
 {
     BOH_ASSERT(pStmt);

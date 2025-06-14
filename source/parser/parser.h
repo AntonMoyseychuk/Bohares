@@ -226,11 +226,30 @@ bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc);
 bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
 
 
+typedef struct IfStmt
+{
+    bohDynArray innerStmtIdxStorage;
+} bohIfStmt;
+
+
+void bohIfStmtDestroy(bohIfStmt* pStmt);
+
+bohIfStmt bohIfStmtCreate(void);
+bohIfStmt bohIfStmtCreateStmtsCount(size_t stmtsCount);
+
+bohStmtIdx* bohIfStmtPushIdx(bohIfStmt* pStmt, bohStmtIdx stmtIdx);
+const bohDynArray* bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt* pStmt);
+
+bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc);
+bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);
+
+
 typedef enum StmtType
 {
     BOH_STMT_TYPE_EMPTY,
     BOH_STMT_TYPE_RAW_EXPR,
     BOH_STMT_TYPE_PRINT,
+    BOH_STMT_TYPE_IF,
 } bohStmtType;
 
 
@@ -243,6 +262,7 @@ typedef struct Stmt
     {
         bohRawExprStmt rawExpr;
         bohPrintStmt printStmt;
+        bohIfStmt ifStmt;
     };
     
     bohLineNmb line;
@@ -257,15 +277,18 @@ bohStmt bohStmtCreateSelfIdxLineColumn(bohStmtIdx selfIdx, bohLineNmb line, bohC
 
 bohStmt bohStmtCreateRawExpr(bohStmtIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column);
 bohStmt bohStmtCreatePrint(bohStmtIdx selfIdx, bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column);
+bohStmt bohStmtCreateIf(bohStmtIdx selfIdx, bohLineNmb line, bohColumnNmb column);
 
 bohStmtType bohStmtGetType(const bohStmt* pStmt);
 
 bool bohStmtIsEmpty(const bohStmt* pStmt);
 bool bohStmtIsRawExpr(const bohStmt* pStmt);
 bool bohStmtIsPrint(const bohStmt* pStmt);
+bool bohStmtIsIf(const bohStmt* pStmt);
 
 const bohRawExprStmt* bohStmtGetRawExpr(const bohStmt* pStmt);
 const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt);
+const bohIfStmt* bohStmtGetIf(const bohStmt* pStmt);
 
 bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc);
 bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc);

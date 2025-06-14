@@ -5,6 +5,50 @@
 #include "dyn_array.h"
 
 
+#define BOH_CONSTRUCT_BASE_TYPE_DEFAULT_CONSTRUCTOR_NAME(TYPE) bohDynArrElemDefConstr_##TYPE##_
+#define BOH_CONSTRUCT_BASE_TYPE_DESTRUCTOR_NAME(TYPE) bohDynArrElemDestr_##TYPE##_
+#define BOH_CONSTRUCT_BASE_TYPE_COPY_FUNC_NAME(TYPE) bohDynArrElemCopyFunc_##TYPE##_
+
+#define BOH_DECLARE_BASE_TYPE_DEFAULT_CONSTRUCT(TYPE)                           \
+    void BOH_CONSTRUCT_BASE_TYPE_DEFAULT_CONSTRUCTOR_NAME(TYPE)(void* pElement) \
+    {                                                                           \
+        *((TYPE*)pElement) = (TYPE)0;                                           \
+    }
+
+#define BOH_DECLARE_BASE_TYPE_DESTRUCTOR(TYPE)                          \
+    void BOH_CONSTRUCT_BASE_TYPE_DESTRUCTOR_NAME(TYPE)(void* pElement)  \
+    {                                                                   \
+        *((TYPE*)pElement) = (TYPE)0;                                   \
+    }
+
+#define BOH_DECLARE_BASE_TYPE_COPY_FUNC(TYPE)                                       \
+    void BOH_CONSTRUCT_BASE_TYPE_COPY_FUNC_NAME(TYPE)(void* pDst, const void* pSrc) \
+    {                                                                               \
+        *((TYPE*)pDst) = *((const TYPE*)pSrc);                                      \
+    }
+
+#define BOH_DECALRE_BASE_TYPE_ARR_FUNCS(TYPE)       \
+    BOH_DECLARE_BASE_TYPE_DEFAULT_CONSTRUCT(TYPE)   \
+    BOH_DECLARE_BASE_TYPE_DESTRUCTOR(TYPE)          \
+    BOH_DECLARE_BASE_TYPE_COPY_FUNC(TYPE)
+
+#define BOH_GET_BASE_TYPE_DEF_CONSTR(TYPE) BOH_CONSTRUCT_BASE_TYPE_DEFAULT_CONSTRUCTOR_NAME(TYPE)
+#define BOH_GET_BASE_TYPE_DESTR(TYPE)      BOH_CONSTRUCT_BASE_TYPE_DESTRUCTOR_NAME(TYPE)
+#define BOH_GET_BASE_TYPE_COPY_FUNC(TYPE)  BOH_CONSTRUCT_BASE_TYPE_COPY_FUNC_NAME(TYPE)
+
+
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(int8_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(uint8_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(int16_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(uint16_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(int32_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(uint32_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(int64_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(uint64_t)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(float)
+BOH_DECALRE_BASE_TYPE_ARR_FUNCS(double)
+
+
 #define BOH_GET_DYN_ARRAY_ELEMENT_PTR(DATA, INDEX, ELEM_SIZE) (void*)((uint8_t*)(DATA) + (INDEX) * (ELEM_SIZE))
 
 
@@ -212,4 +256,107 @@ size_t bohDynArrayGetMemorySize(const bohDynArray* pArray)
 bool bohDynArrayIsValid(const bohDynArray* pArray)
 {
     return pArray && pArray->elementSize > 0 && pArray->pElemDefContr && pArray->pElemDestr && pArray->pElemCopyFunc;
+}
+
+
+bohDynArray* bohDynArrayAssign(bohDynArray* pDst, const bohDynArray* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohDynArrayDestroy(pDst);
+
+    *pDst = bohDynArrayCreate(pSrc->elementSize, pSrc->pElemDefContr, pSrc->pElemDestr, pSrc->pElemCopyFunc);
+
+    bohDynArrayReserve(pDst, pSrc->capacity);
+
+    for (size_t i = 0; i < pSrc->size; ++i) {
+        bohDynArrayPushBack(pDst, bohDynArrayAtConst(pSrc, i));
+    }
+
+    return pDst;
+}
+
+
+bohDynArray* bohDynArrayMove(bohDynArray* pDst, bohDynArray* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohDynArrayDestroy(pDst);
+
+    memcpy_s(pDst, sizeof(bohDynArray), pSrc, sizeof(bohDynArray));
+    memset(pSrc, 0, sizeof(bohDynArray));
+
+    return pDst;
+}
+
+
+bohDynArray bohDynArrayCreateI8(void)
+{
+    return BOH_DYN_ARRAY_CREATE(int8_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(int8_t), BOH_GET_BASE_TYPE_DESTR(int8_t), BOH_GET_BASE_TYPE_COPY_FUNC(int8_t));
+}
+
+
+bohDynArray bohDynArrayCreateUI8(void)
+{
+    return BOH_DYN_ARRAY_CREATE(uint8_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(uint8_t), BOH_GET_BASE_TYPE_DESTR(uint8_t), BOH_GET_BASE_TYPE_COPY_FUNC(uint8_t));
+}
+
+
+bohDynArray bohDynArrayCreateI16(void)
+{
+    return BOH_DYN_ARRAY_CREATE(int16_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(int16_t), BOH_GET_BASE_TYPE_DESTR(int16_t), BOH_GET_BASE_TYPE_COPY_FUNC(int16_t));
+}
+
+
+bohDynArray bohDynArrayCreateUI16(void)
+{
+    return BOH_DYN_ARRAY_CREATE(uint16_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(uint16_t), BOH_GET_BASE_TYPE_DESTR(uint16_t), BOH_GET_BASE_TYPE_COPY_FUNC(uint16_t));
+}
+
+
+bohDynArray bohDynArrayCreateI32(void)
+{
+    return BOH_DYN_ARRAY_CREATE(int32_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(int32_t), BOH_GET_BASE_TYPE_DESTR(int32_t), BOH_GET_BASE_TYPE_COPY_FUNC(int32_t));
+}
+
+
+bohDynArray bohDynArrayCreateUI32(void)
+{
+    return BOH_DYN_ARRAY_CREATE(uint32_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(uint32_t), BOH_GET_BASE_TYPE_DESTR(uint32_t), BOH_GET_BASE_TYPE_COPY_FUNC(uint32_t));
+}
+
+
+bohDynArray bohDynArrayCreateI64(void)
+{
+    return BOH_DYN_ARRAY_CREATE(int64_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(int64_t), BOH_GET_BASE_TYPE_DESTR(int64_t), BOH_GET_BASE_TYPE_COPY_FUNC(int64_t));
+}
+
+
+bohDynArray bohDynArrayCreateUI64(void)
+{
+    return BOH_DYN_ARRAY_CREATE(uint64_t, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(uint64_t), BOH_GET_BASE_TYPE_DESTR(uint64_t), BOH_GET_BASE_TYPE_COPY_FUNC(uint64_t));
+}
+
+
+bohDynArray bohDynArrayCreateFloat(void)
+{
+    return BOH_DYN_ARRAY_CREATE(float, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(float), BOH_GET_BASE_TYPE_DESTR(float), BOH_GET_BASE_TYPE_COPY_FUNC(float));
+}
+
+
+bohDynArray bohDynArrayCreateDouble(void)
+{
+    return BOH_DYN_ARRAY_CREATE(double, 
+        BOH_GET_BASE_TYPE_DEF_CONSTR(double), BOH_GET_BASE_TYPE_DESTR(double), BOH_GET_BASE_TYPE_COPY_FUNC(double));
 }

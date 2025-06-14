@@ -238,7 +238,12 @@ bohStringView* bohStringViewMove(bohStringView* pDst, bohStringView* pSrc)
 const char* bohStringViewGetData(const bohStringView* pStrView)
 {
     BOH_ASSERT(pStrView);
-    return pStrView->pData ? pStrView->pData : "";
+
+    if (pStrView->isConstantPtr) {
+        return pStrView->pConstData ? pStrView->pConstData : "";
+    } else {
+        return pStrView->pData ? pStrView->pData : "";
+    }
 }
 
 
@@ -261,9 +266,8 @@ char bohStringViewAt(const bohStringView* pStrView, size_t index)
 
 void bohStringViewSetAt(bohStringView* pStrView, char ch, size_t index)
 {
-    BOH_ASSERT(pStrView);
+    BOH_ASSERT(!bohStringViewIsConst(pStrView));
     BOH_ASSERT(pStrView->pData);
-    BOH_ASSERT(bohStringViewIsConst(pStrView));
     BOH_ASSERT(index < pStrView->size);
 
     pStrView->pData[index] = ch;

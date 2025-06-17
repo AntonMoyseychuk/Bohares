@@ -1,6 +1,19 @@
-if ((1 + 2.2) * 3.3) {
-    print("Anton\n" + "\t")
-    print("Bohares\n")
+if (false) {
+    print("true: ")
+
+    if (false) {
+        print("true inside true\n")
+    } else {
+        print("false inside true\n")
+    }
+} else {
+    print("false: ")
+
+    if (true) {
+        print("true inside false\n")
+    } else {
+        print("false inside false\n")
+    }
 }
 
 print("after if stmt\n")

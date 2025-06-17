@@ -1633,6 +1633,9 @@ static bohStmt* parsParsNextStmt(bohParser* pParser)
             return parsParsPrintStmt(pParser);
         case BOH_TOKEN_TYPE_IF:
             return parsParsIfStmt(pParser);
+        case BOH_TOKEN_TYPE_ELSE:
+            BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "unexpected standalone \'else\' statement");
+            return NULL;
         default:
             BOH_ASSERT(false && "Invalid token type");
             return NULL;

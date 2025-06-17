@@ -99,7 +99,7 @@ static void PrintTokens(const bohTokenStorage* pTokens)
 
     const size_t tokensCount = bohDynArrayGetSize(pTokens);
     for (size_t i = 0; i < tokensCount; ++i) {
-        PrintToken(bohDynArrayAtConst(pTokens, i));
+        PrintToken(BOH_DYN_ARRAY_AT_CONST(bohToken, pTokens, i));
     }
 }
 
@@ -284,12 +284,12 @@ static void PrintIfStmt(const bohIfStmt* pIfStmt, uint64_t offsetLen)
     fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen2);
 
-    const size_t blockSize = bohIfStmtGetStmtBlockSize(pIfStmt);
-    for (size_t i = 0; i < blockSize; ++i) {
-        const bohStmt* pStmt = bohIfStmtAt(pIfStmt, i);
+    const size_t thenStmtCount = bohIfStmtGetThenStmtsCount(pIfStmt);
+    for (size_t i = 0; i < thenStmtCount; ++i) {
+        const bohStmt* pStmt = bohIfStmtGetThenStmtAt(pIfStmt, i);
         PrintAstStmt(pStmt, nextlevelOffsetLen2);
 
-        if (i + 1 < blockSize) {
+        if (i + 1 < thenStmtCount) {
             fputc('\n', stdout);
             PrintOffset(stdout, nextlevelOffsetLen2);
         }

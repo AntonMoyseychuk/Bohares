@@ -218,49 +218,28 @@ bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc);
 bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
 
 
-typedef struct StmtsBlock
-{
-    const bohStmt* pBegin;
-    size_t size;
-} bohStmtsBlock;
-
-
-void bohStmtsBlockDestroy(bohStmtsBlock* pBlock);
-
-// NOTE: *CreateInPlace functions don't call destroy function
-void bohStmtsBlockCreateInPlace(bohStmtsBlock* pBlock, const bohStmt* pBlockBegin, size_t blockStmtCount);
-
-size_t bohStmtsBlockGetSize(const bohStmtsBlock* pBlock);
-const bohStmt* bohStmtsBlockGetBegin(const bohStmtsBlock* pBlock);
-const bohStmt* bohStmtsBlockGetEnd(const bohStmtsBlock* pBlock);
-
-const bohStmt* bohStmtsBlockFront(const bohStmtsBlock* pBlock);
-const bohStmt* bohStmtsBlockBack(const bohStmtsBlock* pBlock);
-const bohStmt* bohStmtsBlockAt(const bohStmtsBlock* pBlock, size_t index);
-
-bool bohStmtsBlockIsEmpty(const bohStmtsBlock* pBlock);
-
-bohStmtsBlock* bohStmtsBlockAssign(bohStmtsBlock* pDst, const bohStmtsBlock* pSrc);
-bohStmtsBlock* bohStmtsBlockMove(bohStmtsBlock* pDst, bohStmtsBlock* pSrc);
-
-
 typedef struct IfStmt
 {
     const bohStmt* pCondStmt;
-    bohStmtsBlock stmtBlock;
+    bohDynArray thenStmtPtrs;
+    bohDynArray elseStmtPtrs;
 } bohIfStmt;
 
 
 void bohIfStmtDestroy(bohIfStmt* pStmt);
 
 // NOTE: *CreateInPlace functions don't call destroy function
-void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, const bohStmt* pBlockBegin, size_t blockStmtCount);
+void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs);
 
 const bohStmt* bohIfStmtGetCondStmt(const bohIfStmt* pStmt);
-const bohStmtsBlock* bohIfStmtGetInnerStmtBlock(const bohIfStmt* pStmt);
+const bohDynArray* bohIfStmtGetThenStmts(const bohIfStmt* pStmt);
+const bohDynArray* bohIfStmtGetElseStmts(const bohIfStmt* pStmt);
 
-size_t bohIfStmtGetStmtBlockSize(const bohIfStmt* pStmt);
-const bohStmt* bohIfStmtAt(const bohIfStmt* pStmt, size_t index);
+size_t bohIfStmtGetThenStmtsCount(const bohIfStmt* pStmt);
+size_t bohIfStmtGetElseStmtsCount(const bohIfStmt* pStmt);
+
+const bohStmt* bohIfStmtGetThenStmtAt(const bohIfStmt* pStmt, size_t index);
+const bohStmt* bohIfStmtGetElseStmtAt(const bohIfStmt* pStmt, size_t index);
 
 bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc);
 bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);
@@ -296,7 +275,7 @@ void bohStmtDestroy(bohStmt* pStmt);
 // NOTE: *CreateInPlace functions don't call destroy function
 void bohStmtCreateRawExprInPlace(bohStmt* pStmt, const bohExpr* pExpr, bohLineNmb line, bohColumnNmb column);
 void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohStmt* pArgStmt, bohLineNmb line, bohColumnNmb column);
-void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohStmt* pCondStmt, const bohStmt* pBlockBegin, size_t blockStmtCount, bohLineNmb line, bohColumnNmb column);
+void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohStmt* pCondStmt, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs, bohLineNmb line, bohColumnNmb column);
 
 bool bohStmtIsEmpty(const bohStmt* pStmt);
 bool bohStmtIsRawExpr(const bohStmt* pStmt);

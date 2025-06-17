@@ -1,9 +1,6 @@
 if ((1 + 2.2) * 3.3) {
-    print("a\n")
-    print("b\n")
-    print("c\n")
-    print("d\n")
-    print("e\n")
+    print("Anton\n" + "\t")
+    print("Bohares\n")
 }
 
 print("after if stmt\n")

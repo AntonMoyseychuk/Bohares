@@ -829,14 +829,19 @@ static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt)
     const bohRawExprStmtInterpResult* pArgRawExprStmtResult = bohStmtInterpResultGetRawExprStmtResult(&condInterpResult);
 
     if (bohRawExprStmtInterpResultToBool(pArgRawExprStmtResult)) {
-        const size_t blockSize = bohIfStmtGetStmtBlockSize(pIfStmt);
+        const size_t thenStmtCount = bohIfStmtGetThenStmtsCount(pIfStmt);
 
-        for (size_t i = 0; i < blockSize; ++i) {
-            const bohStmt* pInnerStmt = bohIfStmtAt(pIfStmt, i);
-            bohAstInterpretStmt(pInnerStmt);
+        for (size_t i = 0; i < thenStmtCount; ++i) {
+            const bohStmt* pThenStmt = bohIfStmtGetThenStmtAt(pIfStmt, i);
+            bohAstInterpretStmt(pThenStmt);
         }
     } else {
-        // TODO: else stmt
+        const size_t elseStmtCount = bohIfStmtGetElseStmtsCount(pIfStmt);
+
+        for (size_t i = 0; i < elseStmtCount; ++i) {
+            const bohStmt* pElseStmt = bohIfStmtGetElseStmtAt(pIfStmt, i);
+            bohAstInterpretStmt(pElseStmt);
+        }
     }
     
     bohStmtInterpResultDestroy(&condInterpResult);

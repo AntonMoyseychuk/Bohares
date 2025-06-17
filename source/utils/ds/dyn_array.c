@@ -161,6 +161,8 @@ void bohDynArrayResize(bohDynArray* pArray, size_t newSize)
     const bohDynArrElemDefConstr ElemConstructor = pArray->pElemDefContr;
 
     bohDynArrayReserve(pArray, newSize);
+    pArrData = pArray->pData;
+
     for (size_t i = oldSize; i < newSize; ++i) {
         ElemConstructor(BOH_GET_DYN_ARRAY_ELEMENT_PTR(pArrData, i, elemSize));
     }
@@ -270,7 +272,7 @@ bohDynArray* bohDynArrayAssign(bohDynArray* pDst, const bohDynArray* pSrc)
 
     *pDst = bohDynArrayCreate(pSrc->elementSize, pSrc->pElemDefContr, pSrc->pElemDestr, pSrc->pElemCopyFunc);
 
-    bohDynArrayReserve(pDst, pSrc->capacity);
+    bohDynArrayReserve(pDst, pSrc->size);
 
     for (size_t i = 0; i < pSrc->size; ++i) {
         bohDynArrayPushBack(pDst, bohDynArrayAtConst(pSrc, i));
@@ -285,7 +287,9 @@ bohDynArray* bohDynArrayMove(bohDynArray* pDst, bohDynArray* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    bohDynArrayDestroy(pDst);
+    if (bohDynArrayIsValid(pDst)) {
+        bohDynArrayDestroy(pDst);
+    }
 
     memcpy_s(pDst, sizeof(bohDynArray), pSrc, sizeof(bohDynArray));
     memset(pSrc, 0, sizeof(bohDynArray));

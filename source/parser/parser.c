@@ -18,6 +18,28 @@
     }
 
 
+static void bohPtrDefContr(void* pElement)
+{
+    BOH_ASSERT(pElement);
+    *((void**)pElement) = NULL;
+}
+
+
+static void bohPtrDestr(void* pElement)
+{
+    BOH_ASSERT(pElement);
+    *((void**)pElement) = NULL;
+}
+
+
+static void bohPtrCopyFunc(void* pDst, const void* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+    *((void**)pDst) = *((void**)pSrc);
+}
+
+
 static bohBoharesString parsGetUnescapedString(const bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
@@ -726,114 +748,24 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
 }
 
 
-void bohStmtsBlockDestroy(bohStmtsBlock* pBlock)
-{
-    BOH_ASSERT(pBlock);
-    pBlock->pBegin = NULL;
-    pBlock->size = 0;
-}
-
-
-void bohStmtsBlockCreateInPlace(bohStmtsBlock* pBlock, const bohStmt* pBlockBegin, size_t blockStmtCount)
-{
-    BOH_ASSERT(pBlock);
-
-    if (pBlockBegin == NULL) {
-        BOH_ASSERT(blockStmtCount == 0);
-    }
-
-    pBlock->pBegin = pBlockBegin;
-    pBlock->size = blockStmtCount;
-}
-
-
-size_t bohStmtsBlockGetSize(const bohStmtsBlock* pBlock)
-{
-    BOH_ASSERT(pBlock);
-    return pBlock->size;
-}
-
-
-const bohStmt* bohStmtsBlockGetBegin(const bohStmtsBlock *pBlock)
-{
-    BOH_ASSERT(pBlock);
-    return pBlock->pBegin;
-}
-
-
-const bohStmt* bohStmtsBlockGetEnd(const bohStmtsBlock* pBlock)
-{
-    BOH_ASSERT(pBlock);
-    return pBlock->pBegin + pBlock->size;
-}
-
-
-const bohStmt* bohStmtsBlockFront(const bohStmtsBlock* pBlock)
-{
-    return bohStmtsBlockIsEmpty(pBlock) ? NULL : bohStmtsBlockAt(pBlock, 0);
-}
-
-
-const bohStmt* bohStmtsBlockBack(const bohStmtsBlock* pBlock)
-{
-    return bohStmtsBlockIsEmpty(pBlock) ? NULL : bohStmtsBlockAt(pBlock, pBlock->size - 1);
-}
-
-
-const bohStmt* bohStmtsBlockAt(const bohStmtsBlock* pBlock, size_t index)
-{
-    BOH_ASSERT(pBlock);
-    BOH_ASSERT(index < bohStmtsBlockGetSize(pBlock));
-
-    return bohStmtsBlockGetBegin(pBlock) + index;
-}
-
-
-bool bohStmtsBlockIsEmpty(const bohStmtsBlock *pBlock)
-{
-    BOH_ASSERT(pBlock);
-    return pBlock->size == 0;
-}
-
-
-bohStmtsBlock* bohStmtsBlockAssign(bohStmtsBlock* pDst, const bohStmtsBlock* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-
-    pDst->pBegin = pSrc->pBegin;
-    pDst->size = pSrc->size;
-
-    return pDst;
-}
-
-
-bohStmtsBlock* bohStmtsBlockMove(bohStmtsBlock* pDst, bohStmtsBlock* pSrc)
-{
-    bohStmtsBlockAssign(pDst, pSrc);
-    pSrc->pBegin = NULL;
-    pSrc->size = 0;
-
-    return pDst;
-}
-
-
 void bohIfStmtDestroy(bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
 
     pStmt->pCondStmt = NULL;
-    bohStmtsBlockDestroy(&pStmt->stmtBlock);
+    bohDynArrayDestroy(&pStmt->thenStmtPtrs);
+    bohDynArrayDestroy(&pStmt->elseStmtPtrs);
 }
 
 
-void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, const bohStmt* pBlockBegin, size_t blockStmtCount)
+void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs)
 {
     BOH_ASSERT(pStmt);
     BOH_ASSERT(pCondStmt);
 
     pStmt->pCondStmt = pCondStmt;
-    bohStmtsBlockCreateInPlace(&pStmt->stmtBlock, pBlockBegin, blockStmtCount);
+    bohDynArrayMove(&pStmt->thenStmtPtrs, pThenStmtPtrs);
+    bohDynArrayMove(&pStmt->elseStmtPtrs, pElseStmtPtrs);
 }
 
 
@@ -844,24 +776,45 @@ const bohStmt* bohIfStmtGetCondStmt(const bohIfStmt* pStmt)
 }
 
 
-const bohStmtsBlock* bohIfStmtGetInnerStmtBlock(const bohIfStmt* pStmt)
+const bohDynArray* bohIfStmtGetThenStmts(const bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return &pStmt->stmtBlock;
+    return &pStmt->thenStmtPtrs;
 }
 
 
-size_t bohIfStmtGetStmtBlockSize(const bohIfStmt* pStmt)
+const bohDynArray* bohIfStmtGetElseStmts(const bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return bohStmtsBlockGetSize(&pStmt->stmtBlock);
+    return &pStmt->elseStmtPtrs;
 }
 
 
-const bohStmt* bohIfStmtAt(const bohIfStmt* pStmt, size_t index)
+size_t bohIfStmtGetThenStmtsCount(const bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return bohStmtsBlockAt(&pStmt->stmtBlock, index);
+    return bohDynArrayGetSize(&pStmt->thenStmtPtrs);
+}
+
+
+size_t bohIfStmtGetElseStmtsCount(const bohIfStmt *pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return bohDynArrayGetSize(&pStmt->elseStmtPtrs);
+}
+
+
+const bohStmt* bohIfStmtGetThenStmtAt(const bohIfStmt* pStmt, size_t index)
+{
+    BOH_ASSERT(pStmt);
+    return *BOH_DYN_ARRAY_AT_CONST(bohStmt*, &pStmt->thenStmtPtrs, index);
+}
+
+
+const bohStmt* bohIfStmtGetElseStmtAt(const bohIfStmt* pStmt, size_t index)
+{
+    BOH_ASSERT(pStmt);
+    return *BOH_DYN_ARRAY_AT_CONST(bohStmt*, &pStmt->elseStmtPtrs, index);
 }
 
 
@@ -871,7 +824,8 @@ bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     pDst->pCondStmt = pSrc->pCondStmt;
-    bohStmtsBlockAssign(&pDst->stmtBlock, &pSrc->stmtBlock);
+    bohDynArrayAssign(&pDst->thenStmtPtrs, &pSrc->thenStmtPtrs);
+    bohDynArrayAssign(&pDst->elseStmtPtrs, &pSrc->elseStmtPtrs);
 
     return pDst;
 }
@@ -883,7 +837,8 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     pDst->pCondStmt = pSrc->pCondStmt;
-    bohStmtsBlockMove(&pDst->stmtBlock, &pSrc->stmtBlock);
+    bohDynArrayMove(&pDst->thenStmtPtrs, &pSrc->thenStmtPtrs);
+    bohDynArrayMove(&pDst->elseStmtPtrs, &pSrc->elseStmtPtrs);
 
     pSrc->pCondStmt = NULL;
 
@@ -946,12 +901,12 @@ void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohStmt* pArgStmt, bohLineN
 }
 
 
-void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohStmt* pCondStmt, const bohStmt* pBlockBegin, size_t blockStmtCount, bohLineNmb line, bohColumnNmb column)
+void bohStmtCreateIfInPlace(bohStmt *pStmt, const bohStmt *pCondStmt, bohDynArray *pThenStmtPtrs, bohDynArray *pElseStmtPtrs, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pStmt);
 
     pStmt->type = BOH_STMT_TYPE_IF;
-    bohIfStmtCreateInPlace(&pStmt->ifStmt, pCondStmt, pBlockBegin, blockStmtCount);
+    bohIfStmtCreateInPlace(&pStmt->ifStmt, pCondStmt, pThenStmtPtrs, pElseStmtPtrs);
     bohStmtSetLineColumnNmb(pStmt, line, column);
 }
 
@@ -1154,7 +1109,7 @@ static bohExprOperator parsTokenTypeToExprOperator(bohTokenType tokenType)
 static const bohToken* parsPeekCurrToken(const bohParser* pParser)
 {
     BOH_ASSERT(pParser);
-    return bohDynArrayAtConst(pParser->pTokenStorage, pParser->currTokenIdx);
+    return BOH_DYN_ARRAY_AT_CONST(bohToken, pParser->pTokenStorage, pParser->currTokenIdx);
 }
 
 
@@ -1166,7 +1121,7 @@ static const bohToken* parsPeekPrevToken(const bohParser* pParser)
     const size_t prevTokenIdx = pParser->currTokenIdx - 1;
     BOH_ASSERT(prevTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage));
 
-    return bohDynArrayAtConst(pParser->pTokenStorage, prevTokenIdx);
+    return BOH_DYN_ARRAY_AT_CONST(bohToken, pParser->pTokenStorage, prevTokenIdx);
 }
 
 
@@ -1610,7 +1565,7 @@ static bohStmt* parsParsPrintStmt(bohParser* pParser)
 }
 
 
-// <if_stmt> = "if" <stmt> { (<stmt>)* }
+// <if_stmt> = "if" <stmt> { (<stmt>)* } ("else" {(<stmt>)*})?
 static bohStmt* parsParsIfStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
@@ -1626,17 +1581,21 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), pLCurlyToken->line, pLCurlyToken->column, 
         "expected opening \'{\' in \'if\' statement block");
 
-    const bohStmt* pStmtBlockBegin = NULL;    
-    const bohStmt* pStmtBlockEnd = NULL;
+    // const bohStmt* pStmtBlockBegin = NULL;    
+    // const bohStmt* pStmtBlockEnd = NULL;
+
+    bohDynArray thenStmtsPtrs = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
+    bohDynArray elseStmtsPtrs = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
 
     if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
-        pStmtBlockBegin = parsParsNextStmt(pParser);
-        pStmtBlockEnd = pStmtBlockBegin + 1;
+        // pStmtBlockBegin = parsParsNextStmt(pParser);
+        // pStmtBlockEnd = pStmtBlockBegin + 1;
 
         const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
         
         while(pParser->currTokenIdx < tokensCount && !parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
-            pStmtBlockEnd = parsParsNextStmt(pParser);
+            bohStmt** ppThenStmt = (bohStmt**)bohDynArrayPushBackDummy(&thenStmtsPtrs);
+            *ppThenStmt = parsParsNextStmt(pParser);
         }
 
         const bohToken* pRCurlyToken = parsPeekPrevToken(pParser);
@@ -1645,7 +1604,7 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     }
 
     bohStmt* pIfStmt = bohAstAllocateStmt(&pParser->ast);
-    bohStmtCreateIfInPlace(pIfStmt, pCondStmt, pStmtBlockBegin, (size_t)(pStmtBlockEnd - pStmtBlockBegin), pCurrToken->line, pCurrToken->column);
+    bohStmtCreateIfInPlace(pIfStmt, pCondStmt, &thenStmtsPtrs, &elseStmtsPtrs, pCurrToken->line, pCurrToken->column);
 
     return pIfStmt;
 }
@@ -1698,28 +1657,6 @@ void bohAstDestroy(bohAST* pAST)
 }
 
 
-static void bohPtrDefContr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-    *((void**)pElement) = NULL;
-}
-
-
-static void bohPtrDestr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-    *((void**)pElement) = NULL;
-}
-
-
-static void bohPtrCopyFunc(void* pDst, const void* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-    *((void**)pDst) = *((void**)pSrc);
-}
-
-
 bohAST bohAstCreate(void)
 {
     bohAST ast = {0};
@@ -1762,7 +1699,7 @@ bohStmt** bohAstPushStmtPtr(bohAST* pAst, bohStmt* pStmt)
 const bohStmt* bohAstGetStmtByIdx(const bohAST* pAst, size_t index)
 {
     BOH_ASSERT(pAst);
-    return *(bohStmt**)bohDynArrayAtConst(&pAst->stmtPtrsStorage, index);
+    return *BOH_DYN_ARRAY_AT_CONST(bohStmt*, &pAst->stmtPtrsStorage, index);
 }
 
 

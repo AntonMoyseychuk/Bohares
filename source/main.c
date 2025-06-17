@@ -298,6 +298,32 @@ static void PrintIfStmt(const bohIfStmt* pIfStmt, uint64_t offsetLen)
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
+
+    if (bohIfStmtGetElseStmtsCount(pIfStmt) > 0) {
+        fputc('\n', stdout);
+        PrintOffset(stdout, offsetLen);
+        
+        fprintf_s(stdout, "%sElseStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
+        PrintOffset(stdout, nextlevelOffsetLen);
+
+        fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+        PrintOffset(stdout, nextlevelOffsetLen2);
+
+        const size_t elseStmtCount = bohIfStmtGetElseStmtsCount(pIfStmt);
+        for (size_t i = 0; i < elseStmtCount; ++i) {
+            const bohStmt* pStmt = bohIfStmtGetElseStmtAt(pIfStmt, i);
+            PrintAstStmt(pStmt, nextlevelOffsetLen2);
+
+            if (i + 1 < elseStmtCount) {
+                fputc('\n', stdout);
+                PrintOffset(stdout, nextlevelOffsetLen2);
+            }
+        }
+
+        fputc('\n', stdout);
+        PrintOffset(stdout, offsetLen);
+        fputc(')', stdout);
+    }
 }
 
 

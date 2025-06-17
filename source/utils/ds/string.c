@@ -384,7 +384,7 @@ bohString bohStringViewAddStringView(const bohStringView* pLStrView, const bohSt
     memset(newString.pData, 0, newStringCapacity);
 
     memcpy_s(newString.pData, newStringCapacity, bohStringViewGetData(pLStrView), leftStringSize);
-    memcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, bohStringGetCStr(pRStrView), rightStringSize);
+    memcpy_s(newString.pData + leftStringSize, newStringCapacity - leftStringSize, bohStringViewGetData(pRStrView), rightStringSize);
     newString.pData[newStringSize] = '\0';
 
     newString.size = newStringSize;

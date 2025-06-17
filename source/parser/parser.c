@@ -71,56 +71,6 @@ static bohBoharesString parsGetUnescapedString(const bohBoharesString* pString)
 }
 
 
-static void stmtDefConstr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-
-    bohStmt* pStmt = (bohStmt*)pElement;
-    *pStmt = bohStmtCreate();
-}
-
-
-static void stmtDestr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-    bohStmtDestroy((bohStmt*)pElement);
-}
-
-
-static void stmtCopyFunc(void* pDst, const void* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-
-    bohStmtAssign((bohStmt*)pDst, (bohStmt*)pSrc);
-}
-
-
-static void exprDefConstr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-
-    bohExpr* pExpr = (bohExpr*)pElement;
-    *pExpr = bohExprCreate();
-}
-
-
-static void exprDestr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-    bohExprDestroy((bohExpr*)pElement);
-}
-
-
-static void exprCopyFunc(void* pDst, const void* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-
-    bohExprAssign((bohExpr*)pDst, (bohExpr*)pSrc);
-}
-
-
 const char* bohParsExprOperatorToStr(bohExprOperator op)
 {
     switch (op) {
@@ -182,53 +132,48 @@ void bohValueExprDestroy(bohValueExpr* pExpr)
 }
 
 
-bohValueExpr bohValueExprCreate(void)
+void bohValueExprCreateInPlace(bohValueExpr* pExpr)
 {
-    bohValueExpr expr = {0};
+    BOH_ASSERT(pExpr);
 
-    expr.type = BOH_VALUE_EXPR_TYPE_NUMBER;
-    expr.number = bohNumberCreateI64(0);
-
-    return expr;
+    pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
+    pExpr->number = bohNumberCreateI64(0);
 }
 
 
-bohValueExpr bohValueExprCreateNumber(bohNumber number)
+void bohValueExprCreateNumberInPlace(bohValueExpr* pExpr, bohNumber number)
 {
-    return bohValueExprCreateNumberNumberPtr(&number);
+    bohValueExprCreateNumberNumberPtrInPlace(pExpr, &number);
 }
 
 
-bohValueExpr bohValueExprCreateNumberNumberPtr(const bohNumber* pNumber)
+void bohValueExprCreateNumberNumberPtrInPlace(bohValueExpr* pExpr, const bohNumber* pNumber)
 {
+    BOH_ASSERT(pExpr);
     BOH_ASSERT(pNumber);
 
-    bohValueExpr expr = bohValueExprCreate();
-    bohValueExprSetNumberNumberPtr(&expr, pNumber);
-
-    return expr;
+    pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
+    bohNumberAssign(&pExpr->number, pNumber);
 }
 
 
-bohValueExpr bohValueExprCreateStringStringPtr(const bohBoharesString* pString)
+void bohValueExprCreateStringStringPtrInPlace(bohValueExpr* pExpr, const bohBoharesString* pString)
 {
+    BOH_ASSERT(pExpr);
     BOH_ASSERT(pString);
 
-    bohValueExpr expr = bohValueExprCreate();
-    bohValueExprSetStringStringPtr(&expr, pString);
-
-    return expr;
+    pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
+    bohBoharesStringAssign(&pExpr->string, pString);
 }
 
 
-bohValueExpr bohValueExprCreateStringStringMove(bohBoharesString* pString)
+void bohValueExprCreateStringStringMoveInPlace(bohValueExpr* pExpr, bohBoharesString* pString)
 {
+    BOH_ASSERT(pExpr);
     BOH_ASSERT(pString);
 
-    bohValueExpr expr = bohValueExprCreate();
-    bohValueExprSetStringStringMove(&expr, pString);
-
-    return expr;
+    pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
+    bohBoharesStringMove(&pExpr->string, pString);
 }
 
 
@@ -260,7 +205,14 @@ bool bohValueExprIsString(const bohValueExpr *pExpr)
 }
 
 
-const bohNumber* bohValueExprGetNumber(const bohValueExpr* pExpr)
+bohValueExprType bohValueExprGetType(const bohValueExpr* pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return pExpr->type;
+}
+
+
+const bohNumber *bohValueExprGetNumber(const bohValueExpr *pExpr)
 {
     BOH_ASSERT(bohValueExprIsNumber(pExpr));
     return &pExpr->number;
@@ -271,48 +223,6 @@ const bohBoharesString* bohValueExprGetString(const bohValueExpr *pExpr)
 {
     BOH_ASSERT(bohValueExprIsString(pExpr));
     return &pExpr->string;
-}
-
-
-void bohValueExprSetNumber(bohValueExpr* pExpr, bohNumber number)
-{
-    bohValueExprSetNumberNumberPtr(pExpr, &number);
-}
-
-
-void bohValueExprSetNumberNumberPtr(bohValueExpr* pExpr, const bohNumber* pNumber)
-{
-    BOH_ASSERT(pExpr);
-    BOH_ASSERT(pNumber);
-
-    bohValueExprDestroy(pExpr);
-
-    pExpr->type = BOH_VALUE_EXPR_TYPE_NUMBER;
-    bohNumberAssign(&pExpr->number, pNumber);
-}
-
-
-void bohValueExprSetStringStringPtr(bohValueExpr* pExpr, const bohBoharesString* pString)
-{
-    BOH_ASSERT(pExpr);
-    BOH_ASSERT(pString);
-
-    bohValueExprDestroy(pExpr);
-
-    pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
-    bohBoharesStringAssign(&pExpr->string, pString);
-}
-
-
-void bohValueExprSetStringStringMove(bohValueExpr* pExpr, bohBoharesString* pString)
-{
-    BOH_ASSERT(pExpr);
-    BOH_ASSERT(pString);
-
-    bohValueExprDestroy(pExpr);
-
-    pExpr->type = BOH_VALUE_EXPR_TYPE_STRING;
-    bohBoharesStringMove(&pExpr->string, pString);
 }
 
 
@@ -372,30 +282,30 @@ void bohUnaryExprDestroy(bohUnaryExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
 
-    pExpr->exprIdx = BOH_EXPR_IDX_INVALID;
+    pExpr->pExpr = NULL;
     pExpr->op = BOH_OP_UNKNOWN;
 }
 
 
-bohUnaryExpr bohUnaryExprCreateOpExpr(bohExprOperator op, bohExprIdx exprIdx)
-{
-    bohUnaryExpr expr;
-    
-    expr.exprIdx = exprIdx;
-    expr.op = op;
-
-    return expr;
-}
-
-
-bohExprIdx bohUnaryExprGetExprIdx(const bohUnaryExpr* pExpr)
+void bohUnaryExprCreateOpExprInPlace(bohUnaryExpr* pExpr, bohExprOperator op, const bohExpr* pArgExpr)
 {
     BOH_ASSERT(pExpr);
-    return pExpr->exprIdx;
+    BOH_ASSERT(pArgExpr);
+    BOH_ASSERT(op != BOH_OP_UNKNOWN);
+
+    pExpr->pExpr = pArgExpr;
+    pExpr->op = op;
 }
 
 
-bohExprOperator bohUnaryExprGetOp(const bohUnaryExpr* pExpr)
+const bohExpr* bohUnaryExprGetExpr(const bohUnaryExpr *pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return pExpr->pExpr;
+}
+
+
+bohExprOperator bohUnaryExprGetOperator(const bohUnaryExpr *pExpr)
 {
     BOH_ASSERT(pExpr);
     return pExpr->op;
@@ -409,7 +319,7 @@ bohUnaryExpr* bohUnaryExprAssign(bohUnaryExpr* pDst, const bohUnaryExpr* pSrc)
 
     bohUnaryExprDestroy(pDst);
 
-    pDst->exprIdx = pSrc->exprIdx;
+    pDst->pExpr = pSrc->pExpr;
     pDst->op = pSrc->op;
 
     return pDst;
@@ -423,7 +333,7 @@ bohUnaryExpr* bohUnaryExprMove(bohUnaryExpr* pDst, bohUnaryExpr* pSrc)
 
     bohUnaryExprAssign(pDst, pSrc);
     
-    pSrc->exprIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->pExpr = NULL;
     pSrc->op = BOH_OP_UNKNOWN;
 
     return pDst;
@@ -434,39 +344,40 @@ void bohBinaryExprDestroy(bohBinaryExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
 
-    pExpr->leftExprIdx = BOH_EXPR_IDX_INVALID;
-    pExpr->rightExprIdx = BOH_EXPR_IDX_INVALID;
+    pExpr->pLeftExpr = NULL;
+    pExpr->pRightExpr = NULL;
     pExpr->op = BOH_OP_UNKNOWN;
 }
 
 
-bohBinaryExpr bohBinaryExprCreateOpExpr(bohExprOperator op, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx)
-{
-    bohBinaryExpr expr;
-
-    expr.leftExprIdx = leftExprIdx;
-    expr.rightExprIdx = rightExprIdx;
-    expr.op = op;
-
-    return expr;
-}
-
-
-bohExprIdx bohBinaryExprGetLeftExprIdx(const bohBinaryExpr* pExpr)
+void bohBinaryExprCreateOpExprInPlace(bohBinaryExpr* pExpr, bohExprOperator op, const bohExpr* pLeftExpr, const bohExpr* pRightExpr)
 {
     BOH_ASSERT(pExpr);
-    return pExpr->leftExprIdx;
+    BOH_ASSERT(pLeftExpr);
+    BOH_ASSERT(pRightExpr);
+    BOH_ASSERT(op != BOH_OP_UNKNOWN);
+
+    pExpr->pLeftExpr = pLeftExpr;
+    pExpr->pRightExpr = pRightExpr;
+    pExpr->op = op;
 }
 
 
-bohExprIdx bohBinaryExprGetRightExprIdx(const bohBinaryExpr* pExpr)
+const bohExpr* bohBinaryExprGetLeftExpr(const bohBinaryExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
-    return pExpr->rightExprIdx;
+    return pExpr->pLeftExpr;
 }
 
 
-bohExprOperator bohBinaryExprGetOp(const bohBinaryExpr *pExpr)
+const bohExpr* bohBinaryExprGetRightExpr(const bohBinaryExpr* pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return pExpr->pRightExpr;
+}
+
+
+bohExprOperator bohBinaryExprGetOperator(const bohBinaryExpr *pExpr)
 {
     BOH_ASSERT(pExpr);
     return pExpr->op;
@@ -480,8 +391,8 @@ bohBinaryExpr* bohBinaryExprAssign(bohBinaryExpr* pDst, const bohBinaryExpr* pSr
 
     bohBinaryExprDestroy(pDst);
 
-    pDst->leftExprIdx = pSrc->leftExprIdx;
-    pDst->rightExprIdx = pSrc->rightExprIdx;
+    pDst->pLeftExpr = pSrc->pLeftExpr;
+    pDst->pRightExpr = pSrc->pRightExpr;
     pDst->op = pSrc->op;
 
     return pDst;
@@ -495,11 +406,20 @@ bohBinaryExpr* bohBinaryExprMove(bohBinaryExpr* pDst, bohBinaryExpr* pSrc)
 
     bohBinaryExprAssign(pDst, pSrc);
     
-    pSrc->leftExprIdx = BOH_EXPR_IDX_INVALID;
-    pSrc->rightExprIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->pLeftExpr = NULL;
+    pSrc->pRightExpr = NULL;
     pSrc->op = BOH_OP_UNKNOWN;
 
     return pDst;
+}
+
+
+static void bohExprSetLineColumnNmb(bohExpr* pExpr, bohLineNmb line, bohColumnNmb column)
+{
+    BOH_ASSERT(pExpr);
+
+    pExpr->line = line;
+    pExpr->column = column;
 }
 
 
@@ -523,96 +443,65 @@ void bohExprDestroy(bohExpr* pExpr)
     }
 
     pExpr->type = BOH_EXPR_TYPE_VALUE;
-    pExpr->selfIdx = BOH_EXPR_IDX_INVALID;
-    pExpr->line = 0;
-    pExpr->column = 0;
+    bohExprSetLineColumnNmb(pExpr, 0, 0);
 }
 
 
-bohExpr bohExprCreate(void)
+void bohExprCreateNumberValueExprInPlace(bohExpr* pExpr, bohNumber number, bohLineNmb line, bohColumnNmb column)
 {
-    return bohExprCreateSelfIdxLineColumn(BOH_EXPR_IDX_INVALID, 0, 0);
+    bohExprCreateNumberValueExprPtrInPlace(pExpr, &number, line, column);
 }
 
 
-bohExpr bohExprCreateSelfIdxLineColumn(bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+void bohExprCreateNumberValueExprPtrInPlace(bohExpr* pExpr, const bohNumber* pNumber, bohLineNmb line, bohColumnNmb column)
 {
-    bohExpr expr = {0};
+    BOH_ASSERT(pExpr);
 
-    expr.type = BOH_EXPR_TYPE_VALUE;
-    expr.valueExpr = bohValueExprCreateNumber(bohNumberCreateI64(0));
-    expr.selfIdx = selfIdx;
-    expr.line = line;
-    expr.column = column;
-
-    return expr;
+    pExpr->type = BOH_EXPR_TYPE_VALUE;
+    bohValueExprCreateNumberNumberPtrInPlace(&pExpr->valueExpr, pNumber);
+    bohExprSetLineColumnNmb(pExpr, line, column);
 }
 
 
-bohExpr bohExprCreateNumberValueExpr(bohNumber number, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+void bohExprCreateStringValueExprInPlace(bohExpr* pExpr, const bohBoharesString* pString, bohLineNmb line, bohColumnNmb column)
 {
-    return bohExprCreateNumberValueExprPtr(&number, selfIdx, line, column);
+    BOH_ASSERT(pExpr);
+
+    pExpr->type = BOH_EXPR_TYPE_VALUE;
+    bohValueExprCreateStringStringPtrInPlace(&pExpr->valueExpr, pString);
+    bohExprSetLineColumnNmb(pExpr, line, column);
 }
 
 
-bohExpr bohExprCreateNumberValueExprPtr(const bohNumber* pNumber, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+void bohExprCreateStringValueExprMoveInPlace(bohExpr* pExpr, bohBoharesString* pString, bohLineNmb line, bohColumnNmb column)
 {
-    BOH_ASSERT(pNumber);
+    BOH_ASSERT(pExpr);
 
-    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    expr.valueExpr = bohValueExprCreateNumberNumberPtr(pNumber);
-    expr.type = BOH_EXPR_TYPE_VALUE;
-
-    return expr;
+    pExpr->type = BOH_EXPR_TYPE_VALUE;
+    bohValueExprCreateStringStringMoveInPlace(&pExpr->valueExpr, pString);
+    bohExprSetLineColumnNmb(pExpr, line, column);
 }
 
 
-bohExpr bohExprCreateStringValueExpr(const bohBoharesString* pString, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+void bohExprCreateUnaryExprInPlace(bohExpr* pExpr, bohExprOperator op, bohExpr* pArgExpr, bohLineNmb line, bohColumnNmb column)
 {
-    BOH_ASSERT(pString);
+    BOH_ASSERT(pExpr);
 
-    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    expr.valueExpr = bohValueExprCreateStringStringPtr(pString);
-    expr.type = BOH_EXPR_TYPE_VALUE;
-
-    return expr;
+    pExpr->type = BOH_EXPR_TYPE_UNARY;
+    bohUnaryExprCreateOpExprInPlace(&pExpr->unaryExpr, op, pArgExpr);
+    bohExprSetLineColumnNmb(pExpr, line, column);
 }
 
 
-bohExpr bohExprCreateStringValueExprMove(bohBoharesString* pString, bohExprIdx selfIdx, bohLineNmb line, bohColumnNmb column)
+void bohExprCreateBinaryExprInPlace(bohExpr* pExpr, bohExprOperator op, bohExpr* pLeftArgExpr, bohExpr* pRightArgExpr, bohLineNmb line, bohColumnNmb column)
 {
-    BOH_ASSERT(pString);
+    BOH_ASSERT(pExpr);
+    BOH_ASSERT(pLeftArgExpr);
+    BOH_ASSERT(pRightArgExpr);
 
-    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    expr.valueExpr = bohValueExprCreateStringStringMove(pString);
-    expr.type = BOH_EXPR_TYPE_VALUE;
-
-    return expr;
-}
-
-
-bohExpr bohExprCreateUnaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column)
-{
-    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    expr.unaryExpr = bohUnaryExprCreateOpExpr(op, exprIdx);
-    expr.type = BOH_EXPR_TYPE_UNARY;
-
-    return expr;
-}
-
-
-bohExpr bohExprCreateBinaryExpr(bohExprOperator op, bohExprIdx selfIdx, bohExprIdx leftExprIdx, bohExprIdx rightExprIdx, bohLineNmb line, bohColumnNmb column)
-{
-    bohExpr expr = bohExprCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    expr.binaryExpr = bohBinaryExprCreateOpExpr(op, leftExprIdx, rightExprIdx);
-    expr.type = BOH_EXPR_TYPE_BINARY;
-
-    return expr;
+    pExpr->type = BOH_EXPR_TYPE_BINARY;
+    bohBinaryExprCreateOpExprInPlace(&pExpr->binaryExpr, op, pLeftArgExpr, pRightArgExpr);
+    bohExprSetLineColumnNmb(pExpr, line, column);
 }
 
 
@@ -658,21 +547,21 @@ const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr)
 }
 
 
-bohExprIdx bohExprGetSelfIdx(const bohExpr* pExpr)
+bohExprType bohExprGetType(const bohExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
-    return pExpr->selfIdx;
+    return pExpr->type;
 }
 
 
-bohLineNmb bohExprGetLine(const bohExpr *pExpr)
+bohLineNmb bohExprGetLine(const bohExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
     return pExpr->line;
 }
 
 
-bohColumnNmb bohExprGetColumn(const bohExpr *pExpr)
+bohColumnNmb bohExprGetColumn(const bohExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
     return pExpr->column;
@@ -687,9 +576,6 @@ bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc)
     bohExprDestroy(pDst);
 
     pDst->type = pSrc->type;
-    pDst->selfIdx = pSrc->selfIdx;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_EXPR_TYPE_VALUE:
@@ -706,6 +592,8 @@ bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc)
             break;
     }
 
+    bohExprSetLineColumnNmb(pDst, pSrc->line, pSrc->column);
+
     return pDst;
 }
 
@@ -718,9 +606,6 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
     bohExprDestroy(pDst);
 
     pDst->type = pSrc->type;
-    pDst->selfIdx = pSrc->selfIdx;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_EXPR_TYPE_VALUE:
@@ -737,10 +622,11 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
             break;
     }
 
+    pDst->line = pSrc->line;
+    pDst->column = pSrc->column;
+
     pSrc->type = BOH_EXPR_TYPE_VALUE;
-    pSrc->selfIdx = BOH_EXPR_IDX_INVALID;
-    pSrc->line = 0;
-    pSrc->column = 0;
+    bohExprSetLineColumnNmb(pSrc, 0, 0);
 
     return pDst;
 }
@@ -749,23 +635,23 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
 void bohRawExprStmtDestroy(bohRawExprStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    pStmt->exprIdx = BOH_EXPR_IDX_INVALID;
+    pStmt->pExpr = NULL;
 }
 
 
-bohRawExprStmt bohRawExprStmtCreateExprIdx(bohExprIdx exprIdx)
-{
-    bohRawExprStmt stmt;
-    stmt.exprIdx = exprIdx;
-
-    return stmt;
-}
-
-
-bohExprIdx bohRawExprStmtGetExprIdx(const bohRawExprStmt* pStmt)
+void bohRawExprStmtCreateInPlace(bohRawExprStmt* pStmt, const bohExpr* pExpr)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->exprIdx;
+    BOH_ASSERT(pExpr);
+
+    pStmt->pExpr = pExpr;
+}
+
+
+const bohExpr* bohRawExprStmtGetExpr(const bohRawExprStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->pExpr;
 }
 
 
@@ -775,7 +661,7 @@ bohRawExprStmt* bohRawExprStmtAssign(bohRawExprStmt* pDst, const bohRawExprStmt*
     BOH_ASSERT(pSrc);
 
     bohRawExprStmtDestroy(pDst);
-    pDst->exprIdx = pSrc->exprIdx;
+    pDst->pExpr = pSrc->pExpr;
 
     return pDst;
 }
@@ -787,7 +673,7 @@ bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohRawExprStmtAssign(pDst, pSrc);
-    pSrc->exprIdx = BOH_EXPR_IDX_INVALID;
+    pSrc->pExpr = NULL;
 
     return pDst;
 }
@@ -796,23 +682,23 @@ bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc)
 void bohPrintStmtDestroy(bohPrintStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    pStmt->argStmtIdx = BOH_STMT_IDX_INVALID;
+    pStmt->pArgStmt = NULL;
 }
 
 
-bohPrintStmt bohPrintStmtCreateStmtIdx(bohStmtIdx argStmtIdx)
-{
-    bohPrintStmt stmt;
-    stmt.argStmtIdx = argStmtIdx;
-
-    return stmt;
-}
-
-
-bohStmtIdx bohPrintStmtGetStmtIdx(const bohPrintStmt* pStmt)
+void bohPrintStmtCreateInPlace(bohPrintStmt* pStmt, const bohStmt* pArgStmt)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->argStmtIdx;
+    BOH_ASSERT(pArgStmt);
+
+    pStmt->pArgStmt = pArgStmt;
+}
+
+
+const bohStmt* bohPrintStmtGetArgStmt(const bohPrintStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->pArgStmt;
 }
 
 
@@ -822,7 +708,7 @@ bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohPrintStmtDestroy(pDst);
-    pDst->argStmtIdx = pSrc->argStmtIdx;
+    pDst->pArgStmt = pSrc->pArgStmt;
 
     return pDst;
 }
@@ -834,7 +720,7 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohPrintStmtAssign(pDst, pSrc);
-    pSrc->argStmtIdx = BOH_STMT_IDX_INVALID;
+    pSrc->pArgStmt = NULL;
 
     return pDst;
 }
@@ -843,52 +729,70 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
 void bohStmtsBlockDestroy(bohStmtsBlock* pBlock)
 {
     BOH_ASSERT(pBlock);
-    bohDynArrayDestroy(&pBlock->innerStmtIdxStorage);
+    pBlock->pBegin = NULL;
+    pBlock->size = 0;
 }
 
 
-bohStmtsBlock bohStmtsBlockCreate(void)
-{
-    bohStmtsBlock block = {0};
-    block.innerStmtIdxStorage = bohStmtIdxStorageCreate();
-
-    return block;
-}
-
-
-bohStmtsBlock bohStmtsBlockCreateStmtsIdxStorageMove(bohDynArray* pStmtIdxStorage)
-{
-    BOH_ASSERT(pStmtIdxStorage);
-
-    bohStmtsBlock block = bohStmtsBlockCreate();
-    bohDynArrayMove(&block.innerStmtIdxStorage, pStmtIdxStorage);
-    
-    return block;
-}
-
-
-bohStmtIdx *bohStmtsBlockPushIdx(bohStmtsBlock* pBlock, bohStmtIdx stmtIdx)
+void bohStmtsBlockCreateInPlace(bohStmtsBlock* pBlock, const bohStmt* pBlockBegin, size_t blockStmtCount)
 {
     BOH_ASSERT(pBlock);
 
-    bohStmtIdx* pIdx = (bohStmtIdx*)bohDynArrayPushBackDummy(&pBlock->innerStmtIdxStorage);
-    *pIdx = stmtIdx;
+    if (pBlockBegin == NULL) {
+        BOH_ASSERT(blockStmtCount == 0);
+    }
 
-    return pIdx;
+    pBlock->pBegin = pBlockBegin;
+    pBlock->size = blockStmtCount;
 }
 
 
-const bohDynArray* bohStmtsBlockGetInnerStmtIdxStorage(const bohStmtsBlock* pBlock)
+size_t bohStmtsBlockGetSize(const bohStmtsBlock* pBlock)
 {
     BOH_ASSERT(pBlock);
-    return &pBlock->innerStmtIdxStorage;
+    return pBlock->size;
 }
 
 
-bohStmtIdx bohStmtsBlockAt(const bohStmtsBlock* pBlock, size_t index)
+const bohStmt* bohStmtsBlockGetBegin(const bohStmtsBlock *pBlock)
 {
     BOH_ASSERT(pBlock);
-    return *(const bohStmtIdx*)bohDynArrayAtConst(&pBlock->innerStmtIdxStorage, index);
+    return pBlock->pBegin;
+}
+
+
+const bohStmt* bohStmtsBlockGetEnd(const bohStmtsBlock* pBlock)
+{
+    BOH_ASSERT(pBlock);
+    return pBlock->pBegin + pBlock->size;
+}
+
+
+const bohStmt* bohStmtsBlockFront(const bohStmtsBlock* pBlock)
+{
+    return bohStmtsBlockIsEmpty(pBlock) ? NULL : bohStmtsBlockAt(pBlock, 0);
+}
+
+
+const bohStmt* bohStmtsBlockBack(const bohStmtsBlock* pBlock)
+{
+    return bohStmtsBlockIsEmpty(pBlock) ? NULL : bohStmtsBlockAt(pBlock, pBlock->size - 1);
+}
+
+
+const bohStmt* bohStmtsBlockAt(const bohStmtsBlock* pBlock, size_t index)
+{
+    BOH_ASSERT(pBlock);
+    BOH_ASSERT(index < bohStmtsBlockGetSize(pBlock));
+
+    return bohStmtsBlockGetBegin(pBlock) + index;
+}
+
+
+bool bohStmtsBlockIsEmpty(const bohStmtsBlock *pBlock)
+{
+    BOH_ASSERT(pBlock);
+    return pBlock->size == 0;
 }
 
 
@@ -897,7 +801,8 @@ bohStmtsBlock* bohStmtsBlockAssign(bohStmtsBlock* pDst, const bohStmtsBlock* pSr
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    bohDynArrayAssign(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+    pDst->pBegin = pSrc->pBegin;
+    pDst->size = pSrc->size;
 
     return pDst;
 }
@@ -905,10 +810,9 @@ bohStmtsBlock* bohStmtsBlockAssign(bohStmtsBlock* pDst, const bohStmtsBlock* pSr
 
 bohStmtsBlock* bohStmtsBlockMove(bohStmtsBlock* pDst, bohStmtsBlock* pSrc)
 {
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-
-    bohDynArrayMove(&pDst->innerStmtIdxStorage, &pSrc->innerStmtIdxStorage);
+    bohStmtsBlockAssign(pDst, pSrc);
+    pSrc->pBegin = NULL;
+    pSrc->size = 0;
 
     return pDst;
 }
@@ -918,59 +822,45 @@ void bohIfStmtDestroy(bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
 
-    pStmt->conditionStmtIdx = BOH_STMT_IDX_INVALID;
+    pStmt->pCondStmt = NULL;
     bohStmtsBlockDestroy(&pStmt->stmtBlock);
 }
 
 
-bohIfStmt bohIfStmtCreate(void)
-{
-    bohIfStmt stmt = {0};
-
-    stmt.conditionStmtIdx = BOH_STMT_IDX_INVALID;
-    stmt.stmtBlock = bohStmtsBlockCreate();
-
-    return stmt;
-}
-
-
-bohIfStmt bohIfStmtCreateStmtsIdxStorageMove(bohStmtIdx conditionStmtIdx, bohDynArray* pStmtIdxStorage)
-{
-    BOH_ASSERT(conditionStmtIdx != BOH_STMT_IDX_INVALID);
-    BOH_ASSERT(pStmtIdxStorage);
-
-    bohIfStmt stmt = bohIfStmtCreate();
-    
-    stmt.conditionStmtIdx = conditionStmtIdx;
-    stmt.stmtBlock = bohStmtsBlockCreateStmtsIdxStorageMove(pStmtIdxStorage);
-    
-    return stmt;
-}
-
-
-bohStmtIdx* bohIfStmtPushIdx(bohIfStmt* pStmt, bohStmtIdx stmtIdx)
+void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, const bohStmt* pBlockBegin, size_t blockStmtCount)
 {
     BOH_ASSERT(pStmt);
-    return bohStmtsBlockPushIdx(&pStmt->stmtBlock, stmtIdx);
+    BOH_ASSERT(pCondStmt);
+
+    pStmt->pCondStmt = pCondStmt;
+    bohStmtsBlockCreateInPlace(&pStmt->stmtBlock, pBlockBegin, blockStmtCount);
 }
 
 
-const bohDynArray* bohIfStmtGetInnerStmtIdxStorage(const bohIfStmt *pStmt)
+const bohStmt* bohIfStmtGetCondStmt(const bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return bohStmtsBlockGetInnerStmtIdxStorage(&pStmt->stmtBlock);
+    return pStmt->pCondStmt;
 }
 
 
-bohStmtIdx bohIfStmtGetConditionStmtIdx(const bohIfStmt* pStmt)
+const bohStmtsBlock* bohIfStmtGetInnerStmtBlock(const bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->conditionStmtIdx;
+    return &pStmt->stmtBlock;
 }
 
 
-bohStmtIdx bohIfStmtGetInnerStmtIdxAt(const bohIfStmt* pStmt, size_t index)
+size_t bohIfStmtGetStmtBlockSize(const bohIfStmt* pStmt)
 {
+    BOH_ASSERT(pStmt);
+    return bohStmtsBlockGetSize(&pStmt->stmtBlock);
+}
+
+
+const bohStmt* bohIfStmtAt(const bohIfStmt* pStmt, size_t index)
+{
+    BOH_ASSERT(pStmt);
     return bohStmtsBlockAt(&pStmt->stmtBlock, index);
 }
 
@@ -980,7 +870,7 @@ bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    pDst->conditionStmtIdx = pSrc->conditionStmtIdx;
+    pDst->pCondStmt = pSrc->pCondStmt;
     bohStmtsBlockAssign(&pDst->stmtBlock, &pSrc->stmtBlock);
 
     return pDst;
@@ -992,12 +882,21 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    pDst->conditionStmtIdx = pSrc->conditionStmtIdx;
+    pDst->pCondStmt = pSrc->pCondStmt;
     bohStmtsBlockMove(&pDst->stmtBlock, &pSrc->stmtBlock);
 
-    pSrc->conditionStmtIdx = BOH_STMT_IDX_INVALID;
+    pSrc->pCondStmt = NULL;
 
     return pDst;
+}
+
+
+static void bohStmtSetLineColumnNmb(bohStmt* pStmt, bohLineNmb line, bohColumnNmb column)
+{
+    BOH_ASSERT(pStmt);
+
+    pStmt->line = line;
+    pStmt->column = column;
 }
 
 
@@ -1023,68 +922,37 @@ void bohStmtDestroy(bohStmt* pStmt)
     }
 
     pStmt->type = BOH_STMT_TYPE_EMPTY;
-    pStmt->selfIdx = BOH_STMT_IDX_INVALID;
-    pStmt->line = 0;
-    pStmt->column = 0;
+    bohStmtSetLineColumnNmb(pStmt, 0, 0);
 }
 
 
-bohStmt bohStmtCreate(void)
-{
-    return bohStmtCreateSelfIdxLineColumn(BOH_STMT_IDX_INVALID, 0, 0);
-}
-
-
-bohStmt bohStmtCreateSelfIdxLineColumn(bohStmtIdx selfIdx, bohLineNmb line, bohColumnNmb column)
-{
-    bohStmt stmt = {0};
-
-    stmt.type = BOH_STMT_TYPE_EMPTY;
-    stmt.selfIdx = selfIdx;
-    stmt.line = line;
-    stmt.column = column;
-
-    return stmt;
-}
-
-
-bohStmt bohStmtCreateRawExpr(bohStmtIdx selfIdx, bohExprIdx exprIdx, bohLineNmb line, bohColumnNmb column)
-{
-    bohStmt stmt = bohStmtCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    stmt.type = BOH_STMT_TYPE_RAW_EXPR;
-    stmt.rawExpr = bohRawExprStmtCreateExprIdx(exprIdx);
-
-    return stmt;
-}
-
-
-bohStmt bohStmtCreatePrint(bohStmtIdx selfIdx, bohStmtIdx argStmtIdx, bohLineNmb line, bohColumnNmb column)
-{
-    bohStmt stmt = bohStmtCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    stmt.type = BOH_STMT_TYPE_PRINT;
-    stmt.printStmt = bohPrintStmtCreateStmtIdx(argStmtIdx);
-
-    return stmt;
-}
-
-
-bohStmt bohStmtCreateIf(bohStmtIdx selfIdx, bohStmtIdx conditionStmtIdx, bohDynArray* pStmtIdxStorage, bohLineNmb line, bohColumnNmb column)
-{
-    bohStmt stmt = bohStmtCreateSelfIdxLineColumn(selfIdx, line, column);
-
-    stmt.type = BOH_STMT_TYPE_IF;
-    stmt.ifStmt = bohIfStmtCreateStmtsIdxStorageMove(conditionStmtIdx, pStmtIdxStorage);
-
-    return stmt;
-}
-
-
-bohStmtType bohStmtGetType(const bohStmt* pStmt)
+void bohStmtCreateRawExprInPlace(bohStmt* pStmt, const bohExpr* pExpr, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->type;
+
+    pStmt->type = BOH_STMT_TYPE_RAW_EXPR;
+    bohRawExprStmtCreateInPlace(&pStmt->rawExpr, pExpr);
+    bohStmtSetLineColumnNmb(pStmt, line, column);
+}
+
+
+void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohStmt* pArgStmt, bohLineNmb line, bohColumnNmb column)
+{
+    BOH_ASSERT(pStmt);
+
+    pStmt->type = BOH_STMT_TYPE_PRINT;
+    bohPrintStmtCreateInPlace(&pStmt->printStmt, pArgStmt);
+    bohStmtSetLineColumnNmb(pStmt, line, column);
+}
+
+
+void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohStmt* pCondStmt, const bohStmt* pBlockBegin, size_t blockStmtCount, bohLineNmb line, bohColumnNmb column)
+{
+    BOH_ASSERT(pStmt);
+
+    pStmt->type = BOH_STMT_TYPE_IF;
+    bohIfStmtCreateInPlace(&pStmt->ifStmt, pCondStmt, pBlockBegin, blockStmtCount);
+    bohStmtSetLineColumnNmb(pStmt, line, column);
 }
 
 
@@ -1145,9 +1013,6 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
     bohStmtDestroy(pDst);
 
     pDst->type = pSrc->type;
-    pDst->selfIdx = pSrc->selfIdx;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_STMT_TYPE_EMPTY:
@@ -1166,6 +1031,9 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
             break;
     }
 
+    pDst->line = pSrc->line;
+    pDst->column = pSrc->column;
+
     return pDst;
 }
 
@@ -1178,9 +1046,6 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
     bohStmtDestroy(pDst);
 
     pDst->type = pSrc->type;
-    pDst->selfIdx = pSrc->selfIdx;
-    pDst->line = pSrc->line;
-    pDst->column = pSrc->column;
 
     switch (pSrc->type) {
         case BOH_STMT_TYPE_EMPTY:
@@ -1199,19 +1064,19 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
             break;
     }
 
+    bohStmtSetLineColumnNmb(pDst, pSrc->line, pSrc->column);
+
     pSrc->type = BOH_STMT_TYPE_EMPTY;
-    pSrc->selfIdx = BOH_STMT_IDX_INVALID;
-    pSrc->line = 0;
-    pSrc->column = 0;
+    bohStmtSetLineColumnNmb(pSrc, 0, 0);
 
     return pDst;
 }
 
 
-bohStmtIdx bohStmtGetSelfIdx(const bohStmt* pStmt)
+bohStmtType bohStmtGetType(const bohStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->selfIdx;
+    return pStmt->type;
 }
 
 
@@ -1331,44 +1196,46 @@ static bool parsIsCurrTokenMatch(bohParser* pParser, bohTokenType type)
 }
 
 
-static bohExpr parsParsExpr(bohParser* pParser);
+static bohExpr* parsParsExpr(bohParser* pParser);
 
 
 // <primary> = <integer> | <float> | <string> | '(' <expr> ')' 
-static bohExpr parsParsPrimary(bohParser* pParser)
+static bohExpr* parsParsPrimary(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
     if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_TRUE)) {
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(1), bohExprGetSelfIdx(pPrimaryExpr),
-            parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
+        const bohToken* pPrevToken = parsPeekPrevToken(pParser);
+        bohExprCreateNumberValueExprInPlace(pPrimaryExpr, bohNumberCreateI64(1), pPrevToken->line, pPrevToken->column);
         
-        return *pPrimaryExpr;
+        return pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FALSE)) {
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetSelfIdx(pPrimaryExpr),
-            parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
+        const bohToken* pPrevToken = parsPeekPrevToken(pParser);
+        bohExprCreateNumberValueExprInPlace(pPrimaryExpr, bohNumberCreateI64(0), pPrevToken->line, pPrevToken->column);
 
-        return *pPrimaryExpr;
+        return pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER)) {
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
-        const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(value), bohExprGetSelfIdx(pPrimaryExpr),
-            parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
+        const bohToken* pPrevToken = parsPeekPrevToken(pParser);
 
-        return *pPrimaryExpr;
+        const int64_t value = _atoi64(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
+        bohExprCreateNumberValueExprInPlace(pPrimaryExpr, bohNumberCreateI64(value), pPrevToken->line, pPrevToken->column);
+
+        return pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT)) {
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
 
+        const bohToken* pPrevToken = parsPeekPrevToken(pParser);
+
         const double value = atof(bohStringViewGetData(&parsPeekPrevToken(pParser)->lexeme));
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateF64(value), bohExprGetSelfIdx(pPrimaryExpr),
-            parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
+        bohExprCreateNumberValueExprInPlace(pPrimaryExpr, bohNumberCreateF64(value), pPrevToken->line, pPrevToken->column);
         
-        return *pPrimaryExpr;
+        return pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_STRING)) {
         bohBoharesString lexeme = bohBoharesStringCreateStringViewStringViewPtr(&parsPeekPrevToken(pParser)->lexeme);
         bohBoharesString unescapedLexeme = parsGetUnescapedString(&lexeme);
@@ -1376,38 +1243,35 @@ static bohExpr parsParsPrimary(bohParser* pParser)
         bohBoharesStringDestroy(&lexeme);
         
         bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+        const bohToken* pPrevToken = parsPeekPrevToken(pParser);
 
-        *pPrimaryExpr = bohExprCreateStringValueExprMove(&unescapedLexeme, bohExprGetSelfIdx(pPrimaryExpr), 
-            parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column);
+        bohExprCreateStringValueExprMoveInPlace(pPrimaryExpr, &unescapedLexeme, pPrevToken->line, pPrevToken->column);
 
-        return *pPrimaryExpr;
+        return pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
 
-        bohExpr expr = parsParsExpr(pParser);
+        bohExpr* pExpr = parsParsExpr(pParser);
         BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN), line, column, "missed closing \')\'");
         
-        return expr;
-    }
-
-    {
+        return pExpr;
+    } else {
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
+    
         const bohToken* pCurrToken = parsPeekCurrToken(pParser);
         BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "invalid primary token: %.*s",
             bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
-    
-        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
-    
-        *pPrimaryExpr = bohExprCreateNumberValueExpr(bohNumberCreateI64(0), bohExprGetSelfIdx(pPrimaryExpr),
-            pCurrToken->line, pCurrToken->column);
 
-        return *pPrimaryExpr;
+        bohExprCreateNumberValueExprInPlace(pPrimaryExpr, bohNumberCreateI64(0), pCurrToken->line, pCurrToken->column);
+
+        return pPrimaryExpr;
     }
 }
 
 
 // <unary> = ('+' | '-' | '~' | '!') <unary> | <primary>
-static bohExpr parsParsUnary(bohParser* pParser)
+static bohExpr* parsParsUnary(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
@@ -1418,16 +1282,16 @@ static bohExpr parsParsUnary(bohParser* pParser)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
 
-        bohExpr operandExpr = parsParsUnary(pParser);
+        bohExpr* pOperandExpr = parsParsUnary(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, "unknown unary operator: %.*s", 
             bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
         
         bohExpr* pUnaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pUnaryExpr = bohExprCreateUnaryExpr(op, pUnaryExpr->selfIdx, operandExpr.selfIdx, pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateUnaryExprInPlace(pUnaryExpr, op, pOperandExpr, pOperatorToken->line, pOperatorToken->column);
 
-        return *pUnaryExpr;
+        return pUnaryExpr;
     }
 
     return parsParsPrimary(pParser);
@@ -1435,11 +1299,11 @@ static bohExpr parsParsUnary(bohParser* pParser)
 
 
 // <multiplication> = <unary> (('*' | '/' | '%') <unary>)*
-static bohExpr parsParsMultiplication(bohParser* pParser)
+static bohExpr* parsParsMultiplication(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsUnary(pParser);
+    bohExpr* pLeftExpr = parsParsUnary(pParser);
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MULT) ||
@@ -1447,87 +1311,84 @@ static bohExpr parsParsMultiplication(bohParser* pParser)
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MOD)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsUnary(pParser);
+        bohExpr* pRightExpr = parsParsUnary(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown term operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <addition> = <multiplication> (('+' | '-') <multiplication>)*
-static bohExpr parsParsAddition(bohParser* pParser)
+static bohExpr* parsParsAddition(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsMultiplication(pParser);
+    bohExpr* pLeftExpr = parsParsMultiplication(pParser);
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PLUS) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_MINUS)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsMultiplication(pParser);
+        bohExpr* pRightExpr = parsParsMultiplication(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <bitwise_shift> = <addition> (('<<' | '>>') <addition>)*
-static bohExpr parsParsBitwiseShift(bohParser* pParser)
+static bohExpr* parsParsBitwiseShift(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsAddition(pParser);
+    bohExpr* pLeftExpr = parsParsAddition(pParser);
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_LSHIFT) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_RSHIFT)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsAddition(pParser);
+        bohExpr* pRightExpr = parsParsAddition(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <comparison> = <bitwise_shift> (('>' | '>=' | '<' | '<=') <bitwise_shift>)*
-static bohExpr parsParsComparison(bohParser* pParser)
+static bohExpr* parsParsComparison(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsBitwiseShift(pParser);
+    bohExpr* pLeftExpr = parsParsBitwiseShift(pParser);
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_GREATER) ||
@@ -1536,220 +1397,202 @@ static bohExpr parsParsComparison(bohParser* pParser)
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LEQUAL)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsBitwiseShift(pParser);
+        bohExpr* pRightExpr = parsParsBitwiseShift(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <equality> = <comparison> (('!=' | '==') <comparison>)*
-static bohExpr parsParsEquality(bohParser* pParser)
+static bohExpr* parsParsEquality(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsComparison(pParser);
+    bohExpr* pLeftExpr = parsParsComparison(pParser);
 
     while (
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_NOT_EQUAL) ||
         parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_EQUAL)
     ) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsComparison(pParser);
+        bohExpr* pRightExpr = parsParsComparison(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <bitwise_and> = <equality> (('&') <equality>)*
-static bohExpr parsParsBitwiseAnd(bohParser* pParser)
+static bohExpr* parsParsBitwiseAnd(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsEquality(pParser);
+    bohExpr* pLeftExpr = parsParsEquality(pParser);
 
     while (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_AND)) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsEquality(pParser);
+        bohExpr* pRightExpr = parsParsEquality(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <bitwise_xor> = <bitwise_and> (('^') <bitwise_and>)*
-static bohExpr parsParsBitwiseXor(bohParser* pParser)
+static bohExpr* parsParsBitwiseXor(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsBitwiseAnd(pParser);
+    bohExpr* pLeftExpr = parsParsBitwiseAnd(pParser);
 
     while (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_XOR)) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsBitwiseAnd(pParser);
+        bohExpr* pRightExpr = parsParsBitwiseAnd(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <bitwise_or> = <bitwise_xor> (('|') <bitwise_xor>)*
-static bohExpr parsParsBitwiseOr(bohParser* pParser)
+static bohExpr* parsParsBitwiseOr(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsBitwiseXor(pParser);
+    bohExpr* pLeftExpr = parsParsBitwiseXor(pParser);
 
     while (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_BITWISE_OR)) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsBitwiseXor(pParser);
+        bohExpr* pRightExpr = parsParsBitwiseXor(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <and> = <bitwise_or> (('and' | '&&') <bitwise_or>)*
-static bohExpr parsParsAnd(bohParser* pParser)
+static bohExpr* parsParsAnd(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsBitwiseOr(pParser);
+    bohExpr* pLeftExpr = parsParsBitwiseOr(pParser);
 
     while (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_AND)) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsBitwiseOr(pParser);
+        bohExpr* pRightExpr = parsParsBitwiseOr(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
 // <or> = <and> (('or' | '||') <and>)*
-static bohExpr parsParsOr(bohParser* pParser)
+static bohExpr* parsParsOr(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    bohExpr leftExpr = parsParsAnd(pParser);
+    bohExpr* pLeftExpr = parsParsAnd(pParser);
 
     while (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_OR)) {
         const bohToken* pOperatorToken = parsPeekPrevToken(pParser);
-        const bohExpr rightExpr = parsParsAnd(pParser);
+        bohExpr* pRightExpr = parsParsAnd(pParser);
 
         const bohExprOperator op = parsTokenTypeToExprOperator(pOperatorToken->type);
         BOH_PARSER_EXPECT(op != BOH_OP_UNKNOWN, pOperatorToken->line, pOperatorToken->column, 
             "unknown expr operator: %.*s", bohStringViewGetSize(&pOperatorToken->lexeme), bohStringViewGetData(&pOperatorToken->lexeme));
 
         bohExpr* pBinaryExpr = bohAstAllocateExpr(&pParser->ast);
-        *pBinaryExpr = bohExprCreateBinaryExpr(op, pBinaryExpr->selfIdx, leftExpr.selfIdx, rightExpr.selfIdx, 
-            pOperatorToken->line, pOperatorToken->column);
+        bohExprCreateBinaryExprInPlace(pBinaryExpr, op, pLeftExpr, pRightExpr, pOperatorToken->line, pOperatorToken->column);
 
-        leftExpr = *pBinaryExpr;
+        pLeftExpr = pBinaryExpr;
     }
 
-    return leftExpr;
+    return pLeftExpr;
 }
 
 
-static bohExpr parsParsExpr(bohParser* pParser)
+static bohExpr* parsParsExpr(bohParser* pParser)
 {
     return parsParsOr(pParser);
 }
 
 
-static bohStmt parsParsNextStmt(bohParser* pParser);
+static bohStmt* parsParsNextStmt(bohParser* pParser);
 
 
 // <raw_expr_stmt> = <expr>
-static bohStmt parsParsRawExprStmt(bohParser* pParser)
+static bohStmt* parsParsRawExprStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
     const bohToken* pCurrToken = parsPeekCurrToken(pParser);
-    
-    // const bool isRawExprStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_STRING) ||
-    //     parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_INTEGER) ||
-    //     parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_FLOAT) ||
-    //     parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN);
-    // BOH_ASSERT(isRawExprStmt);
 
-    const bohExpr expr = parsParsExpr(pParser);
-
-    /////////////////
-    // NEED TO CHECK AND THINK ABOUT CHECK_COND
-    // parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN);
-    /////////////////
+    const bohExpr* pExpr = parsParsExpr(pParser);
 
     bohStmt* pRawExprStmt = bohAstAllocateStmt(&pParser->ast);
-    *pRawExprStmt = bohStmtCreateRawExpr(pRawExprStmt->selfIdx, expr.selfIdx, pCurrToken->line, pCurrToken->column);
+    bohStmtCreateRawExprInPlace(pRawExprStmt, pExpr, pCurrToken->line, pCurrToken->column);
 
-    return *pRawExprStmt;
+    return pRawExprStmt;
 }
 
 
 // <print_stmt> = "print" <stmt>
-static bohStmt parsParsPrintStmt(bohParser* pParser)
+static bohStmt* parsParsPrintStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
@@ -1760,15 +1603,15 @@ static bohStmt parsParsPrintStmt(bohParser* pParser)
 
     bohStmt* pPrintStmt = bohAstAllocateStmt(&pParser->ast);
 
-    const bohStmt argStmt = parsParsNextStmt(pParser);
-    *pPrintStmt = bohStmtCreatePrint(pPrintStmt->selfIdx, argStmt.selfIdx, pCurrToken->line, pCurrToken->column);
+    const bohStmt* pArgStmt = parsParsNextStmt(pParser);
+    bohStmtCreatePrintInPlace(pPrintStmt, pArgStmt, pCurrToken->line, pCurrToken->column);
 
-    return *pPrintStmt;
+    return pPrintStmt;
 }
 
 
 // <if_stmt> = "if" <stmt> { (<stmt>)* }
-static bohStmt parsParsIfStmt(bohParser* pParser)
+static bohStmt* parsParsIfStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
@@ -1777,44 +1620,44 @@ static bohStmt parsParsIfStmt(bohParser* pParser)
     const bool isIfStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_IF);
     BOH_ASSERT(isIfStmt);
 
-    const bohStmtIdx ifStmtIdx = bohStmtGetSelfIdx(bohAstAllocateStmt(&pParser->ast));
-
-    const bohStmt conditionStmt = parsParsNextStmt(pParser);
+    const bohStmt* pCondStmt = parsParsNextStmt(pParser);
     
     const bohToken* pLCurlyToken = parsPeekPrevToken(pParser);
     BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), pLCurlyToken->line, pLCurlyToken->column, 
         "expected opening \'{\' in \'if\' statement block");
 
-    const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
-    
-    bohDynArray innerStmtIdxStorage = bohStmtIdxStorageCreate();
+    const bohStmt* pStmtBlockBegin = NULL;    
+    const bohStmt* pStmtBlockEnd = NULL;
 
-    while(pParser->currTokenIdx < tokensCount && !parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
-        const bohStmt innerStmt = parsParsNextStmt(pParser);
-        const bohStmtIdx innerStmtIdx = bohStmtGetSelfIdx(&innerStmt);
+    if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
+        pStmtBlockBegin = parsParsNextStmt(pParser);
+        pStmtBlockEnd = pStmtBlockBegin + 1;
 
-        bohDynArrayPushBack(&innerStmtIdxStorage, &innerStmtIdx);
+        const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
+        
+        while(pParser->currTokenIdx < tokensCount && !parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
+            pStmtBlockEnd = parsParsNextStmt(pParser);
+        }
+
+        const bohToken* pRCurlyToken = parsPeekPrevToken(pParser);
+        BOH_PARSER_EXPECT(pRCurlyToken->type == BOH_TOKEN_TYPE_RCURLY, pRCurlyToken->line, pRCurlyToken->column, 
+            "expected closing \'}\' in \'if\' statement block");
     }
 
-    const bohToken* pRCurlyToken = parsPeekPrevToken(pParser);
-    BOH_PARSER_EXPECT(pRCurlyToken->type == BOH_TOKEN_TYPE_RCURLY, pRCurlyToken->line, pRCurlyToken->column, 
-        "expected closing \'}\' in \'if\' statement block");
+    bohStmt* pIfStmt = bohAstAllocateStmt(&pParser->ast);
+    bohStmtCreateIfInPlace(pIfStmt, pCondStmt, pStmtBlockBegin, (size_t)(pStmtBlockEnd - pStmtBlockBegin), pCurrToken->line, pCurrToken->column);
 
-    bohStmt* pIfStmt = bohDynArrayAt(&pParser->ast.stmts, ifStmtIdx);
-    *pIfStmt = bohStmtCreateIf(ifStmtIdx, bohStmtGetSelfIdx(&conditionStmt), &innerStmtIdxStorage,
-        pCurrToken->line, pCurrToken->column);
-
-    return *pIfStmt;
+    return pIfStmt;
 }
 
 
-static bohStmt parsParsNextStmt(bohParser* pParser)
+static bohStmt* parsParsNextStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
     const bohToken* pCurrToken = parsPeekCurrToken(pParser);
 
-    switch (pCurrToken->type) {
+    switch (bohTokenGetType(pCurrToken)) {
         case BOH_TOKEN_TYPE_LPAREN:
         case BOH_TOKEN_TYPE_STRING:
         case BOH_TOKEN_TYPE_INTEGER:
@@ -1826,7 +1669,7 @@ static bohStmt parsParsNextStmt(bohParser* pParser)
             return parsParsIfStmt(pParser);
         default:
             BOH_ASSERT(false && "Invalid token type");
-            return bohStmtCreate();
+            return NULL;
     }
 }
 
@@ -1839,7 +1682,7 @@ static void parsParsStmts(bohParser* pParser)
     const size_t tokensCount = bohDynArrayGetSize(pTokenStorage);
     
     while(pParser->currTokenIdx < tokensCount) {
-        parsParsNextStmt(pParser);
+        bohAstPushStmtPtr(&pParser->ast, parsParsNextStmt(pParser));
     }
 }
 
@@ -1847,40 +1690,44 @@ static void parsParsStmts(bohParser* pParser)
 void bohAstDestroy(bohAST* pAST)
 {
     BOH_ASSERT(pAST);
-    bohDynArrayDestroy(&pAST->stmts);
-    bohDynArrayDestroy(&pAST->exprs);
+
+    bohDynArrayDestroy(&pAST->stmtPtrsStorage);
+
+    bohMemoryArenaDestroy(&pAST->stmtMemArena);
+    bohMemoryArenaDestroy(&pAST->epxrMemArena);
 }
 
 
-bohAST bohAstCreate(
-    const bohStmtStorageCreateInfo* pStmtStorageCreateInfo, 
-    const bohExprStorageCreateInfo* pExprStorageCreateInfo
-) {
-    BOH_ASSERT(pStmtStorageCreateInfo);
-    BOH_ASSERT(pStmtStorageCreateInfo->pStmtDefConstr);
-    BOH_ASSERT(pStmtStorageCreateInfo->pStmtDestr);
-    BOH_ASSERT(pStmtStorageCreateInfo->pStmtCopyFunc);
+static void bohPtrDefContr(void* pElement)
+{
+    BOH_ASSERT(pElement);
+    *((void**)pElement) = NULL;
+}
 
-    BOH_ASSERT(pExprStorageCreateInfo);
-    BOH_ASSERT(pExprStorageCreateInfo->pExprDefConstr);
-    BOH_ASSERT(pExprStorageCreateInfo->pExprDestr);
-    BOH_ASSERT(pExprStorageCreateInfo->pExprCopyFunc);
 
-    bohAST ast;
+static void bohPtrDestr(void* pElement)
+{
+    BOH_ASSERT(pElement);
+    *((void**)pElement) = NULL;
+}
 
-    ast.stmts = BOH_DYN_ARRAY_CREATE(
-        bohStmt, 
-        pStmtStorageCreateInfo->pStmtDefConstr, 
-        pStmtStorageCreateInfo->pStmtDestr, 
-        pStmtStorageCreateInfo->pStmtCopyFunc
-    );
 
-    ast.exprs = BOH_DYN_ARRAY_CREATE(
-        bohExpr, 
-        pExprStorageCreateInfo->pExprDefConstr, 
-        pExprStorageCreateInfo->pExprDestr, 
-        pExprStorageCreateInfo->pExprCopyFunc
-    );
+static void bohPtrCopyFunc(void* pDst, const void* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+    *((void**)pDst) = *((void**)pSrc);
+}
+
+
+bohAST bohAstCreate(void)
+{
+    bohAST ast = {0};
+
+    ast.stmtPtrsStorage = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
+
+    ast.stmtMemArena = bohMemoryArenaCreate((size_t)1 << 20);
+    ast.epxrMemArena = bohMemoryArenaCreate((size_t)1 << 20);
 
     return ast;
 }
@@ -1889,75 +1736,40 @@ bohAST bohAstCreate(
 bohExpr* bohAstAllocateExpr(bohAST* pAst)
 {
     BOH_ASSERT(pAst);
-
-    bohExpr* pExpr = bohDynArrayPushBackDummy(&pAst->exprs);
-    BOH_ASSERT(pExpr);
-
-    pExpr->selfIdx = bohDynArrayGetSize(&pAst->exprs) - 1;
-
-    return pExpr;
+    return BOH_MEMORY_ARENA_ALLOC(&pAst->epxrMemArena, bohExpr);
 }
 
 
 bohStmt* bohAstAllocateStmt(bohAST* pAst)
 {
     BOH_ASSERT(pAst);
+    return BOH_MEMORY_ARENA_ALLOC(&pAst->stmtMemArena, bohStmt);
+}
 
-    bohStmt* pStmt = bohDynArrayPushBackDummy(&pAst->stmts);
+
+bohStmt** bohAstPushStmtPtr(bohAST* pAst, bohStmt* pStmt)
+{
+    BOH_ASSERT(pAst);
     BOH_ASSERT(pStmt);
 
-    pStmt->selfIdx = bohDynArrayGetSize(&pAst->stmts) - 1;
-
-    return pStmt;
-}
-
-
-bohStmtStorage* bohAstGetStmts(bohAST* pAst)
-{
-    BOH_ASSERT(pAst);
-    return &pAst->stmts;
-}
-
-
-const bohStmtStorage* bohAstGetStmtsConst(const bohAST* pAst)
-{
-    BOH_ASSERT(pAst);
-    return &pAst->stmts;
+    bohStmt** ppStmt = (bohStmt**)bohDynArrayPushBackDummy(&pAst->stmtPtrsStorage);
+    *ppStmt = pStmt;
+    
+    return ppStmt;
 }
 
 
 const bohStmt* bohAstGetStmtByIdx(const bohAST* pAst, size_t index)
 {
     BOH_ASSERT(pAst);
-    return bohDynArrayAtConst(&pAst->stmts, index);
+    return *(bohStmt**)bohDynArrayAtConst(&pAst->stmtPtrsStorage, index);
 }
 
 
-bohExprStorage* bohAstGetExprs(bohAST* pAst)
+size_t bohAstGetStmtCount(const bohAST* pAst)
 {
     BOH_ASSERT(pAst);
-    return &pAst->exprs;
-}
-
-
-const bohExprStorage* bohAstGetExprsConst(const bohAST* pAst)
-{
-    BOH_ASSERT(pAst);
-    return &pAst->exprs;
-}
-
-
-const bohExpr* bohAstGetExprByIdx(const bohAST* pAst, size_t index)
-{
-    BOH_ASSERT(pAst);
-    return bohDynArrayAtConst(&pAst->exprs, index);
-}
-
-
-bool bohAstIsEmpty(const bohAST *pAst)
-{
-    BOH_ASSERT(pAst);
-    return bohDynArrayIsEmpty(&pAst->stmts);
+    return bohDynArrayGetSize(&pAst->stmtPtrsStorage);
 }
 
 
@@ -1970,17 +1782,7 @@ bohParser bohParserCreate(const bohTokenStorage *pTokenStorage)
     parser.pTokenStorage = pTokenStorage;
     parser.currTokenIdx = 0;
 
-    bohStmtStorageCreateInfo stmtStorageCreateInfo;
-    stmtStorageCreateInfo.pStmtDefConstr = stmtDefConstr;
-    stmtStorageCreateInfo.pStmtDestr = stmtDestr;
-    stmtStorageCreateInfo.pStmtCopyFunc = stmtCopyFunc;
-
-    bohExprStorageCreateInfo exprStorageCreateInfo;
-    exprStorageCreateInfo.pExprDefConstr = exprDefConstr;
-    exprStorageCreateInfo.pExprDestr = exprDestr;
-    exprStorageCreateInfo.pExprCopyFunc = exprCopyFunc;
-
-    parser.ast = bohAstCreate(&stmtStorageCreateInfo, &exprStorageCreateInfo);
+    parser.ast = bohAstCreate();
 
     return parser;
 }

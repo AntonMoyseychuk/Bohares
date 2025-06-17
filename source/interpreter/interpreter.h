@@ -110,19 +110,20 @@ typedef enum StmtInterpResultType
 
 typedef struct StmtInterpResult
 {
+    bohStmtInterpResultType type;
     union {
         bohRawExprStmtInterpResult rawExprStmtInterpResult;
         bohPrintStmtInterpResult printStmtInterpResult;
         bohIfStmtInterpResult ifStmtInterpResult;
     };
-
-    bohStmtInterpResultType type;
-    bohStmtIdx lastInterpretedStmtIdx;
 } bohStmtInterpResult;
 
 
-bohStmtInterpResult bohStmtInterpResultCreate(void);
 void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult);
+
+bohStmtInterpResult bohStmtInterpResultCreateRawExprResultMove(bohRawExprStmtInterpResult* pResult);
+bohStmtInterpResult bohStmtInterpResultCreatePrintStmtMove(bohPrintStmtInterpResult* pResult);
+bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* pResult);
 
 bool bohStmtInterpResultIsRawExprStmt(const bohStmtInterpResult* pResult);
 bool bohStmtInterpResultIsPrintStmt(const bohStmtInterpResult* pResult);
@@ -131,10 +132,6 @@ bool bohStmtInterpResultIsIfStmt(const bohStmtInterpResult* pResult);
 const bohRawExprStmtInterpResult* bohStmtInterpResultGetRawExprStmtResult(const bohStmtInterpResult* pResult);
 const bohPrintStmtInterpResult* bohStmtInterpResultGetPrintStmtResult(const bohStmtInterpResult* pResult);
 const bohIfStmtInterpResult* bohStmtInterpResultGetIfStmtResult(const bohStmtInterpResult* pResult);
-
-bohStmtInterpResult bohStmtInterpResultCreateRawExprResultMove(bohRawExprStmtInterpResult* pResult, bohStmtIdx idx);
-bohStmtInterpResult bohStmtInterpResultCreatePrintStmtMove(bohPrintStmtInterpResult* pResult, bohStmtIdx idx);
-bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* pResult, bohStmtIdx idx);
 
 
 typedef struct AST bohAST;

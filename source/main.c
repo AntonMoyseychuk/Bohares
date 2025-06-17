@@ -17,10 +17,10 @@
 #define BOH_OUTPUT_COLOR_ERROR          BOH_OUTPUT_COLOR_RED
 
 
-static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen);
+static void PrintExpr(const bohExpr* pExpr, uint64_t offsetLen);
 
 // Returns last printed stmt
-static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen);
+static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen);
 
 
 static void PrintOffset(FILE* pStream, uint64_t offsetLen)
@@ -104,11 +104,9 @@ static void PrintTokens(const bohTokenStorage* pTokens)
 }
 
 
-static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx)
+static void PrintValueExpr(const bohValueExpr* pExpr)
 {
-    BOH_ASSERT(pAst);
-
-    const bohValueExpr* pExpr = bohExprGetValueExpr(bohAstGetExprByIdx(pAst, exprIdx));
+    BOH_ASSERT(pExpr);
 
     switch (pExpr->type) {
         case BOH_VALUE_EXPR_TYPE_NUMBER:
@@ -139,15 +137,12 @@ static void PrintValueExpr(const bohAST* pAst, bohExprIdx exprIdx)
 }
 
 
-static void PrintUnaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
+static void PrintUnaryExpr(const bohUnaryExpr* pUnaryExpr, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
+    BOH_ASSERT(pUnaryExpr);
 
     const uint64_t nextlevelOffsetLen = offsetLen + 4;
-    
-    const bohExpr* pExpr = bohAstGetExprByIdx(pAst, exprIdx);
-    const bohUnaryExpr* pUnaryExpr = bohExprGetUnaryExpr(pExpr);
-    const bohExpr* pOperandExpr = bohAstGetExprByIdx(pAst, pUnaryExpr->exprIdx);
+    const bohExpr* pOperandExpr = pUnaryExpr->pExpr;
 
     const bool isOperandValueExpr = bohExprIsValueExpr(pOperandExpr);
     const bool isOperandNumber = isOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pOperandExpr));
@@ -160,7 +155,7 @@ static void PrintUnaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offs
         PrintOffset(stdout, nextlevelOffsetLen);
     }
 
-    PrintExpr(pAst, pOperandExpr->selfIdx, nextlevelOffsetLen);
+    PrintExpr(pOperandExpr, nextlevelOffsetLen);
             
     if (!isOperandNumber) {
         fputc('\n', stdout);
@@ -170,20 +165,17 @@ static void PrintUnaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offs
 }
 
 
-static void PrintBinaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
+static void PrintBinaryExpr(const bohBinaryExpr* pBinaryExpr, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
+    BOH_ASSERT(pBinaryExpr);
 
     const uint64_t nextlevelOffsetLen = offsetLen + 4;
-    
-    const bohExpr* pExpr = bohAstGetExprByIdx(pAst, exprIdx);
-    const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
-    const bohExpr* pLeftExpr = bohAstGetExprByIdx(pAst, pBinaryExpr->leftExprIdx);
+    const bohExpr* pLeftExpr = pBinaryExpr->pLeftExpr;
     const bool isLeftOperandValueExpr = bohExprIsValueExpr(pLeftExpr);
     const bool isLeftOperandNumber = isLeftOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pLeftExpr));
 
-    const bohExpr* pRightExpr = bohAstGetExprByIdx(pAst, pBinaryExpr->rightExprIdx);
+    const bohExpr* pRightExpr = pBinaryExpr->pRightExpr;
     const bool isRightOperandValueExpr = bohExprIsValueExpr(pRightExpr);
     const bool isRightOperandNumber = isRightOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pRightExpr));
 
@@ -197,7 +189,7 @@ static void PrintBinaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t off
         PrintOffset(stdout, nextlevelOffsetLen);
     }
 
-    PrintExpr(pAst, pLeftExpr->selfIdx, nextlevelOffsetLen);
+    PrintExpr(pLeftExpr, nextlevelOffsetLen);
             
     fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
@@ -205,7 +197,7 @@ static void PrintBinaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t off
         PrintOffset(stdout, nextlevelOffsetLen);
     }
 
-    PrintExpr(pAst, pRightExpr->selfIdx, nextlevelOffsetLen);
+    PrintExpr(pRightExpr, nextlevelOffsetLen);
             
     if (!areLeftAndRightNodesNumbers) {
         fputc('\n', stdout);
@@ -215,21 +207,19 @@ static void PrintBinaryExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t off
 }
 
 
-static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen)
+static void PrintExpr(const bohExpr* pExpr, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
-
-    const bohExpr* pExpr = bohAstGetExprByIdx(pAst, exprIdx);
+    BOH_ASSERT(pExpr);
 
     switch (pExpr->type) {
         case BOH_EXPR_TYPE_VALUE:
-            PrintValueExpr(pAst, pExpr->selfIdx);
+            PrintValueExpr(bohExprGetValueExpr(pExpr));
             break;
         case BOH_EXPR_TYPE_UNARY:
-            PrintUnaryExpr(pAst, pExpr->selfIdx, offsetLen);
+            PrintUnaryExpr(bohExprGetUnaryExpr(pExpr), offsetLen);
             break;
         case BOH_EXPR_TYPE_BINARY:
-            PrintBinaryExpr(pAst, pExpr->selfIdx, offsetLen);
+            PrintBinaryExpr(bohExprGetBinaryExpr(pExpr), offsetLen);
             break;
         default:
             BOH_ASSERT(false && "Invalid AST node type");
@@ -237,64 +227,46 @@ static void PrintExpr(const bohAST* pAst, bohExprIdx exprIdx, uint64_t offsetLen
     }
 }
 
-static bohStmtIdx PrintAstRawExprStmt(const bohAST* pAst, bohStmtIdx rawExprStmtIdx, uint64_t offsetLen)
+
+static void PrintAstRawExprStmt(const bohRawExprStmt* pRawExprStmt, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
+    BOH_ASSERT(pRawExprStmt);
 
     const uint64_t nextlevelOffsetLen = offsetLen + 4;
-
-    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, rawExprStmtIdx);
-    BOH_ASSERT(pStmt);
-
-    const bohRawExprStmt* pRawExprStmt = bohStmtGetRawExpr(pStmt);
 
     fprintf_s(stdout, "%sRawExprStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen);
 
-    PrintExpr(pAst, pRawExprStmt->exprIdx, nextlevelOffsetLen);
+    PrintExpr(pRawExprStmt->pExpr, nextlevelOffsetLen);
 
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
-
-    return rawExprStmtIdx;
 }
 
 
-static bohStmtIdx PrintPrintStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint64_t offsetLen)
+static void PrintPrintStmt(const bohPrintStmt* pPrintStmt, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
+    BOH_ASSERT(pPrintStmt);
 
     const uint64_t nextlevelOffsetLen = offsetLen + 4;
-
-    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, printStmtIdx);
-    BOH_ASSERT(pStmt);
-
-    const bohPrintStmt* pPrintStmt = bohStmtGetPrint(pStmt);
 
     fprintf_s(stdout, "%sPrintStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen);
 
-    const bohStmtIdx lastPrintedStmt = PrintAstStmt(pAst, pPrintStmt->argStmtIdx, nextlevelOffsetLen);
+    PrintAstStmt(pPrintStmt->pArgStmt, nextlevelOffsetLen);
 
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
-
-    return lastPrintedStmt;
 }
 
 
-static bohStmtIdx PrintIfStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint64_t offsetLen)
+static void PrintIfStmt(const bohIfStmt* pIfStmt, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
+    BOH_ASSERT(pIfStmt);
 
     const uint64_t nextlevelOffsetLen = offsetLen + 4;
-
-    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, printStmtIdx);
-    BOH_ASSERT(pStmt);
-
-    const bohIfStmt* pIfStmt = bohStmtGetIf(pStmt);
 
     fprintf_s(stdout, "%sIfStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen);
@@ -304,7 +276,7 @@ static bohStmtIdx PrintIfStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint6
     fprintf_s(stdout, "%scondition:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen2);
 
-    bohStmtIdx lastPrintedStmt = PrintAstStmt(pAst, pIfStmt->conditionStmtIdx, nextlevelOffsetLen2);
+    PrintAstStmt(pIfStmt->pCondStmt, nextlevelOffsetLen2);
 
     fputc('\n', stdout);
     PrintOffset(stdout, nextlevelOffsetLen);
@@ -312,11 +284,12 @@ static bohStmtIdx PrintIfStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint6
     fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen2);
 
-    const size_t innerStmtCount = bohDynArrayGetSize(bohIfStmtGetInnerStmtIdxStorage(pIfStmt));
-    for (size_t i = 0; i < innerStmtCount; ++i) {
-        lastPrintedStmt = PrintAstStmt(pAst, bohIfStmtGetInnerStmtIdxAt(pIfStmt, i), nextlevelOffsetLen2);
+    const size_t blockSize = bohIfStmtGetStmtBlockSize(pIfStmt);
+    for (size_t i = 0; i < blockSize; ++i) {
+        const bohStmt* pStmt = bohIfStmtAt(pIfStmt, i);
+        PrintAstStmt(pStmt, nextlevelOffsetLen2);
 
-        if (i + 1 < innerStmtCount) {
+        if (i + 1 < blockSize) {
             fputc('\n', stdout);
             PrintOffset(stdout, nextlevelOffsetLen2);
         }
@@ -325,31 +298,27 @@ static bohStmtIdx PrintIfStmt(const bohAST* pAst, bohStmtIdx printStmtIdx, uint6
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
-
-    return lastPrintedStmt;
 }
 
 
 // Returns last printed stmt
-static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t offsetLen)
+static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen)
 {
-    BOH_ASSERT(pAst);
-
-    const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, stmtIdx);
     BOH_ASSERT(pStmt);
     
     switch (pStmt->type) {
-        case BOH_STMT_TYPE_EMPTY:
-            return stmtIdx;
         case BOH_STMT_TYPE_RAW_EXPR:
-            return PrintAstRawExprStmt(pAst, pStmt->selfIdx, offsetLen);
+            PrintAstRawExprStmt(bohStmtGetRawExpr(pStmt), offsetLen);
+            break;
         case BOH_STMT_TYPE_PRINT:
-            return PrintPrintStmt(pAst, pStmt->selfIdx, offsetLen);
+            PrintPrintStmt(bohStmtGetPrint(pStmt), offsetLen);
+            break;
         case BOH_STMT_TYPE_IF:
-            return PrintIfStmt(pAst, pStmt->selfIdx, offsetLen);
+            PrintIfStmt(bohStmtGetIf(pStmt), offsetLen);
+            break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
-            return stmtIdx;
+            break;
     }
 }
 
@@ -357,14 +326,13 @@ static bohStmtIdx PrintAstStmt(const bohAST* pAst, bohStmtIdx stmtIdx, uint64_t 
 static void PrintAst(const bohAST* pAst)
 {
     BOH_ASSERT(pAst);
-    
-    const bohStmtStorage* pStmts = bohAstGetStmtsConst(pAst);
-    const size_t stmtCount = bohDynArrayGetSize(pStmts);
 
+    const size_t stmtCount = bohAstGetStmtCount(pAst);
     uint64_t offsetLen = 0;
 
-    for (bohStmtIdx stmtIdx = 0; stmtIdx < stmtCount; ++stmtIdx) {
-        stmtIdx = PrintAstStmt(pAst, stmtIdx, offsetLen);
+    for (size_t i = 0; i < stmtCount; ++i) {
+        const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, i);
+        PrintAstStmt(pStmt, offsetLen);
         fputc('\n', stdout);
     }
 }

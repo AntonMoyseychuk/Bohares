@@ -315,6 +315,7 @@ bohStmt** bohAstPushStmtPtr(bohAST* pAst, bohStmt* pStmt);
 const bohStmt* bohAstGetStmtByIdx(const bohAST* pAst, size_t index);
 
 size_t bohAstGetStmtCount(const bohAST* pAst);
+size_t bohAstGetMemorySize(const bohAST* pAst);
 
 
 typedef bohDynArray bohTokenStorage;

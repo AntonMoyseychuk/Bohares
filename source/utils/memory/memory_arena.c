@@ -53,3 +53,17 @@ void* bohMemoryArenaAlloc(bohMemoryArena* pArena, size_t size, size_t alignment)
     
     return pArena->pMemory + (current - (size_t)pArena->pMemory);
 }
+
+
+size_t bohMemoryArenaGetOffset(const bohMemoryArena* pArena)
+{
+    BOH_ASSERT(pArena);
+    return pArena->offset;
+}
+
+
+size_t bohMemoryArenaGetCapacity(const bohMemoryArena* pArena)
+{
+    BOH_ASSERT(pArena);
+    return pArena->capacity;
+}

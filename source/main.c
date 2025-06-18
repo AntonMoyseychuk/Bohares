@@ -409,7 +409,7 @@ int main(int argc, char* argv[])
 
     const bohTokenStorage* pTokens = bohLexerGetTokens(&lexer);
 
-    fprintf_s(stdout, "\n%sLEXER TOKENS:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, "\n%sLEXER TOKENS (Memory: %f KB):%s\n", BOH_OUTPUT_COLOR_GREEN, bohLexerGetTokenStorageMemorySize(&lexer) / 1024.f, BOH_OUTPUT_COLOR_RESET);
     PrintTokens(pTokens);
 
     if (bohErrorsStateHasLexerErrorGlobal()) {
@@ -419,14 +419,15 @@ int main(int argc, char* argv[])
     bohParser parser = bohParserCreate(pTokens);
     bohParserParse(&parser);
 
-    fprintf_s(stdout, "%s\nAST:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
-    PrintAst(bohParserGetAST(&parser));
+    const bohAST* pAst = bohParserGetAST(&parser);
+    fprintf_s(stdout, "%s\nAST (Memory: %f KB):%s\n", BOH_OUTPUT_COLOR_GREEN, bohAstGetMemorySize(pAst) / 1024.f, BOH_OUTPUT_COLOR_RESET);
+    PrintAst(pAst);
 
     if (bohErrorsStateHasParserErrorGlobal()) {
         exit(-2);
     }
 
-    bohInterpreter interp = bohInterpCreate(bohParserGetAST(&parser));
+    bohInterpreter interp = bohInterpCreate(pAst);
 
     fprintf_s(stdout, "\n\n%sINTERPRETER:%s\n", BOH_OUTPUT_COLOR_GREEN, BOH_OUTPUT_COLOR_RESET);
     bohInterpInterpret(&interp);

@@ -702,3 +702,10 @@ void bohLexerTokenize(bohLexer* pLexer)
         }
     }
 }
+
+
+size_t bohLexerGetTokenStorageMemorySize(const bohLexer* pLexer)
+{
+    BOH_ASSERT(pLexer);
+    return bohDynArrayGetMemorySize(&pLexer->tokens);
+}

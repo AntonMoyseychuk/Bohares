@@ -126,3 +126,5 @@ void bohLexerDestroy(bohLexer* pLexer);
 const bohTokenStorage* bohLexerGetTokens(const bohLexer* pLexer);
 
 void bohLexerTokenize(bohLexer* pLexer);
+
+size_t bohLexerGetTokenStorageMemorySize(const bohLexer* pLexer);

@@ -1720,6 +1720,16 @@ size_t bohAstGetStmtCount(const bohAST* pAst)
 }
 
 
+size_t bohAstGetMemorySize(const bohAST* pAst)
+{
+    BOH_ASSERT(pAst);
+    
+    return bohDynArrayGetMemorySize(&pAst->stmtPtrsStorage) + 
+        bohMemoryArenaGetCapacity(&pAst->epxrMemArena) + 
+        bohMemoryArenaGetCapacity(&pAst->stmtMemArena);
+}
+
+
 bohParser bohParserCreate(const bohTokenStorage *pTokenStorage)
 {
     BOH_ASSERT(pTokenStorage);

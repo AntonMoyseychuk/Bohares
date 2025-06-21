@@ -102,7 +102,7 @@ bohIfStmtInterpResult* bohIfStmtInterpResultAssign(bohIfStmtInterpResult* pDst, 
 
 typedef enum StmtInterpResultType
 {
-    BOH_INTERP_RES_TYPE_RAW_EXPR,
+    BOH_INTERP_RES_TYPE_EXPR,
     BOH_INTERP_RES_TYPE_PRINT,
     BOH_INTERP_RES_TYPE_IF,
 } bohStmtInterpResultType;

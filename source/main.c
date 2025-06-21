@@ -11,7 +11,7 @@
 
 #define BOH_OUTPUT_COLOR_VALUE          BOH_OUTPUT_COLOR_WHITE
 #define BOH_OUTPUT_COLOR_OPERATOR       BOH_OUTPUT_COLOR_GREEN
-#define BOH_OUTPUT_COLOR_OPERATOR_EXPR  BOH_OUTPUT_COLOR_YELLOW
+#define BOH_OUTPUT_COLOR_EXPR           BOH_OUTPUT_COLOR_YELLOW
 #define BOH_OUTPUT_COLOR_STMT           BOH_OUTPUT_COLOR_BLUE
 
 #define BOH_OUTPUT_COLOR_ERROR          BOH_OUTPUT_COLOR_RED
@@ -147,7 +147,7 @@ static void PrintUnaryExpr(const bohUnaryExpr* pUnaryExpr, uint64_t offsetLen)
     const bool isOperandValueExpr = bohExprIsValueExpr(pOperandExpr);
     const bool isOperandNumber = isOperandValueExpr && bohValueExprIsNumber(bohExprGetValueExpr(pOperandExpr));
 
-    fprintf_s(stdout, "%sUnOp%s(", BOH_OUTPUT_COLOR_OPERATOR_EXPR, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, "%sUnOp%s(", BOH_OUTPUT_COLOR_EXPR, BOH_OUTPUT_COLOR_RESET);
     fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_OPERATOR, bohParsExprOperatorToStr(pUnaryExpr->op), BOH_OUTPUT_COLOR_RESET);
     fputs(isOperandNumber ? ", " : ",\n", stdout);
 
@@ -181,7 +181,7 @@ static void PrintBinaryExpr(const bohBinaryExpr* pBinaryExpr, uint64_t offsetLen
 
     const bool areLeftAndRightNodesNumbers = isLeftOperandNumber && isRightOperandNumber;
     
-    fprintf_s(stdout, "%sBinOp%s(", BOH_OUTPUT_COLOR_OPERATOR_EXPR, BOH_OUTPUT_COLOR_RESET);
+    fprintf_s(stdout, "%sBinOp%s(", BOH_OUTPUT_COLOR_EXPR, BOH_OUTPUT_COLOR_RESET);
     fprintf_s(stdout, "%s%s%s", BOH_OUTPUT_COLOR_OPERATOR, bohParsExprOperatorToStr(pBinaryExpr->op), BOH_OUTPUT_COLOR_RESET);
     fputs(areLeftAndRightNodesNumbers ? ", " : ",\n", stdout);
 
@@ -207,6 +207,15 @@ static void PrintBinaryExpr(const bohBinaryExpr* pBinaryExpr, uint64_t offsetLen
 }
 
 
+static void PrintIdentifierExpr(const bohIdentifierExpr* pIdentifierExpr)
+{
+    BOH_ASSERT(pIdentifierExpr);
+    
+    fprintf_s(stdout, "%sIdentifier%s[%s%.*s%s]", BOH_OUTPUT_COLOR_EXPR, BOH_OUTPUT_COLOR_RESET, 
+        BOH_OUTPUT_COLOR_VALUE, bohStringViewGetSize(&pIdentifierExpr->name), bohStringViewGetData(&pIdentifierExpr->name), BOH_OUTPUT_COLOR_RESET);
+}
+
+
 static void PrintExpr(const bohExpr* pExpr, uint64_t offsetLen)
 {
     BOH_ASSERT(pExpr);
@@ -220,6 +229,9 @@ static void PrintExpr(const bohExpr* pExpr, uint64_t offsetLen)
             break;
         case BOH_EXPR_TYPE_BINARY:
             PrintBinaryExpr(bohExprGetBinaryExpr(pExpr), offsetLen);
+            break;
+        case BOH_EXPR_TYPE_IDENTIFIER:
+            PrintIdentifierExpr(bohExprGetIdentifierExpr(pExpr));
             break;
         default:
             BOH_ASSERT_FAIL("Invalid AST node type");
@@ -245,7 +257,7 @@ static void PrintPrintStmt(const bohPrintStmt* pPrintStmt, uint64_t offsetLen)
 }
 
 
-static void PrintStmtList(const bohDynArray* pStmtPtrs, size_t levelOffset)
+static void PrintStmtList(const bohDynArray* pStmtPtrs, size_t offsetLen)
 {
     BOH_ASSERT(bohDynArrayIsValid(pStmtPtrs));
 
@@ -253,11 +265,11 @@ static void PrintStmtList(const bohDynArray* pStmtPtrs, size_t levelOffset)
 
     for (size_t i = 0; i < thenStmtCount; ++i) {
         const bohStmt* pStmt = *BOH_DYN_ARRAY_AT_CONST(bohStmt*, pStmtPtrs, i);
-        PrintAstStmt(pStmt, levelOffset);
+        PrintAstStmt(pStmt, offsetLen);
 
         if (i + 1 < thenStmtCount) {
             fputc('\n', stdout);
-            PrintOffset(stdout, levelOffset);
+            PrintOffset(stdout, offsetLen);
         }
     }
 }
@@ -319,6 +331,28 @@ static void PrintIfStmt(const bohIfStmt* pIfStmt, uint64_t offsetLen)
 }
 
 
+static void PrintAssignmentStmt(const bohAssignmentStmt* pStmt, uint64_t offsetLen)
+{
+    BOH_ASSERT(pStmt);
+
+    const uint64_t nextlevelOffsetLen = offsetLen + 4;
+
+    fprintf_s(stdout, "%sAssignmentStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
+    PrintOffset(stdout, nextlevelOffsetLen);
+    
+    PrintExpr(pStmt->pLeft, nextlevelOffsetLen);
+
+    fputs(",\n", stdout);
+    PrintOffset(stdout, nextlevelOffsetLen);
+
+    PrintExpr(pStmt->pRight, nextlevelOffsetLen);
+
+    fputc('\n', stdout);
+    PrintOffset(stdout, offsetLen);
+    fputc(')', stdout);
+}
+
+
 static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen)
 {
     BOH_ASSERT(pStmt);
@@ -329,6 +363,9 @@ static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen)
             break;
         case BOH_STMT_TYPE_IF:
             PrintIfStmt(bohStmtGetIf(pStmt), offsetLen);
+            break;
+        case BOH_STMT_TYPE_ASSIGNMENT:
+            PrintAssignmentStmt(bohStmtGetAssignment(pStmt), offsetLen);
             break;
         default:
             BOH_ASSERT_FAIL("Invalid statement type");

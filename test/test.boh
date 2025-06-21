@@ -1,7 +1,7 @@
 if (1 + 2 >= 3) {
     print("true: ")
 
-    if (false) {
+    if ("string") {
         print("true inside true\n")
     } else {
         print("false inside true\n")

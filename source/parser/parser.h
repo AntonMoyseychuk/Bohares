@@ -252,7 +252,7 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);
 
 typedef struct AssignmentStmt
 {
-    bohExpr* pLeft;
+    const bohExpr* pLeft;
     const bohExpr* pRight;
 } bohAssignmentStmt;
 
@@ -260,7 +260,7 @@ typedef struct AssignmentStmt
 void bohAssignmentStmtDestroy(bohAssignmentStmt* pStmt);
 
 // NOTE: *CreateInPlace functions don't call destroy function
-void bohAssignmentStmtCreateInPlace(bohAssignmentStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight);
+void bohAssignmentStmtCreateInPlace(bohAssignmentStmt* pStmt, const bohExpr* pLeft, const bohExpr* pRight);
 
 const bohExpr* bohAssignmentStmtGetLeftExpr(const bohAssignmentStmt* pStmt);
 const bohExpr* bohAssignmentStmtGetRightExpr(const bohAssignmentStmt* pStmt);
@@ -299,7 +299,7 @@ void bohStmtDestroy(bohStmt* pStmt);
 // NOTE: *CreateInPlace functions don't call destroy function
 void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohExpr* pArgExpr, bohLineNmb line, bohColumnNmb column);
 void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohExpr* pCondExpr, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs, bohLineNmb line, bohColumnNmb column);
-void bohStmtCreateAssignInPlace(bohStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column);
+void bohStmtCreateAssignInPlace(bohStmt* pStmt, const bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column);
 
 bool bohStmtIsEmpty(const bohStmt* pStmt);
 bool bohStmtIsPrint(const bohStmt* pStmt);

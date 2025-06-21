@@ -872,7 +872,7 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult)
     BOH_ASSERT(pResult);
 
     switch (pResult->type) {
-        case BOH_INTERP_RES_TYPE_RAW_EXPR:
+        case BOH_INTERP_RES_TYPE_EXPR:
             bohExprInterpResultDestroy(&pResult->exprInterpResult);
             break;
         case BOH_INTERP_RES_TYPE_PRINT:
@@ -886,7 +886,7 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult)
             break;
     }
 
-    pResult->type = BOH_INTERP_RES_TYPE_RAW_EXPR;
+    pResult->type = BOH_INTERP_RES_TYPE_EXPR;
 }
 
 
@@ -896,7 +896,7 @@ bohStmtInterpResult bohStmtInterpResultCreateExprResultMove(bohExprInterpResult*
 
     bohStmtInterpResult result = {0};
     
-    result.type = BOH_INTERP_RES_TYPE_RAW_EXPR;
+    result.type = BOH_INTERP_RES_TYPE_EXPR;
     bohExprInterpResultMove(&result.exprInterpResult, pResult);
 
     return result;
@@ -932,7 +932,7 @@ bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* p
 bool bohStmtInterpResultIsExpr(const bohStmtInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return pResult->type == BOH_INTERP_RES_TYPE_RAW_EXPR;
+    return pResult->type == BOH_INTERP_RES_TYPE_EXPR;
 }
 
 

@@ -886,7 +886,7 @@ void bohAssignmentStmtDestroy(bohAssignmentStmt* pStmt)
 }
 
 
-void bohAssignmentStmtCreateInPlace(bohAssignmentStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight)
+void bohAssignmentStmtCreateInPlace(bohAssignmentStmt* pStmt, const bohExpr* pLeft, const bohExpr* pRight)
 {
     BOH_ASSERT(pStmt);
 
@@ -991,7 +991,7 @@ void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohExpr* pCondExpr, bohDynArra
 }
 
 
-void bohStmtCreateAssignInPlace(bohStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column)
+void bohStmtCreateAssignInPlace(bohStmt* pStmt, const bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pStmt);
 
@@ -1244,7 +1244,7 @@ static bool parsIsCurrTokenMatch(bohParser* pParser, bohTokenType type)
 static bohExpr* parsParsExpr(bohParser* pParser);
 
 
-// <primary> = <integer> | <float> | <string> | '(' <expr> ')' 
+// <primary> = <integer> | <float> | <string> | <identifier> | '(' <expr> ')' 
 static bohExpr* parsParsPrimary(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
@@ -1293,6 +1293,13 @@ static bohExpr* parsParsPrimary(bohParser* pParser)
         bohExprCreateStringValueExprMoveInPlace(pPrimaryExpr, &unescapedLexeme, pPrevToken->line, pPrevToken->column);
 
         return pPrimaryExpr;
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_IDENTIFIER)) {
+        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);        
+        
+        const bohToken* pPrevToken = parsPeekPrevToken(pParser);
+        bohExprCreateIdentifierExprInPlace(pPrimaryExpr, &pPrevToken->lexeme, pPrevToken->line, pPrevToken->column);
+
+        return pPrimaryExpr;
     } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LPAREN)) {
         const uint32_t line = parsPeekCurrToken(pParser)->line;
         const uint32_t column = parsPeekCurrToken(pParser)->column;
@@ -1301,17 +1308,9 @@ static bohExpr* parsParsPrimary(bohParser* pParser)
         BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RPAREN), line, column, "missed closing \')\'");
         
         return pExpr;
-    } else {
-        bohExpr* pPrimaryExpr = bohAstAllocateExpr(&pParser->ast);
-    
-        const bohToken* pCurrToken = parsPeekCurrToken(pParser);
-        BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "invalid primary token: %.*s",
-            bohStringViewGetSize(&pCurrToken->lexeme), bohStringViewGetData(&pCurrToken->lexeme));
-
-        bohExprCreateNumberValueExprInPlace(pPrimaryExpr, bohNumberCreateI64(0), pCurrToken->line, pCurrToken->column);
-
-        return pPrimaryExpr;
     }
+    
+    return NULL;
 }
 
 
@@ -1710,10 +1709,10 @@ static bohStmt* parsParsNextStmt(bohParser* pParser)
     } else {
         const bohToken* pCurrToken = parsPeekCurrToken(pParser);
 
-        bohExpr* pLeftExpr = parsParsExpr(pParser);
+        const bohExpr* pLeftExpr = parsParsExpr(pParser);
 
         if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_ASSIGNMENT)) {
-            bohExpr* pRightExpr = parsParsExpr(pParser);
+            const bohExpr* pRightExpr = parsParsExpr(pParser);
 
             bohStmt* pAssignmentStmt = bohAstAllocateStmt(&pParser->ast);
             bohStmtCreateAssignInPlace(pAssignmentStmt, pLeftExpr, pRightExpr, pCurrToken->line, pCurrToken->column);

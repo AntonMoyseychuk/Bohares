@@ -11,7 +11,7 @@ typedef enum TokenType
 {
     BOH_TOKEN_TYPE_UNKNOWN,
     BOH_TOKEN_TYPE_COMMENT,                 // #
-    BOH_TOKEN_TYPE_ASSIGN,                  // =
+    BOH_TOKEN_TYPE_ASSIGNMENT,                  // =
     BOH_TOKEN_TYPE_LPAREN,                  // (
     BOH_TOKEN_TYPE_RPAREN,                  // )
     BOH_TOKEN_TYPE_LCURLY,                  // {

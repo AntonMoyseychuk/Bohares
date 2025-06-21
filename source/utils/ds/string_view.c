@@ -216,7 +216,7 @@ bohStringView* bohStringViewAssignConstString(bohStringView* pDst, const bohStri
 bohStringView* bohStringViewResize(bohStringView* pStrView, size_t newSize)
 {
     BOH_ASSERT(pStrView);
-    BOH_ASSERT(newSize <= pStrView->size && "impossible to increase string view the size");
+    BOH_ASSERT_MSG(newSize <= pStrView->size, "impossible to increase string view the size");
 
     pStrView->size = newSize;
     return pStrView;

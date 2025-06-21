@@ -52,7 +52,7 @@ void bohExprInterpResultDestroy(bohExprInterpResult* pResult)
             bohBoharesStringDestroy(&pResult->string);
             break;
         default:
-            BOH_ASSERT(false && "Invalid interpretation result type");
+            BOH_ASSERT_FAIL("Invalid interpretation result type");
             break;
     }
 
@@ -402,7 +402,7 @@ bohExprInterpResult* bohExprInterpResultMove(bohExprInterpResult* pDst, bohExprI
             bohBoharesStringMove(&pDst->string, &pSrc->string);
             break;
         default:
-            BOH_ASSERT(false && "Invalid raw expr stmt interp result type");
+            BOH_ASSERT_FAIL("Invalid raw expr stmt interp result type");
             break;
     }
 
@@ -429,7 +429,7 @@ bohExprInterpResult* bohExprInterpResultAssing(bohExprInterpResult* pDst, const 
             bohBoharesStringAssign(&pDst->string, &pSrc->string);
             break;
         default:
-            BOH_ASSERT(false && "Invalid raw expr stmt interp result type");
+            BOH_ASSERT_FAIL("Invalid raw expr stmt interp result type");
             break;
     }
 
@@ -538,7 +538,7 @@ static bohExprInterpResult interpInterpretExpr(const bohExpr* pExpr)
         }
     }
 
-    BOH_ASSERT(false && "Invalid expression type");
+    BOH_ASSERT_FAIL("Invalid expression type");
     return bohExprInterpResultCreateNumberI64(-1);
 }
 
@@ -568,7 +568,7 @@ static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr)
             return bohExprInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
     
         default:
-            BOH_ASSERT(false && "Invalid unary operator");
+            BOH_ASSERT_FAIL("Invalid unary operator");
             return bohExprInterpResultCreateNumberI64(-1);
     }
 }
@@ -582,8 +582,8 @@ static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
 
     const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)) 
-        && "Invalid left bohExprInterpResult type");
+    BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)),
+        "Invalid left bohExprInterpResult type");
 
     const bohNumber* pLeftNumber = bohExprInterpResultIsNumber(&leftInterpResult) ? 
         bohExprInterpResultGetNumber(&leftInterpResult) : NULL;
@@ -594,8 +594,8 @@ static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
 
     const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult)) 
-        && "Invalid right bohExprInterpResult type");
+    BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult)),
+        "Invalid right bohExprInterpResult type");
 
     const bohNumber* pRightNumber = bohExprInterpResultIsNumber(&rightInterpResult) ? 
         bohExprInterpResultGetNumber(&rightInterpResult) : NULL;
@@ -616,8 +616,8 @@ static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
 
     const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)) 
-        && "Invalid left bohExprInterpResult type");
+    BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)),
+        "Invalid left bohExprInterpResult type");
 
     const bohNumber* pLeftNumber = bohExprInterpResultIsNumber(&leftInterpResult) ? 
         bohExprInterpResultGetNumber(&leftInterpResult) : NULL;
@@ -628,8 +628,8 @@ static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
 
     const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
     
-    BOH_ASSERT((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult))
-        && "Invalid right bohExprInterpResult type");
+    BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult)),
+        "Invalid right bohExprInterpResult type");
 
     const bohNumber* pRightNumber = bohExprInterpResultIsNumber(&rightInterpResult) ? 
         bohExprInterpResultGetNumber(&rightInterpResult) : NULL;
@@ -657,10 +657,10 @@ static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr)
     const bohExprInterpResult left = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
     const bohExprInterpResult right = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohExprInterpResultIsNumber(&left) || bohExprInterpResultIsString(&left)) 
-        && "Invalid left bohExprInterpResult type");
-    BOH_ASSERT((bohExprInterpResultIsNumber(&right) || bohExprInterpResultIsString(&right)) 
-        && "Invalid right bohExprInterpResult type");
+    BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&left) || bohExprInterpResultIsString(&left)),
+        "Invalid left bohExprInterpResult type");
+    BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&right) || bohExprInterpResultIsString(&right)),
+        "Invalid right bohExprInterpResult type");
 
     const bohNumber* pLeftNumber = bohExprInterpResultIsNumber(&left) ? bohExprInterpResultGetNumber(&left) : NULL;
     const bohNumber* pRightNumber = bohExprInterpResultIsNumber(&right) ? bohExprInterpResultGetNumber(&right) : NULL;
@@ -763,7 +763,7 @@ static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr)
         case BOH_OP_BITWISE_LSHIFT:
             return bohExprInterpResultCreateNumber(bohNumberBitwiseLShift(pLeftNumber, pRightNumber));    
         default:
-            BOH_ASSERT(false && "Invalid binary operator");
+            BOH_ASSERT_FAIL("Invalid binary operator");
             return bohExprInterpResultCreateNumberI64(-1);
     }
 }
@@ -798,7 +798,7 @@ static bohStmtInterpResult bohAstInterpretPrintStmt(const bohPrintStmt* pPrintSt
             fprintf_s(stdout, "%.*s", bohStringViewGetSize(pStrView), bohStringViewGetData(pStrView));
         }
     } else {
-        BOH_ASSERT(false && "Invalid raw expr stmt interp result value type");
+        BOH_ASSERT_FAIL("Invalid raw expr stmt interp result value type");
     }
 
     bohExprInterpResultDestroy(pArgInterpResult);
@@ -848,7 +848,7 @@ static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt)
         case BOH_STMT_TYPE_IF:
             return bohAstInterpretIfStmt(bohStmtGetIf(pStmt));
         default:
-            BOH_ASSERT(false && "Invalid statement type");
+            BOH_ASSERT_FAIL("Invalid statement type");
             return interpCreateDummyStmtInterpResult();
     }
 }
@@ -882,7 +882,7 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult)
             bohIfStmtInterpResultDestroy(&pResult->ifStmtInterpResult);
             break;
         default:
-            BOH_ASSERT(false && "Invalid stmt interpretation result type");
+            BOH_ASSERT_FAIL("Invalid stmt interpretation result type");
             break;
     }
 

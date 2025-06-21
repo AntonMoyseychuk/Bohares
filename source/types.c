@@ -831,7 +831,7 @@ bohNumber* bohNumberMove(bohNumber* pDst, bohNumber* pSrc)
             bohNumberSetF64(pSrc, 0.0);
             break;
         default:
-            BOH_ASSERT(false && "Invalid number type");
+            BOH_ASSERT_FAIL("Invalid number type");
             break;
     }
 

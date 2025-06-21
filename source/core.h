@@ -24,13 +24,19 @@
 
 
 #if defined(_DEBUG) || !defined(NDEBUG)
-    #define BOH_ASSERT(COND)                                                                                              \
+    #define BOH_ASSERT_MSG(COND, MSG)                                                                                     \
         if (!(COND)) {                                                                                                    \
-            fprintf_s(stderr, "%s%s: %s(%d)%s", BOH_OUTPUT_COLOR_RED, #COND, __FILE__, __LINE__, BOH_OUTPUT_COLOR_RESET); \
+            fprintf_s(stderr, "%s%s: %s(%d)%s", BOH_OUTPUT_COLOR_RED, MSG, __FILE__, __LINE__, BOH_OUTPUT_COLOR_RESET);   \
             BOH_DEBUG_BREAK();                                                                                            \
         }
+
+    #define BOH_ASSERT(COND)     BOH_ASSERT_MSG(COND, #COND)
+    #define BOH_ASSERT_FAIL(MSG) BOH_ASSERT_MSG(false, MSG)
+        
 #else
+    #define BOH_ASSERT_MSG(COND, MSG)
     #define BOH_ASSERT(COND)
+    #define BOH_ASSERT_FAIL(MSG)
 #endif
 
 

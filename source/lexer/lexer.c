@@ -47,7 +47,7 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
     switch (type) {
         case BOH_TOKEN_TYPE_UNKNOWN: return "BOH_TOKEN_TYPE_UNKNOWN";
         case BOH_TOKEN_TYPE_COMMENT: return "BOH_TOKEN_TYPE_COMMENT";
-        case BOH_TOKEN_TYPE_ASSIGN: return "BOH_TOKEN_TYPE_ASSIGN";
+        case BOH_TOKEN_TYPE_ASSIGNMENT: return "BOH_TOKEN_TYPE_ASSIGNMENT";
         case BOH_TOKEN_TYPE_LPAREN: return "BOH_TOKEN_TYPE_LPAREN";
         case BOH_TOKEN_TYPE_RPAREN: return "BOH_TOKEN_TYPE_RPAREN";
         case BOH_TOKEN_TYPE_LCURLY: return "BOH_TOKEN_TYPE_LCURLY";
@@ -447,7 +447,7 @@ static bohToken lexGetNextToken(bohLexer* pLexer)
                     type = BOH_TOKEN_TYPE_EQUAL;
                     break;
                 default: 
-                    type = BOH_TOKEN_TYPE_ASSIGN;
+                    type = BOH_TOKEN_TYPE_ASSIGNMENT;
                     break;
             }
                 

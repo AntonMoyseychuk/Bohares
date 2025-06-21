@@ -131,7 +131,7 @@ static void PrintValueExpr(const bohValueExpr* pExpr)
             }
             break;
         default:
-            BOH_ASSERT(false && "Invalid value expression type");
+            BOH_ASSERT_FAIL("Invalid value expression type");
             break;
     }
 }
@@ -222,7 +222,7 @@ static void PrintExpr(const bohExpr* pExpr, uint64_t offsetLen)
             PrintBinaryExpr(bohExprGetBinaryExpr(pExpr), offsetLen);
             break;
         default:
-            BOH_ASSERT(false && "Invalid AST node type");
+            BOH_ASSERT_FAIL("Invalid AST node type");
             break;
     }
 }
@@ -319,7 +319,6 @@ static void PrintIfStmt(const bohIfStmt* pIfStmt, uint64_t offsetLen)
 }
 
 
-// Returns last printed stmt
 static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen)
 {
     BOH_ASSERT(pStmt);
@@ -332,7 +331,7 @@ static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen)
             PrintIfStmt(bohStmtGetIf(pStmt), offsetLen);
             break;
         default:
-            BOH_ASSERT(false && "Invalid statement type");
+            BOH_ASSERT_FAIL("Invalid statement type");
             break;
     }
 }

@@ -51,7 +51,7 @@ bool bohErrorsStateIsInitialized(void)
 
 bohErrorsState* bohErrorsStateGet(void)
 {
-    BOH_ASSERT(pBohState && "bohares errors state is not initialized");
+    BOH_ASSERT_MSG(pBohState, "bohares errors state is not initialized");
     return pBohState;
 }
 

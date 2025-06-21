@@ -128,7 +128,7 @@ const char* bohParsExprOperatorToStr(bohExprOperator op)
         case BOH_OP_AND: return "and";
         case BOH_OP_OR: return "or";
         default:
-            BOH_ASSERT(false && "Invalid operator type");
+            BOH_ASSERT_FAIL("Invalid operator type");
             return NULL;
     }
 }
@@ -146,7 +146,7 @@ void bohValueExprDestroy(bohValueExpr* pExpr)
             bohBoharesStringDestroy(&pExpr->string);
             break;
         default:
-            BOH_ASSERT(false && "Invalid value expression type");
+            BOH_ASSERT_FAIL("Invalid value expression type");
             break;
     }
 
@@ -265,7 +265,7 @@ bohValueExpr* bohValueExprAssign(bohValueExpr* pDst, const bohValueExpr* pSrc)
             bohBoharesStringAssign(&pDst->string, &pSrc->string);
             break;
         default:
-            BOH_ASSERT(false && "Invalid value expr type");
+            BOH_ASSERT_FAIL("Invalid value expr type");
             break;
     }
 
@@ -290,7 +290,7 @@ bohValueExpr* bohValueExprMove(bohValueExpr* pDst, bohValueExpr* pSrc)
             bohBoharesStringMove(&pDst->string, &pSrc->string);
             break;
         default:
-            BOH_ASSERT(false && "Invalid value expr type");
+            BOH_ASSERT_FAIL("Invalid value expr type");
             break;
     }
 
@@ -508,7 +508,7 @@ void bohExprDestroy(bohExpr* pExpr)
             bohIdentifierExprDestroy(&pExpr->identifierExpr);
             break;
         default:
-            BOH_ASSERT(false && "Invalid expression type");
+            BOH_ASSERT_FAIL("Invalid expression type");
             break;
     }
 
@@ -685,7 +685,7 @@ bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc)
             bohIdentifierExprAssign(&pDst->identifierExpr, &pSrc->identifierExpr);
             break;
         default:
-            BOH_ASSERT(false && "Invalid expression type");
+            BOH_ASSERT_FAIL("Invalid expression type");
             break;
     }
 
@@ -718,7 +718,7 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
             bohIdentifierExprMove(&pDst->identifierExpr, &pSrc->identifierExpr);
             break;
         default:
-            BOH_ASSERT(false && "Invalid expression type");
+            BOH_ASSERT_FAIL("Invalid expression type");
             break;
     }
 
@@ -962,7 +962,7 @@ void bohStmtDestroy(bohStmt* pStmt)
             bohAssignmentStmtDestroy(&pStmt->assignStmt);
             break;
         default:
-            BOH_ASSERT(false && "Invalid statement type");
+            BOH_ASSERT_FAIL("Invalid statement type");
             break;
     }
 
@@ -1072,7 +1072,7 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
             bohAssignmentStmtAssign(&pDst->assignStmt, &pSrc->assignStmt);
             break;
         default:
-            BOH_ASSERT(false && "Invalid statement type");
+            BOH_ASSERT_FAIL("Invalid statement type");
             break;
     }
 
@@ -1105,7 +1105,7 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
             bohAssignmentStmtMove(&pDst->assignStmt, &pSrc->assignStmt);
             break;
         default:
-            BOH_ASSERT(false && "Invalid statement type");
+            BOH_ASSERT_FAIL("Invalid statement type");
             break;
     }
 
@@ -1708,8 +1708,21 @@ static bohStmt* parsParsNextStmt(bohParser* pParser)
     } else if (type == BOH_TOKEN_TYPE_IF) {
         return parsParsIfStmt(pParser);
     } else {
+        const bohToken* pCurrToken = parsPeekCurrToken(pParser);
 
-        BOH_ASSERT(false && "Invalid token type");
+        bohExpr* pLeftExpr = parsParsExpr(pParser);
+
+        if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_ASSIGNMENT)) {
+            bohExpr* pRightExpr = parsParsExpr(pParser);
+
+            bohStmt* pAssignmentStmt = bohAstAllocateStmt(&pParser->ast);
+            bohStmtCreateAssignInPlace(pAssignmentStmt, pLeftExpr, pRightExpr, pCurrToken->line, pCurrToken->column);
+            return pAssignmentStmt;
+        } else {
+
+        }
+
+        BOH_ASSERT_FAIL("Invalid token type");
         return NULL;
     }
 }

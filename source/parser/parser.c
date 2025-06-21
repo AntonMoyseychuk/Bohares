@@ -436,6 +436,51 @@ bohBinaryExpr* bohBinaryExprMove(bohBinaryExpr* pDst, bohBinaryExpr* pSrc)
 }
 
 
+void bohIdentifierExprDestroy(bohIdentifierExpr* pExpr)
+{
+    BOH_ASSERT(pExpr);
+    bohStringViewReset(&pExpr->name);
+}
+
+
+void bohIdentifierExprCreateInPlace(bohIdentifierExpr* pExpr, const bohStringView* pName)
+{
+    BOH_ASSERT(pExpr);
+    BOH_ASSERT(pName);
+
+    bohStringViewAssignStringViewPtr(&pExpr->name, pName);
+}
+
+
+const bohStringView* bohIdentifierExprGetName(const bohIdentifierExpr* pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return &pExpr->name;
+}
+
+
+bohIdentifierExpr* bohIdentifierExprAssign(bohIdentifierExpr* pDst, const bohIdentifierExpr* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohStringViewAssignStringViewPtr(&pDst->name, &pSrc->name);
+
+    return pDst;
+}
+
+
+bohIdentifierExpr* bohIdentifierExprMove(bohIdentifierExpr* pDst, bohIdentifierExpr* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohStringViewMove(&pDst->name, &pSrc->name);
+
+    return pDst;
+}
+
+
 static void bohExprSetLineColumnNmb(bohExpr* pExpr, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pExpr);
@@ -458,6 +503,9 @@ void bohExprDestroy(bohExpr* pExpr)
             break;
         case BOH_EXPR_TYPE_BINARY:
             bohBinaryExprDestroy(&pExpr->binaryExpr);
+            break;
+        case BOH_EXPR_TYPE_IDENTIFIER:
+            bohIdentifierExprDestroy(&pExpr->identifierExpr);
             break;
         default:
             BOH_ASSERT(false && "Invalid expression type");
@@ -527,6 +575,17 @@ void bohExprCreateBinaryExprInPlace(bohExpr* pExpr, bohExprOperator op, bohExpr*
 }
 
 
+void bohExprCreateIdentifierExprInPlace(bohExpr* pExpr, const bohStringView* pName, bohLineNmb line, bohColumnNmb column)
+{
+    BOH_ASSERT(pExpr);
+    BOH_ASSERT(pName);
+
+    pExpr->type = BOH_EXPR_TYPE_IDENTIFIER;
+    bohIdentifierExprCreateInPlace(&pExpr->identifierExpr, pName);
+    bohExprSetLineColumnNmb(pExpr, line, column);
+}
+
+
 bool bohExprIsValueExpr(const bohExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
@@ -548,6 +607,13 @@ bool bohExprIsBinaryExpr(const bohExpr* pExpr)
 }
 
 
+bool bohExprIsIdentifierExpr(const bohExpr *pExpr)
+{
+    BOH_ASSERT(pExpr);
+    return pExpr->type == BOH_EXPR_TYPE_IDENTIFIER;
+}
+
+
 const bohValueExpr* bohExprGetValueExpr(const bohExpr* pExpr)
 {
     BOH_ASSERT(bohExprIsValueExpr(pExpr));
@@ -566,6 +632,12 @@ const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     return &pExpr->binaryExpr;
+}
+
+const bohIdentifierExpr* bohExprGetIdentifierExpr(const bohExpr* pExpr)
+{
+    BOH_ASSERT(bohExprIsIdentifierExpr(pExpr));
+    return &pExpr->identifierExpr;
 }
 
 
@@ -609,6 +681,9 @@ bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc)
         case BOH_EXPR_TYPE_BINARY:
             bohBinaryExprAssign(&pDst->binaryExpr, &pSrc->binaryExpr);
             break;
+        case BOH_EXPR_TYPE_IDENTIFIER:
+            bohIdentifierExprAssign(&pDst->identifierExpr, &pSrc->identifierExpr);
+            break;
         default:
             BOH_ASSERT(false && "Invalid expression type");
             break;
@@ -639,6 +714,9 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
         case BOH_EXPR_TYPE_BINARY:
             bohBinaryExprMove(&pDst->binaryExpr, &pSrc->binaryExpr);
             break;
+        case BOH_EXPR_TYPE_IDENTIFIER:
+            bohIdentifierExprMove(&pDst->identifierExpr, &pSrc->identifierExpr);
+            break;
         default:
             BOH_ASSERT(false && "Invalid expression type");
             break;
@@ -654,73 +732,26 @@ bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc)
 }
 
 
-void bohRawExprStmtDestroy(bohRawExprStmt* pStmt)
-{
-    BOH_ASSERT(pStmt);
-    pStmt->pExpr = NULL;
-}
-
-
-void bohRawExprStmtCreateInPlace(bohRawExprStmt* pStmt, const bohExpr* pExpr)
-{
-    BOH_ASSERT(pStmt);
-    BOH_ASSERT(pExpr);
-
-    pStmt->pExpr = pExpr;
-}
-
-
-const bohExpr* bohRawExprStmtGetExpr(const bohRawExprStmt* pStmt)
-{
-    BOH_ASSERT(pStmt);
-    return pStmt->pExpr;
-}
-
-
-bohRawExprStmt* bohRawExprStmtAssign(bohRawExprStmt* pDst, const bohRawExprStmt* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-
-    bohRawExprStmtDestroy(pDst);
-    pDst->pExpr = pSrc->pExpr;
-
-    return pDst;
-}
-
-
-bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-
-    bohRawExprStmtAssign(pDst, pSrc);
-    pSrc->pExpr = NULL;
-
-    return pDst;
-}
-
-
 void bohPrintStmtDestroy(bohPrintStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    pStmt->pArgStmt = NULL;
+    pStmt->pArgExpr = NULL;
 }
 
 
-void bohPrintStmtCreateInPlace(bohPrintStmt* pStmt, const bohStmt* pArgStmt)
+void bohPrintStmtCreateInPlace(bohPrintStmt* pStmt, const bohExpr* pArgExpr)
 {
     BOH_ASSERT(pStmt);
-    BOH_ASSERT(pArgStmt);
+    BOH_ASSERT(pArgExpr);
 
-    pStmt->pArgStmt = pArgStmt;
+    pStmt->pArgExpr = pArgExpr;
 }
 
 
-const bohStmt* bohPrintStmtGetArgStmt(const bohPrintStmt* pStmt)
+const bohExpr* bohPrintStmtGetArgExpr(const bohPrintStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->pArgStmt;
+    return pStmt->pArgExpr;
 }
 
 
@@ -730,7 +761,7 @@ bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohPrintStmtDestroy(pDst);
-    pDst->pArgStmt = pSrc->pArgStmt;
+    pDst->pArgExpr = pSrc->pArgExpr;
 
     return pDst;
 }
@@ -742,7 +773,7 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc)
     BOH_ASSERT(pSrc);
 
     bohPrintStmtAssign(pDst, pSrc);
-    pSrc->pArgStmt = NULL;
+    pSrc->pArgExpr = NULL;
 
     return pDst;
 }
@@ -752,27 +783,27 @@ void bohIfStmtDestroy(bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
 
-    pStmt->pCondStmt = NULL;
+    pStmt->pCondExpr = NULL;
     bohDynArrayDestroy(&pStmt->thenStmtPtrs);
     bohDynArrayDestroy(&pStmt->elseStmtPtrs);
 }
 
 
-void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs)
+void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohExpr* pCondExpr, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs)
 {
     BOH_ASSERT(pStmt);
-    BOH_ASSERT(pCondStmt);
+    BOH_ASSERT(pCondExpr);
 
-    pStmt->pCondStmt = pCondStmt;
+    pStmt->pCondExpr = pCondExpr;
     bohDynArrayMove(&pStmt->thenStmtPtrs, pThenStmtPtrs);
     bohDynArrayMove(&pStmt->elseStmtPtrs, pElseStmtPtrs);
 }
 
 
-const bohStmt* bohIfStmtGetCondStmt(const bohIfStmt* pStmt)
+const bohExpr* bohIfStmtGetCondExpr(const bohIfStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->pCondStmt;
+    return pStmt->pCondExpr;
 }
 
 
@@ -823,7 +854,7 @@ bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    pDst->pCondStmt = pSrc->pCondStmt;
+    pDst->pCondExpr = pSrc->pCondExpr;
     bohDynArrayAssign(&pDst->thenStmtPtrs, &pSrc->thenStmtPtrs);
     bohDynArrayAssign(&pDst->elseStmtPtrs, &pSrc->elseStmtPtrs);
 
@@ -836,12 +867,71 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    pDst->pCondStmt = pSrc->pCondStmt;
+    pDst->pCondExpr = pSrc->pCondExpr;
     bohDynArrayMove(&pDst->thenStmtPtrs, &pSrc->thenStmtPtrs);
     bohDynArrayMove(&pDst->elseStmtPtrs, &pSrc->elseStmtPtrs);
 
-    pSrc->pCondStmt = NULL;
+    pSrc->pCondExpr = NULL;
 
+    return pDst;
+}
+
+
+void bohAssignmentStmtDestroy(bohAssignmentStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+
+    pStmt->pLeft = NULL;
+    pStmt->pRight = NULL;
+}
+
+
+void bohAssignmentStmtCreateInPlace(bohAssignmentStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight)
+{
+    BOH_ASSERT(pStmt);
+
+    pStmt->pLeft = pLeft;
+    pStmt->pRight = pRight;
+}
+
+
+const bohExpr* bohAssignmentStmtGetLeftExpr(const bohAssignmentStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->pLeft;
+}
+
+
+const bohExpr* bohAssignmentStmtGetRightExpr(const bohAssignmentStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->pRight;
+}
+
+
+bohAssignmentStmt* bohAssignmentStmtAssign(bohAssignmentStmt* pDst, const bohAssignmentStmt* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    pDst->pLeft = pSrc->pLeft;
+    pDst->pRight = pSrc->pRight;
+
+    return pDst;
+}
+
+
+bohAssignmentStmt* bohAssignmentStmtMove(bohAssignmentStmt* pDst, bohAssignmentStmt* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    pDst->pLeft = pSrc->pLeft;
+    pDst->pRight = pSrc->pRight;
+
+    pSrc->pLeft = NULL;
+    pSrc->pRight = NULL;
+    
     return pDst;
 }
 
@@ -862,14 +952,14 @@ void bohStmtDestroy(bohStmt* pStmt)
     switch (pStmt->type) {
         case BOH_STMT_TYPE_EMPTY:
             break;
-        case BOH_STMT_TYPE_RAW_EXPR:
-            bohRawExprStmtDestroy(&pStmt->rawExpr);
-            break;
         case BOH_STMT_TYPE_PRINT:
             bohPrintStmtDestroy(&pStmt->printStmt);
             break;
         case BOH_STMT_TYPE_IF:
             bohIfStmtDestroy(&pStmt->ifStmt);
+            break;
+        case BOH_STMT_TYPE_ASSIGNMENT:
+            bohAssignmentStmtDestroy(&pStmt->assignStmt);
             break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
@@ -881,40 +971,33 @@ void bohStmtDestroy(bohStmt* pStmt)
 }
 
 
-void bohStmtCreateRawExprInPlace(bohStmt* pStmt, const bohExpr* pExpr, bohLineNmb line, bohColumnNmb column)
-{
-    BOH_ASSERT(pStmt);
-
-    pStmt->type = BOH_STMT_TYPE_RAW_EXPR;
-    bohRawExprStmtCreateInPlace(&pStmt->rawExpr, pExpr);
-    bohStmtSetLineColumnNmb(pStmt, line, column);
-}
-
-
-void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohStmt* pArgStmt, bohLineNmb line, bohColumnNmb column)
+void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohExpr* pArgExpr, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pStmt);
 
     pStmt->type = BOH_STMT_TYPE_PRINT;
-    bohPrintStmtCreateInPlace(&pStmt->printStmt, pArgStmt);
+    bohPrintStmtCreateInPlace(&pStmt->printStmt, pArgExpr);
     bohStmtSetLineColumnNmb(pStmt, line, column);
 }
 
 
-void bohStmtCreateIfInPlace(bohStmt *pStmt, const bohStmt *pCondStmt, bohDynArray *pThenStmtPtrs, bohDynArray *pElseStmtPtrs, bohLineNmb line, bohColumnNmb column)
+void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohExpr* pCondExpr, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pStmt);
 
     pStmt->type = BOH_STMT_TYPE_IF;
-    bohIfStmtCreateInPlace(&pStmt->ifStmt, pCondStmt, pThenStmtPtrs, pElseStmtPtrs);
+    bohIfStmtCreateInPlace(&pStmt->ifStmt, pCondExpr, pThenStmtPtrs, pElseStmtPtrs);
     bohStmtSetLineColumnNmb(pStmt, line, column);
 }
 
 
-bool bohStmtIsRawExpr(const bohStmt* pStmt)
+void bohStmtCreateAssignInPlace(bohStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column)
 {
     BOH_ASSERT(pStmt);
-    return pStmt->type == BOH_STMT_TYPE_RAW_EXPR;
+
+    pStmt->type = BOH_STMT_TYPE_ASSIGNMENT;
+    bohAssignmentStmtCreateInPlace(&pStmt->assignStmt, pLeft, pRight);
+    bohStmtSetLineColumnNmb(pStmt, line, column);
 }
 
 
@@ -939,10 +1022,10 @@ bool bohStmtIsIf(const bohStmt* pStmt)
 }
 
 
-const bohRawExprStmt* bohStmtGetRawExpr(const bohStmt* pStmt)
+bool bohStmtIsAssignment(const bohStmt* pStmt)
 {
-    BOH_ASSERT(bohStmtIsRawExpr(pStmt));
-    return &pStmt->rawExpr;
+    BOH_ASSERT(pStmt);
+    return pStmt->type == BOH_STMT_TYPE_ASSIGNMENT;
 }
 
 
@@ -960,6 +1043,13 @@ const bohIfStmt* bohStmtGetIf(const bohStmt* pStmt)
 }
 
 
+const bohAssignmentStmt* bohStmtGetAssignment(const bohStmt* pStmt)
+{
+    BOH_ASSERT(bohStmtIsAssignment(pStmt));
+    return &pStmt->assignStmt;
+}
+
+
 bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
 {
     BOH_ASSERT(pDst);
@@ -972,14 +1062,14 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
     switch (pSrc->type) {
         case BOH_STMT_TYPE_EMPTY:
             break;
-        case BOH_STMT_TYPE_RAW_EXPR:
-            bohRawExprStmtAssign(&pDst->rawExpr, &pSrc->rawExpr);
-            break;
         case BOH_STMT_TYPE_PRINT:
             bohPrintStmtAssign(&pDst->printStmt, &pSrc->printStmt);
             break;
         case BOH_STMT_TYPE_IF:
             bohIfStmtAssign(&pDst->ifStmt, &pSrc->ifStmt);
+            break;
+        case BOH_STMT_TYPE_ASSIGNMENT:
+            bohAssignmentStmtAssign(&pDst->assignStmt, &pSrc->assignStmt);
             break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
@@ -1005,14 +1095,14 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
     switch (pSrc->type) {
         case BOH_STMT_TYPE_EMPTY:
             break;
-        case BOH_STMT_TYPE_RAW_EXPR:
-            bohRawExprStmtMove(&pDst->rawExpr, &pSrc->rawExpr);
-            break;
         case BOH_STMT_TYPE_PRINT:
             bohPrintStmtMove(&pDst->printStmt, &pSrc->printStmt);
             break;
         case BOH_STMT_TYPE_IF:
             bohIfStmtMove(&pDst->ifStmt, &pSrc->ifStmt);
+            break;
+        case BOH_STMT_TYPE_ASSIGNMENT:
+            bohAssignmentStmtMove(&pDst->assignStmt, &pSrc->assignStmt);
             break;
         default:
             BOH_ASSERT(false && "Invalid statement type");
@@ -1530,22 +1620,6 @@ static bohExpr* parsParsExpr(bohParser* pParser)
 static bohStmt* parsParsNextStmt(bohParser* pParser);
 
 
-// <raw_expr_stmt> = <expr>
-static bohStmt* parsParsRawExprStmt(bohParser* pParser)
-{
-    BOH_ASSERT(pParser);
-
-    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
-
-    const bohExpr* pExpr = parsParsExpr(pParser);
-
-    bohStmt* pRawExprStmt = bohAstAllocateStmt(&pParser->ast);
-    bohStmtCreateRawExprInPlace(pRawExprStmt, pExpr, pCurrToken->line, pCurrToken->column);
-
-    return pRawExprStmt;
-}
-
-
 // <print_stmt> = "print" <stmt>
 static bohStmt* parsParsPrintStmt(bohParser* pParser)
 {
@@ -1558,8 +1632,8 @@ static bohStmt* parsParsPrintStmt(bohParser* pParser)
 
     bohStmt* pPrintStmt = bohAstAllocateStmt(&pParser->ast);
 
-    const bohStmt* pArgStmt = parsParsNextStmt(pParser);
-    bohStmtCreatePrintInPlace(pPrintStmt, pArgStmt, pCurrToken->line, pCurrToken->column);
+    const bohExpr* pArgExpr = parsParsExpr(pParser);
+    bohStmtCreatePrintInPlace(pPrintStmt, pArgExpr, pCurrToken->line, pCurrToken->column);
 
     return pPrintStmt;
 }
@@ -1575,7 +1649,7 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     const bool isIfStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_IF);
     BOH_ASSERT(isIfStmt);
 
-    const bohStmt* pCondStmt = parsParsNextStmt(pParser);
+    const bohExpr* pCondExpr = parsParsExpr(pParser);
     
     BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column, 
         "expected opening \'{\' in \'if\' statement block");
@@ -1585,7 +1659,11 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
 
     const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
 
-    if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {    
+    static const size_t BOH_PLEALLOCATED_INNER_STMT_COUNT = 16;
+
+    if (!parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
+        bohDynArrayReserve(&thenStmtsPtrs, BOH_PLEALLOCATED_INNER_STMT_COUNT);
+
         while(pParser->currTokenIdx < tokensCount && !parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_RCURLY)) {
             bohStmt** ppThenStmt = (bohStmt**)bohDynArrayPushBackDummy(&thenStmtsPtrs);
             *ppThenStmt = parsParsNextStmt(pParser);
@@ -1597,6 +1675,8 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     }
 
     if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_ELSE)) {
+        bohDynArrayReserve(&elseStmtsPtrs, BOH_PLEALLOCATED_INNER_STMT_COUNT);
+
         BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column, 
             "expected opening \'{\' in \'else\' statement block");
         
@@ -1611,7 +1691,7 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     }
 
     bohStmt* pIfStmt = bohAstAllocateStmt(&pParser->ast);
-    bohStmtCreateIfInPlace(pIfStmt, pCondStmt, &thenStmtsPtrs, &elseStmtsPtrs, pCurrToken->line, pCurrToken->column);
+    bohStmtCreateIfInPlace(pIfStmt, pCondExpr, &thenStmtsPtrs, &elseStmtsPtrs, pCurrToken->line, pCurrToken->column);
 
     return pIfStmt;
 }
@@ -1621,24 +1701,16 @@ static bohStmt* parsParsNextStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+    const bohTokenType type = bohTokenGetType(parsPeekCurrToken(pParser));
 
-    switch (bohTokenGetType(pCurrToken)) {
-        case BOH_TOKEN_TYPE_LPAREN:
-        case BOH_TOKEN_TYPE_STRING:
-        case BOH_TOKEN_TYPE_INTEGER:
-        case BOH_TOKEN_TYPE_FLOAT:
-            return parsParsRawExprStmt(pParser);
-        case BOH_TOKEN_TYPE_PRINT:
-            return parsParsPrintStmt(pParser);
-        case BOH_TOKEN_TYPE_IF:
-            return parsParsIfStmt(pParser);
-        case BOH_TOKEN_TYPE_ELSE:
-            BOH_PARSER_EXPECT(false, pCurrToken->line, pCurrToken->column, "unexpected standalone \'else\' statement");
-            return NULL;
-        default:
-            BOH_ASSERT(false && "Invalid token type");
-            return NULL;
+    if (type == BOH_TOKEN_TYPE_PRINT) {
+        return parsParsPrintStmt(pParser);
+    } else if (type == BOH_TOKEN_TYPE_IF) {
+        return parsParsIfStmt(pParser);
+    } else {
+
+        BOH_ASSERT(false && "Invalid token type");
+        return NULL;
     }
 }
 

@@ -134,11 +134,29 @@ bohBinaryExpr* bohBinaryExprAssign(bohBinaryExpr* pDst, const bohBinaryExpr* pSr
 bohBinaryExpr* bohBinaryExprMove(bohBinaryExpr* pDst, bohBinaryExpr* pSrc);
 
 
+typedef struct IdentifierExpr
+{
+    bohStringView name;
+} bohIdentifierExpr;
+
+
+void bohIdentifierExprDestroy(bohIdentifierExpr* pExpr);
+
+// NOTE: *CreateInPlace functions don't call destroy function
+void bohIdentifierExprCreateInPlace(bohIdentifierExpr* pExpr, const bohStringView* pName);
+
+const bohStringView* bohIdentifierExprGetName(const bohIdentifierExpr* pExpr);
+
+bohIdentifierExpr* bohIdentifierExprAssign(bohIdentifierExpr* pDst, const bohIdentifierExpr* pSrc);
+bohIdentifierExpr* bohIdentifierExprMove(bohIdentifierExpr* pDst, bohIdentifierExpr* pSrc);
+
+
 typedef enum ExprType
 {
     BOH_EXPR_TYPE_VALUE,
     BOH_EXPR_TYPE_UNARY,
-    BOH_EXPR_TYPE_BINARY
+    BOH_EXPR_TYPE_BINARY,
+    BOH_EXPR_TYPE_IDENTIFIER,
 } bohExprType;
 
 
@@ -151,6 +169,7 @@ typedef struct Expr
         bohValueExpr valueExpr;
         bohUnaryExpr unaryExpr;
         bohBinaryExpr binaryExpr;
+        bohIdentifierExpr identifierExpr;
     };
 
     bohLineNmb line;
@@ -167,14 +186,17 @@ void bohExprCreateStringValueExprInPlace(bohExpr* pExpr, const bohBoharesString*
 void bohExprCreateStringValueExprMoveInPlace(bohExpr* pExpr, bohBoharesString* pString, bohLineNmb line, bohColumnNmb column);
 void bohExprCreateUnaryExprInPlace(bohExpr* pExpr, bohExprOperator op, bohExpr* pArgExpr, bohLineNmb line, bohColumnNmb column);
 void bohExprCreateBinaryExprInPlace(bohExpr* pExpr, bohExprOperator op, bohExpr* pLeftArgExpr, bohExpr* pRightArgExpr, bohLineNmb line, bohColumnNmb column);
+void bohExprCreateIdentifierExprInPlace(bohExpr* pExpr, const bohStringView* pName, bohLineNmb line, bohColumnNmb column);
 
 bool bohExprIsValueExpr(const bohExpr* pExpr);
 bool bohExprIsUnaryExpr(const bohExpr* pExpr);
 bool bohExprIsBinaryExpr(const bohExpr* pExpr);
+bool bohExprIsIdentifierExpr(const bohExpr* pExpr);
 
 const bohValueExpr* bohExprGetValueExpr(const bohExpr* pExpr);
 const bohUnaryExpr* bohExprGetUnaryExpr(const bohExpr* pExpr);
 const bohBinaryExpr* bohExprGetBinaryExpr(const bohExpr* pExpr);
+const bohIdentifierExpr* bohExprGetIdentifierExpr(const bohExpr* pExpr);
 
 bohExprType bohExprGetType(const bohExpr* pExpr);
 bohLineNmb bohExprGetLine(const bohExpr* pExpr);
@@ -184,35 +206,18 @@ bohExpr* bohExprAssign(bohExpr* pDst, const bohExpr* pSrc);
 bohExpr* bohExprMove(bohExpr* pDst, bohExpr* pSrc);
 
 
-typedef struct RawExprStmt
-{
-    const bohExpr* pExpr;
-} bohRawExprStmt;
-
-
-void bohRawExprStmtDestroy(bohRawExprStmt* pStmt);
-
-// NOTE: *CreateInPlace functions don't call destroy function
-void bohRawExprStmtCreateInPlace(bohRawExprStmt* pStmt, const bohExpr* pExpr);
-
-const bohExpr* bohRawExprStmtGetExpr(const bohRawExprStmt* pStmt);
-
-bohRawExprStmt* bohRawExprStmtAssign(bohRawExprStmt* pDst, const bohRawExprStmt* pSrc);
-bohRawExprStmt* bohRawExprStmtMove(bohRawExprStmt* pDst, bohRawExprStmt* pSrc);
-
-
 typedef struct PrintStmt
 {
-    const bohStmt* pArgStmt;
+    const bohExpr* pArgExpr;
 } bohPrintStmt;
 
 
 void bohPrintStmtDestroy(bohPrintStmt* pStmt);
 
 // NOTE: *CreateInPlace functions don't call destroy function
-void bohPrintStmtCreateInPlace(bohPrintStmt* pStmt, const bohStmt* pArgStmt);
+void bohPrintStmtCreateInPlace(bohPrintStmt* pStmt, const bohExpr* pArgExpr);
 
-const bohStmt* bohPrintStmtGetArgStmt(const bohPrintStmt* pStmt);
+const bohExpr* bohPrintStmtGetArgExpr(const bohPrintStmt* pStmt);
 
 bohPrintStmt* bohPrintStmtAssign(bohPrintStmt* pDst, const bohPrintStmt* pSrc);
 bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
@@ -220,7 +225,7 @@ bohPrintStmt* bohPrintStmtMove(bohPrintStmt* pDst, bohPrintStmt* pSrc);
 
 typedef struct IfStmt
 {
-    const bohStmt* pCondStmt;
+    const bohExpr* pCondExpr;
     bohDynArray thenStmtPtrs;
     bohDynArray elseStmtPtrs;
 } bohIfStmt;
@@ -229,9 +234,9 @@ typedef struct IfStmt
 void bohIfStmtDestroy(bohIfStmt* pStmt);
 
 // NOTE: *CreateInPlace functions don't call destroy function
-void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohStmt* pCondStmt, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs);
+void bohIfStmtCreateInPlace(bohIfStmt* pStmt, const bohExpr* pCondExpr, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs);
 
-const bohStmt* bohIfStmtGetCondStmt(const bohIfStmt* pStmt);
+const bohExpr* bohIfStmtGetCondExpr(const bohIfStmt* pStmt);
 const bohDynArray* bohIfStmtGetThenStmts(const bohIfStmt* pStmt);
 const bohDynArray* bohIfStmtGetElseStmts(const bohIfStmt* pStmt);
 
@@ -245,12 +250,31 @@ bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc);
 bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);
 
 
+typedef struct AssignmentStmt
+{
+    bohExpr* pLeft;
+    const bohExpr* pRight;
+} bohAssignmentStmt;
+
+
+void bohAssignmentStmtDestroy(bohAssignmentStmt* pStmt);
+
+// NOTE: *CreateInPlace functions don't call destroy function
+void bohAssignmentStmtCreateInPlace(bohAssignmentStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight);
+
+const bohExpr* bohAssignmentStmtGetLeftExpr(const bohAssignmentStmt* pStmt);
+const bohExpr* bohAssignmentStmtGetRightExpr(const bohAssignmentStmt* pStmt);
+
+bohAssignmentStmt* bohAssignmentStmtAssign(bohAssignmentStmt* pDst, const bohAssignmentStmt* pSrc);
+bohAssignmentStmt* bohAssignmentStmtMove(bohAssignmentStmt* pDst, bohAssignmentStmt* pSrc);
+
+
 typedef enum StmtType
 {
     BOH_STMT_TYPE_EMPTY,
-    BOH_STMT_TYPE_RAW_EXPR,
     BOH_STMT_TYPE_PRINT,
     BOH_STMT_TYPE_IF,
+    BOH_STMT_TYPE_ASSIGNMENT,
 } bohStmtType;
 
 
@@ -260,9 +284,9 @@ typedef struct Stmt
 
     union
     {
-        bohRawExprStmt rawExpr;
         bohPrintStmt printStmt;
         bohIfStmt ifStmt;
+        bohAssignmentStmt assignStmt;
     };
     
     bohLineNmb line;
@@ -273,18 +297,18 @@ typedef struct Stmt
 void bohStmtDestroy(bohStmt* pStmt);
 
 // NOTE: *CreateInPlace functions don't call destroy function
-void bohStmtCreateRawExprInPlace(bohStmt* pStmt, const bohExpr* pExpr, bohLineNmb line, bohColumnNmb column);
-void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohStmt* pArgStmt, bohLineNmb line, bohColumnNmb column);
-void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohStmt* pCondStmt, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs, bohLineNmb line, bohColumnNmb column);
+void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohExpr* pArgExpr, bohLineNmb line, bohColumnNmb column);
+void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohExpr* pCondExpr, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs, bohLineNmb line, bohColumnNmb column);
+void bohStmtCreateAssignInPlace(bohStmt* pStmt, bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column);
 
 bool bohStmtIsEmpty(const bohStmt* pStmt);
-bool bohStmtIsRawExpr(const bohStmt* pStmt);
 bool bohStmtIsPrint(const bohStmt* pStmt);
 bool bohStmtIsIf(const bohStmt* pStmt);
+bool bohStmtIsAssignment(const bohStmt* pStmt);
 
-const bohRawExprStmt* bohStmtGetRawExpr(const bohStmt* pStmt);
 const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt);
 const bohIfStmt* bohStmtGetIf(const bohStmt* pStmt);
+const bohAssignmentStmt* bohStmtGetAssignment(const bohStmt* pStmt);
 
 bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc);
 bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc);

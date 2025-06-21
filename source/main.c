@@ -228,23 +228,6 @@ static void PrintExpr(const bohExpr* pExpr, uint64_t offsetLen)
 }
 
 
-static void PrintAstRawExprStmt(const bohRawExprStmt* pRawExprStmt, uint64_t offsetLen)
-{
-    BOH_ASSERT(pRawExprStmt);
-
-    const uint64_t nextlevelOffsetLen = offsetLen + 4;
-
-    fprintf_s(stdout, "%sRawExprStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
-    PrintOffset(stdout, nextlevelOffsetLen);
-
-    PrintExpr(pRawExprStmt->pExpr, nextlevelOffsetLen);
-
-    fputc('\n', stdout);
-    PrintOffset(stdout, offsetLen);
-    fputc(')', stdout);
-}
-
-
 static void PrintPrintStmt(const bohPrintStmt* pPrintStmt, uint64_t offsetLen)
 {
     BOH_ASSERT(pPrintStmt);
@@ -254,11 +237,29 @@ static void PrintPrintStmt(const bohPrintStmt* pPrintStmt, uint64_t offsetLen)
     fprintf_s(stdout, "%sPrintStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
     PrintOffset(stdout, nextlevelOffsetLen);
 
-    PrintAstStmt(pPrintStmt->pArgStmt, nextlevelOffsetLen);
+    PrintExpr(pPrintStmt->pArgExpr, nextlevelOffsetLen);
 
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
+}
+
+
+static void PrintStmtList(const bohDynArray* pStmtPtrs, size_t levelOffset)
+{
+    BOH_ASSERT(bohDynArrayIsValid(pStmtPtrs));
+
+    const size_t thenStmtCount = bohDynArrayGetSize(pStmtPtrs);
+
+    for (size_t i = 0; i < thenStmtCount; ++i) {
+        const bohStmt* pStmt = *BOH_DYN_ARRAY_AT_CONST(bohStmt*, pStmtPtrs, i);
+        PrintAstStmt(pStmt, levelOffset);
+
+        if (i + 1 < thenStmtCount) {
+            fputc('\n', stdout);
+            PrintOffset(stdout, levelOffset);
+        }
+    }
 }
 
 
@@ -273,57 +274,48 @@ static void PrintIfStmt(const bohIfStmt* pIfStmt, uint64_t offsetLen)
     
     const uint64_t nextlevelOffsetLen2 = nextlevelOffsetLen + 4;
 
-    fprintf_s(stdout, "%scondition:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+    const bool condExprIsValue = bohExprIsValueExpr(pIfStmt->pCondExpr);
+
+    fprintf_s(stdout, "%sCondition%s[", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+    if (!condExprIsValue) {
+        fputc('\n', stdout);
+        PrintOffset(stdout, nextlevelOffsetLen2);
+    }
+    
+    PrintExpr(pIfStmt->pCondExpr, nextlevelOffsetLen2);
+
+    if (!condExprIsValue) {
+        fputc('\n', stdout);
+        PrintOffset(stdout, nextlevelOffsetLen);
+        fprintf_s(stdout, "] %sThen%s [\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+    } else {
+        fputs("]\n", stdout);
+        PrintOffset(stdout, nextlevelOffsetLen);
+        fprintf_s(stdout, "%sThen%s [\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+    }
+
     PrintOffset(stdout, nextlevelOffsetLen2);
 
-    PrintAstStmt(pIfStmt->pCondStmt, nextlevelOffsetLen2);
+    PrintStmtList(bohIfStmtGetThenStmts(pIfStmt), nextlevelOffsetLen2);
 
     fputc('\n', stdout);
     PrintOffset(stdout, nextlevelOffsetLen);
+    fputc(']', stdout);
 
-    fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
-    PrintOffset(stdout, nextlevelOffsetLen2);
+    if (bohIfStmtGetElseStmtsCount(pIfStmt) > 0) {        
+        fprintf_s(stdout, " %sElse%s [\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
+        PrintOffset(stdout, nextlevelOffsetLen2);
 
-    const size_t thenStmtCount = bohIfStmtGetThenStmtsCount(pIfStmt);
-    for (size_t i = 0; i < thenStmtCount; ++i) {
-        const bohStmt* pStmt = bohIfStmtGetThenStmtAt(pIfStmt, i);
-        PrintAstStmt(pStmt, nextlevelOffsetLen2);
+        PrintStmtList(bohIfStmtGetElseStmts(pIfStmt), nextlevelOffsetLen2);
 
-        if (i + 1 < thenStmtCount) {
-            fputc('\n', stdout);
-            PrintOffset(stdout, nextlevelOffsetLen2);
-        }
+        fputc('\n', stdout);
+        PrintOffset(stdout, nextlevelOffsetLen);
+        fputc(']', stdout);
     }
 
     fputc('\n', stdout);
     PrintOffset(stdout, offsetLen);
     fputc(')', stdout);
-
-    if (bohIfStmtGetElseStmtsCount(pIfStmt) > 0) {
-        fputc('\n', stdout);
-        PrintOffset(stdout, offsetLen);
-        
-        fprintf_s(stdout, "%sElseStmt%s(\n", BOH_OUTPUT_COLOR_STMT, BOH_OUTPUT_COLOR_RESET);
-        PrintOffset(stdout, nextlevelOffsetLen);
-
-        fprintf_s(stdout, "%sstatements block:%s\n", BOH_OUTPUT_COLOR_YELLOW, BOH_OUTPUT_COLOR_RESET);
-        PrintOffset(stdout, nextlevelOffsetLen2);
-
-        const size_t elseStmtCount = bohIfStmtGetElseStmtsCount(pIfStmt);
-        for (size_t i = 0; i < elseStmtCount; ++i) {
-            const bohStmt* pStmt = bohIfStmtGetElseStmtAt(pIfStmt, i);
-            PrintAstStmt(pStmt, nextlevelOffsetLen2);
-
-            if (i + 1 < elseStmtCount) {
-                fputc('\n', stdout);
-                PrintOffset(stdout, nextlevelOffsetLen2);
-            }
-        }
-
-        fputc('\n', stdout);
-        PrintOffset(stdout, offsetLen);
-        fputc(')', stdout);
-    }
 }
 
 
@@ -333,9 +325,6 @@ static void PrintAstStmt(const bohStmt* pStmt, uint64_t offsetLen)
     BOH_ASSERT(pStmt);
     
     switch (pStmt->type) {
-        case BOH_STMT_TYPE_RAW_EXPR:
-            PrintAstRawExprStmt(bohStmtGetRawExpr(pStmt), offsetLen);
-            break;
         case BOH_STMT_TYPE_PRINT:
             PrintPrintStmt(bohStmtGetPrint(pStmt), offsetLen);
             break;

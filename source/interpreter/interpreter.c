@@ -19,36 +19,36 @@
     }
 
 
-const char* bohRawExprStmtInterpResultTypeToStr(bohRawExprStmtInterpResultType type)
+const char* bohExprInterpResultTypeToStr(bohExprInterpResultType type)
 {
     switch (type) {
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER: return "NUMBER";
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_STRING: return "STRING";
+        case BOH_EXPR_INTERP_RES_TYPE_NUMBER: return "NUMBER";
+        case BOH_EXPR_INTERP_RES_TYPE_STRING: return "STRING";
         default: return "UNKNOWN TYPE";
     }
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreate(void)
+bohExprInterpResult bohExprInterpResultCreate(void)
 {
-    bohRawExprStmtInterpResult result;
+    bohExprInterpResult result;
 
-    result.type = BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    result.type = BOH_EXPR_INTERP_RES_TYPE_NUMBER;
     result.number = bohNumberCreate();
 
     return result;
 }
 
 
-void bohRawExprStmtInterpResultDestroy(bohRawExprStmtInterpResult* pResult)
+void bohExprInterpResultDestroy(bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
 
     switch (pResult->type) {
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER:
+        case BOH_EXPR_INTERP_RES_TYPE_NUMBER:
             bohNumberSetI64(&pResult->number, 0);
             break;
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_STRING:
+        case BOH_EXPR_INTERP_RES_TYPE_STRING:
             bohBoharesStringDestroy(&pResult->string);
             break;
         default:
@@ -56,349 +56,349 @@ void bohRawExprStmtInterpResultDestroy(bohRawExprStmtInterpResult* pResult)
             break;
     }
 
-    pResult->type = BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    pResult->type = BOH_EXPR_INTERP_RES_TYPE_NUMBER;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringStringViewPtr(bohRawExprStmtInterpResult* pResult, const bohStringView* pStrView)
+bohExprInterpResult* bohExprInterpResultSetStringStringViewPtr(bohExprInterpResult* pResult, const bohStringView* pStrView)
 {
     BOH_ASSERT(pResult);
     BOH_ASSERT(pStrView);
 
-    bohRawExprStmtInterpResultDestroy(pResult);
+    bohExprInterpResultDestroy(pResult);
 
-    pResult->type = BOH_RAW_EXPR_INTERP_RES_TYPE_STRING;
+    pResult->type = BOH_EXPR_INTERP_RES_TYPE_STRING;
     bohBoharesStringStringAssignStringViewPtr(&pResult->string, pStrView);
 
     return pResult;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringStringView(bohRawExprStmtInterpResult* pResult, bohStringView strView)
+bohExprInterpResult* bohExprInterpResultSetStringStringView(bohExprInterpResult* pResult, bohStringView strView)
 {
-    return bohRawExprStmtInterpResultSetStringStringViewPtr(pResult, &strView);
+    return bohExprInterpResultSetStringStringViewPtr(pResult, &strView);
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringCStr(bohRawExprStmtInterpResult* pResult, const char* pCStr)
+bohExprInterpResult* bohExprInterpResultSetStringCStr(bohExprInterpResult* pResult, const char* pCStr)
 {
     BOH_ASSERT(pCStr);
-    return bohRawExprStmtInterpResultSetStringStringView(pResult, bohStringViewCreateConstCStr(pCStr));
+    return bohExprInterpResultSetStringStringView(pResult, bohStringViewCreateConstCStr(pCStr));
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetString(bohRawExprStmtInterpResult* pResult, const bohString* pString)
+bohExprInterpResult* bohExprInterpResultSetString(bohExprInterpResult* pResult, const bohString* pString)
 {
     BOH_ASSERT(pString);
-    return bohRawExprStmtInterpResultSetStringCStr(pResult, bohStringGetCStr(pString));
+    return bohExprInterpResultSetStringCStr(pResult, bohStringGetCStr(pString));
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringViewStringViewPtr(bohRawExprStmtInterpResult* pResult, const bohStringView* pStrView)
+bohExprInterpResult* bohExprInterpResultSetStringViewStringViewPtr(bohExprInterpResult* pResult, const bohStringView* pStrView)
 {
     BOH_ASSERT(pResult);
     BOH_ASSERT(pStrView);
 
-    bohRawExprStmtInterpResultDestroy(pResult);
+    bohExprInterpResultDestroy(pResult);
 
-    pResult->type = BOH_RAW_EXPR_INTERP_RES_TYPE_STRING;
+    pResult->type = BOH_EXPR_INTERP_RES_TYPE_STRING;
     bohBoharesStringStringViewAssignStringViewPtr(&pResult->string, pStrView);
 
     return pResult;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringViewStringView(bohRawExprStmtInterpResult* pResult, bohStringView strView)
+bohExprInterpResult* bohExprInterpResultSetStringViewStringView(bohExprInterpResult* pResult, bohStringView strView)
 {
-    return bohRawExprStmtInterpResultSetStringViewStringViewPtr(pResult, &strView);
+    return bohExprInterpResultSetStringViewStringViewPtr(pResult, &strView);
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumberPtr(bohRawExprStmtInterpResult* pResult, const bohNumber* pNumber)
+bohExprInterpResult* bohExprInterpResultSetNumberPtr(bohExprInterpResult* pResult, const bohNumber* pNumber)
 {
     BOH_ASSERT(pResult);
     BOH_ASSERT(pNumber);
 
-    bohRawExprStmtInterpResultDestroy(pResult);
+    bohExprInterpResultDestroy(pResult);
 
-    pResult->type = BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    pResult->type = BOH_EXPR_INTERP_RES_TYPE_NUMBER;
     bohNumberAssign(&pResult->number, pNumber);
 
     return pResult;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumber(bohRawExprStmtInterpResult* pResult, bohNumber number)
+bohExprInterpResult* bohExprInterpResultSetNumber(bohExprInterpResult* pResult, bohNumber number)
 {
-    return bohRawExprStmtInterpResultSetNumberPtr(pResult, &number);
+    return bohExprInterpResultSetNumberPtr(pResult, &number);
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumberI64(bohRawExprStmtInterpResult* pResult, int64_t value)
+bohExprInterpResult* bohExprInterpResultSetNumberI64(bohExprInterpResult* pResult, int64_t value)
 {
     BOH_ASSERT(pResult);
 
-    bohRawExprStmtInterpResultDestroy(pResult);
+    bohExprInterpResultDestroy(pResult);
 
-    pResult->type = BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    pResult->type = BOH_EXPR_INTERP_RES_TYPE_NUMBER;
     bohNumberSetI64(&pResult->number, value);
 
     return pResult;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumberF64(bohRawExprStmtInterpResult* pResult, double value)
+bohExprInterpResult* bohExprInterpResultSetNumberF64(bohExprInterpResult* pResult, double value)
 {
     BOH_ASSERT(pResult);
 
-    bohRawExprStmtInterpResultDestroy(pResult);
+    bohExprInterpResultDestroy(pResult);
 
-    pResult->type = BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    pResult->type = BOH_EXPR_INTERP_RES_TYPE_NUMBER;
     bohNumberSetF64(&pResult->number, value);
 
     return pResult;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateString(const bohString* pString)
+bohExprInterpResult bohExprInterpResultCreateString(const bohString* pString)
 {
     BOH_ASSERT(pString);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
-    bohRawExprStmtInterpResultSetString(&result, pString);
+    bohExprInterpResult result = bohExprInterpResultCreate();
+    bohExprInterpResultSetString(&result, pString);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringCStr(const char* pCStr)
+bohExprInterpResult bohExprInterpResultCreateStringCStr(const char* pCStr)
 {
     BOH_ASSERT(pCStr);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
-    bohRawExprStmtInterpResultSetStringCStr(&result, pCStr);
+    bohExprInterpResult result = bohExprInterpResultCreate();
+    bohExprInterpResultSetStringCStr(&result, pCStr);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringStringViewPtr(const bohStringView* pStrView)
+bohExprInterpResult bohExprInterpResultCreateStringStringViewPtr(const bohStringView* pStrView)
 {
     BOH_ASSERT(pStrView);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
-    bohRawExprStmtInterpResultSetStringStringViewPtr(&result, pStrView);
+    bohExprInterpResult result = bohExprInterpResultCreate();
+    bohExprInterpResultSetStringStringViewPtr(&result, pStrView);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringStringView(bohStringView strView)
+bohExprInterpResult bohExprInterpResultCreateStringStringView(bohStringView strView)
 {
-    return bohRawExprStmtInterpResultCreateStringStringViewPtr(&strView);
+    return bohExprInterpResultCreateStringStringViewPtr(&strView);
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString)
+bohExprInterpResult bohExprInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
+    bohExprInterpResult result = bohExprInterpResultCreate();
 
-    result.type = BOH_RAW_EXPR_INTERP_RES_TYPE_STRING;
+    result.type = BOH_EXPR_INTERP_RES_TYPE_STRING;
     bohBoharesStringMove(&result.string, pString);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringBoharesStringRVal(bohBoharesString string)
+bohExprInterpResult bohExprInterpResultCreateStringBoharesStringRVal(bohBoharesString string)
 {
-    return bohRawExprStmtInterpResultCreateStringBoharesStringRValPtr(&string);
+    return bohExprInterpResultCreateStringBoharesStringRValPtr(&string);
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString)
+bohExprInterpResult bohExprInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
+    bohExprInterpResult result = bohExprInterpResultCreate();
 
-    result.type = BOH_RAW_EXPR_INTERP_RES_TYPE_STRING;
+    result.type = BOH_EXPR_INTERP_RES_TYPE_STRING;
     bohBoharesStringAssign(&result.string, pString);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringViewStringViewPtr(const bohStringView* pStrView)
+bohExprInterpResult bohExprInterpResultCreateStringViewStringViewPtr(const bohStringView* pStrView)
 {
     BOH_ASSERT(pStrView);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
-    bohRawExprStmtInterpResultSetStringViewStringViewPtr(&result, pStrView);
+    bohExprInterpResult result = bohExprInterpResultCreate();
+    bohExprInterpResultSetStringViewStringViewPtr(&result, pStrView);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringViewStringView(bohStringView strView)
+bohExprInterpResult bohExprInterpResultCreateStringViewStringView(bohStringView strView)
 {
-    return bohRawExprStmtInterpResultCreateStringViewStringViewPtr(&strView);
+    return bohExprInterpResultCreateStringViewStringViewPtr(&strView);
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumberPtr(const bohNumber* pNumber)
+bohExprInterpResult bohExprInterpResultCreateNumberPtr(const bohNumber* pNumber)
 {
     BOH_ASSERT(pNumber);
 
-    bohRawExprStmtInterpResult result = bohRawExprStmtInterpResultCreate();
-    bohRawExprStmtInterpResultSetNumberPtr(&result, pNumber);
+    bohExprInterpResult result = bohExprInterpResultCreate();
+    bohExprInterpResultSetNumberPtr(&result, pNumber);
 
     return result;
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumber(bohNumber number)
+bohExprInterpResult bohExprInterpResultCreateNumber(bohNumber number)
 {
-    return bohRawExprStmtInterpResultCreateNumberPtr(&number);
+    return bohExprInterpResultCreateNumberPtr(&number);
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumberI64(int64_t value)
+bohExprInterpResult bohExprInterpResultCreateNumberI64(int64_t value)
 {
-    return bohRawExprStmtInterpResultCreateNumber(bohNumberCreateI64(value));
+    return bohExprInterpResultCreateNumber(bohNumberCreateI64(value));
 }
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumberF64(double value)
+bohExprInterpResult bohExprInterpResultCreateNumberF64(double value)
 {
-    return bohRawExprStmtInterpResultCreateNumber(bohNumberCreateF64(value));
+    return bohExprInterpResultCreateNumber(bohNumberCreateF64(value));
 }
 
 
-bool bohRawExprStmtInterpResultIsNumber(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultIsNumber(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return pResult->type == BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    return pResult->type == BOH_EXPR_INTERP_RES_TYPE_NUMBER;
 }
 
 
-bool bohRawExprStmtInterpResultIsNumberI64(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultIsNumberI64(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return bohRawExprStmtInterpResultIsNumber(pResult) && bohNumberIsI64(&pResult->number);
+    return bohExprInterpResultIsNumber(pResult) && bohNumberIsI64(&pResult->number);
 }
 
 
-bool bohRawExprStmtInterpResultIsNumberF64(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultIsNumberF64(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return bohRawExprStmtInterpResultIsNumber(pResult) && bohNumberIsF64(&pResult->number);
+    return bohExprInterpResultIsNumber(pResult) && bohNumberIsF64(&pResult->number);
 }
 
 
-bool bohRawExprStmtInterpResultIsString(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultIsString(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return pResult->type == BOH_RAW_EXPR_INTERP_RES_TYPE_STRING;
+    return pResult->type == BOH_EXPR_INTERP_RES_TYPE_STRING;
 }
 
 
-bool bohRawExprStmtInterpResultIsStringStringView(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultIsStringStringView(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return bohRawExprStmtInterpResultIsString(pResult) && bohBoharesStringIsStringView(&pResult->string);
+    return bohExprInterpResultIsString(pResult) && bohBoharesStringIsStringView(&pResult->string);
 }
 
 
-bool bohRawExprStmtInterpResultIsStringString(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultIsStringString(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    return bohRawExprStmtInterpResultIsString(pResult) && bohBoharesStringIsString(&pResult->string);
+    return bohExprInterpResultIsString(pResult) && bohBoharesStringIsString(&pResult->string);
 }
 
 
-const bohNumber* bohRawExprStmtInterpResultGetNumber(const bohRawExprStmtInterpResult* pResult)
+const bohNumber* bohExprInterpResultGetNumber(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    BOH_ASSERT(bohRawExprStmtInterpResultIsNumber(pResult));
+    BOH_ASSERT(bohExprInterpResultIsNumber(pResult));
 
     return &pResult->number;
 }
 
 
-int64_t bohRawExprStmtInterpResultGetNumberI64(const bohRawExprStmtInterpResult* pResult)
+int64_t bohExprInterpResultGetNumberI64(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    BOH_ASSERT(bohRawExprStmtInterpResultIsNumberI64(pResult));
+    BOH_ASSERT(bohExprInterpResultIsNumberI64(pResult));
 
     return pResult->number.i64;
 }
 
 
-double bohRawExprStmtInterpResultGetNumberF64(const bohRawExprStmtInterpResult* pResult)
+double bohExprInterpResultGetNumberF64(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    BOH_ASSERT(bohRawExprStmtInterpResultIsNumberI64(pResult));
+    BOH_ASSERT(bohExprInterpResultIsNumberI64(pResult));
 
     return pResult->number.f64;
 }
 
 
-bool bohRawExprStmtInterpResultToBool(const bohRawExprStmtInterpResult* pResult)
+bool bohExprInterpResultToBool(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
 
-    if (bohRawExprStmtInterpResultIsString(pResult)) {
+    if (bohExprInterpResultIsString(pResult)) {
         return true;
     }
 
-    return bohNumberToBool(bohRawExprStmtInterpResultGetNumber(pResult));
+    return bohNumberToBool(bohExprInterpResultGetNumber(pResult));
 }
 
 
-const bohBoharesString* bohRawExprStmtInterpResultGetString(const bohRawExprStmtInterpResult* pResult)
+const bohBoharesString* bohExprInterpResultGetString(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    BOH_ASSERT(bohRawExprStmtInterpResultIsString(pResult));
+    BOH_ASSERT(bohExprInterpResultIsString(pResult));
 
     return &pResult->string;
 }
 
 
-const bohString* bohRawExprStmtInterpResultGetStringString(const bohRawExprStmtInterpResult* pResult)
+const bohString* bohExprInterpResultGetStringString(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    BOH_ASSERT(bohRawExprStmtInterpResultIsStringString(pResult));
+    BOH_ASSERT(bohExprInterpResultIsStringString(pResult));
 
     return &pResult->string.string;
 }
 
 
-const bohStringView* bohRawExprStmtInterpResultGetStringStringView(const bohRawExprStmtInterpResult* pResult)
+const bohStringView* bohExprInterpResultGetStringStringView(const bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
-    BOH_ASSERT(bohRawExprStmtInterpResultIsStringStringView(pResult));
+    BOH_ASSERT(bohExprInterpResultIsStringStringView(pResult));
 
     return &pResult->string.view;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultMove(bohRawExprStmtInterpResult* pDst, bohRawExprStmtInterpResult* pSrc)
+bohExprInterpResult* bohExprInterpResultMove(bohExprInterpResult* pDst, bohExprInterpResult* pSrc)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    bohRawExprStmtInterpResultDestroy(pDst);
+    bohExprInterpResultDestroy(pDst);
 
     pDst->type = pSrc->type;
 
     switch (pSrc->type) {
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER:
+        case BOH_EXPR_INTERP_RES_TYPE_NUMBER:
             bohNumberMove(&pDst->number, &pSrc->number);
             break;
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_STRING:
+        case BOH_EXPR_INTERP_RES_TYPE_STRING:
             bohBoharesStringMove(&pDst->string, &pSrc->string);
             break;
         default:
@@ -406,26 +406,26 @@ bohRawExprStmtInterpResult* bohRawExprStmtInterpResultMove(bohRawExprStmtInterpR
             break;
     }
 
-    pSrc->type = BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER;
+    pSrc->type = BOH_EXPR_INTERP_RES_TYPE_NUMBER;
 
     return pDst;
 }
 
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultAssing(bohRawExprStmtInterpResult* pDst, const bohRawExprStmtInterpResult* pSrc)
+bohExprInterpResult* bohExprInterpResultAssing(bohExprInterpResult* pDst, const bohExprInterpResult* pSrc)
 {
     BOH_ASSERT(pDst);
     BOH_ASSERT(pSrc);
 
-    bohRawExprStmtInterpResultDestroy(pDst);
+    bohExprInterpResultDestroy(pDst);
 
     pDst->type = pSrc->type;
 
     switch (pSrc->type) {
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER:
+        case BOH_EXPR_INTERP_RES_TYPE_NUMBER:
             bohNumberAssign(&pDst->number, &pSrc->number);
             break;
-        case BOH_RAW_EXPR_INTERP_RES_TYPE_STRING:
+        case BOH_EXPR_INTERP_RES_TYPE_STRING:
             bohBoharesStringAssign(&pDst->string, &pSrc->string);
             break;
         default:
@@ -514,11 +514,11 @@ static bohStmtInterpResult interpCreateDummyStmtInterpResult(void)
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr);
-static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr);
+static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr);
+static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr);
 
 
-static bohRawExprStmtInterpResult interpInterpretExpr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretExpr(const bohExpr* pExpr)
 {
     BOH_ASSERT(pExpr);
 
@@ -532,117 +532,117 @@ static bohRawExprStmtInterpResult interpInterpretExpr(const bohExpr* pExpr)
         const bohValueExpr* pValueExpr = bohExprGetValueExpr(pExpr);
 
         if (bohValueExprIsNumber(pValueExpr)) {
-            return bohRawExprStmtInterpResultCreateNumberPtr(bohValueExprGetNumber(pValueExpr));
+            return bohExprInterpResultCreateNumberPtr(bohValueExprGetNumber(pValueExpr));
         } else if (bohValueExprIsString(pValueExpr)) {
-            return bohRawExprStmtInterpResultCreateStringBoharesStringPtr(bohValueExprGetString(pValueExpr));
+            return bohExprInterpResultCreateStringBoharesStringPtr(bohValueExprGetString(pValueExpr));
         }
     }
 
     BOH_ASSERT(false && "Invalid expression type");
-    return bohRawExprStmtInterpResultCreateNumberI64(-1);
+    return bohExprInterpResultCreateNumberI64(-1);
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr)
 {
     BOH_ASSERT(bohExprIsUnaryExpr(pExpr));
 
     const bohUnaryExpr* pUnaryExpr = bohExprGetUnaryExpr(pExpr);
 
     const bohExpr* pOperandExpr = bohUnaryExprGetExpr(pUnaryExpr);
-    const bohRawExprStmtInterpResult result = interpInterpretExpr(pOperandExpr);
+    const bohExprInterpResult result = interpInterpretExpr(pOperandExpr);
     
     const char* pOperatorStr = bohParsExprOperatorToStr(pUnaryExpr->op);
-    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&result), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
+    BOH_INTERP_EXPECT(bohExprInterpResultIsNumber(&result), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "can't use unary %s operator with non numbers types", pOperatorStr);
 
-    const bohNumber* pResultNumber = bohRawExprStmtInterpResultGetNumber(&result);
+    const bohNumber* pResultNumber = bohExprInterpResultGetNumber(&result);
 
     switch (pUnaryExpr->op) {
         case BOH_OP_PLUS:           return result;
-        case BOH_OP_MINUS:          return bohRawExprStmtInterpResultCreateNumber(bohNumberGetOpposite(pResultNumber));
-        case BOH_OP_NOT:            return bohRawExprStmtInterpResultCreateNumber(bohNumberGetNegation(pResultNumber));
+        case BOH_OP_MINUS:          return bohExprInterpResultCreateNumber(bohNumberGetOpposite(pResultNumber));
+        case BOH_OP_NOT:            return bohExprInterpResultCreateNumber(bohNumberGetNegation(pResultNumber));
         case BOH_OP_BITWISE_NOT:
             BOH_INTERP_EXPECT(bohNumberIsI64(pResultNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
                 "can't use ~ operator with non integral type");
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
+            return bohExprInterpResultCreateNumber(bohNumberGetBitwiseNegation(pResultNumber));
     
         default:
             BOH_ASSERT(false && "Invalid unary operator");
-            return bohRawExprStmtInterpResultCreateNumberI64(-1);
+            return bohExprInterpResultCreateNumberI64(-1);
     }
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
     const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
-    const bohRawExprStmtInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
+    const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohRawExprStmtInterpResultIsNumber(&leftInterpResult) || bohRawExprStmtInterpResultIsString(&leftInterpResult)) 
-        && "Invalid left bohRawExprStmtInterpResult type");
+    BOH_ASSERT((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)) 
+        && "Invalid left bohExprInterpResult type");
 
-    const bohNumber* pLeftNumber = bohRawExprStmtInterpResultIsNumber(&leftInterpResult) ? 
-        bohRawExprStmtInterpResultGetNumber(&leftInterpResult) : NULL;
+    const bohNumber* pLeftNumber = bohExprInterpResultIsNumber(&leftInterpResult) ? 
+        bohExprInterpResultGetNumber(&leftInterpResult) : NULL;
     
     if (pLeftNumber && bohNumberIsZero(pLeftNumber)) {
-        return bohRawExprStmtInterpResultCreateNumberI64(false);
+        return bohExprInterpResultCreateNumberI64(false);
     }
 
-    const bohRawExprStmtInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
+    const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohRawExprStmtInterpResultIsNumber(&rightInterpResult) || bohRawExprStmtInterpResultIsString(&rightInterpResult)) 
-        && "Invalid right bohRawExprStmtInterpResult type");
+    BOH_ASSERT((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult)) 
+        && "Invalid right bohExprInterpResult type");
 
-    const bohNumber* pRightNumber = bohRawExprStmtInterpResultIsNumber(&rightInterpResult) ? 
-        bohRawExprStmtInterpResultGetNumber(&rightInterpResult) : NULL;
+    const bohNumber* pRightNumber = bohExprInterpResultIsNumber(&rightInterpResult) ? 
+        bohExprInterpResultGetNumber(&rightInterpResult) : NULL;
     
     if (pRightNumber) {
-        return bohRawExprStmtInterpResultCreateNumberI64(!bohNumberIsZero(pRightNumber));
+        return bohExprInterpResultCreateNumberI64(!bohNumberIsZero(pRightNumber));
     }
 
-    return bohRawExprStmtInterpResultCreateNumberI64(true);
+    return bohExprInterpResultCreateNumberI64(true);
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
     const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
-    const bohRawExprStmtInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
+    const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohRawExprStmtInterpResultIsNumber(&leftInterpResult) || bohRawExprStmtInterpResultIsString(&leftInterpResult)) 
-        && "Invalid left bohRawExprStmtInterpResult type");
+    BOH_ASSERT((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)) 
+        && "Invalid left bohExprInterpResult type");
 
-    const bohNumber* pLeftNumber = bohRawExprStmtInterpResultIsNumber(&leftInterpResult) ? 
-        bohRawExprStmtInterpResultGetNumber(&leftInterpResult) : NULL;
+    const bohNumber* pLeftNumber = bohExprInterpResultIsNumber(&leftInterpResult) ? 
+        bohExprInterpResultGetNumber(&leftInterpResult) : NULL;
     
     if (pLeftNumber && !bohNumberIsZero(pLeftNumber)) {
-        return bohRawExprStmtInterpResultCreateNumberI64(true);
+        return bohExprInterpResultCreateNumberI64(true);
     }
 
-    const bohRawExprStmtInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
+    const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
     
-    BOH_ASSERT((bohRawExprStmtInterpResultIsNumber(&rightInterpResult) || bohRawExprStmtInterpResultIsString(&rightInterpResult))
-        && "Invalid right bohRawExprStmtInterpResult type");
+    BOH_ASSERT((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult))
+        && "Invalid right bohExprInterpResult type");
 
-    const bohNumber* pRightNumber = bohRawExprStmtInterpResultIsNumber(&rightInterpResult) ? 
-        bohRawExprStmtInterpResultGetNumber(&rightInterpResult) : NULL;
+    const bohNumber* pRightNumber = bohExprInterpResultIsNumber(&rightInterpResult) ? 
+        bohExprInterpResultGetNumber(&rightInterpResult) : NULL;
     
     if (pRightNumber) {
-        return bohRawExprStmtInterpResultCreateNumberI64(!bohNumberIsZero(pRightNumber));
+        return bohExprInterpResultCreateNumberI64(!bohNumberIsZero(pRightNumber));
     }
 
-    return bohRawExprStmtInterpResultCreateNumberI64(true);
+    return bohExprInterpResultCreateNumberI64(true);
 }
 
 
-static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
@@ -654,86 +654,86 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr
         return interpInterpretLogicalOr(pExpr);
     }
 
-    const bohRawExprStmtInterpResult left = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
-    const bohRawExprStmtInterpResult right = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
+    const bohExprInterpResult left = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
+    const bohExprInterpResult right = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
 
-    BOH_ASSERT((bohRawExprStmtInterpResultIsNumber(&left) || bohRawExprStmtInterpResultIsString(&left)) 
-        && "Invalid left bohRawExprStmtInterpResult type");
-    BOH_ASSERT((bohRawExprStmtInterpResultIsNumber(&right) || bohRawExprStmtInterpResultIsString(&right)) 
-        && "Invalid right bohRawExprStmtInterpResult type");
+    BOH_ASSERT((bohExprInterpResultIsNumber(&left) || bohExprInterpResultIsString(&left)) 
+        && "Invalid left bohExprInterpResult type");
+    BOH_ASSERT((bohExprInterpResultIsNumber(&right) || bohExprInterpResultIsString(&right)) 
+        && "Invalid right bohExprInterpResult type");
 
-    const bohNumber* pLeftNumber = bohRawExprStmtInterpResultIsNumber(&left) ? bohRawExprStmtInterpResultGetNumber(&left) : NULL;
-    const bohNumber* pRightNumber = bohRawExprStmtInterpResultIsNumber(&right) ? bohRawExprStmtInterpResultGetNumber(&right) : NULL;
+    const bohNumber* pLeftNumber = bohExprInterpResultIsNumber(&left) ? bohExprInterpResultGetNumber(&left) : NULL;
+    const bohNumber* pRightNumber = bohExprInterpResultIsNumber(&right) ? bohExprInterpResultGetNumber(&right) : NULL;
 
-    const bohBoharesString* pLeftStr = bohRawExprStmtInterpResultIsString(&left) ? bohRawExprStmtInterpResultGetString(&left) : NULL;
-    const bohBoharesString* pRightStr = bohRawExprStmtInterpResultIsString(&right) ? bohRawExprStmtInterpResultGetString(&right) : NULL;
+    const bohBoharesString* pLeftStr = bohExprInterpResultIsString(&left) ? bohExprInterpResultGetString(&left) : NULL;
+    const bohBoharesString* pRightStr = bohExprInterpResultIsString(&right) ? bohExprInterpResultGetString(&right) : NULL;
 
     const char* pOperatorStr = bohParsExprOperatorToStr(pBinaryExpr->op);
 
     BOH_INTERP_EXPECT(left.type == right.type, bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "invalid operation: %s %s %s", 
-        bohRawExprStmtInterpResultTypeToStr(left.type), 
+        bohExprInterpResultTypeToStr(left.type), 
         pOperatorStr, 
-        bohRawExprStmtInterpResultTypeToStr(right.type));
+        bohExprInterpResultTypeToStr(right.type));
 
     switch (pBinaryExpr->op) {
         case BOH_OP_PLUS:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumber(bohNumberAdd(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumber(bohNumberAdd(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
                 const bohBoharesString finalString = bohBoharesStringAdd(pLeftStr, pRightStr);
-                return bohRawExprStmtInterpResultCreateStringBoharesStringPtr(&finalString);
+                return bohExprInterpResultCreateStringBoharesStringPtr(&finalString);
             }
             break;
         case BOH_OP_GREATER:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohNumberGreater(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumberI64(bohNumberGreater(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohBoharesStringGreater(pLeftStr, pRightStr));
+                return bohExprInterpResultCreateNumberI64(bohBoharesStringGreater(pLeftStr, pRightStr));
             }
             break;
         case BOH_OP_LESS:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohNumberLess(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumberI64(bohNumberLess(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohBoharesStringLess(pLeftStr, pRightStr));
+                return bohExprInterpResultCreateNumberI64(bohBoharesStringLess(pLeftStr, pRightStr));
             }
             break;
         case BOH_OP_NOT_EQUAL:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohNumberNotEqual(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumberI64(bohNumberNotEqual(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohBoharesStringNotEqual(pLeftStr, pRightStr));
+                return bohExprInterpResultCreateNumberI64(bohBoharesStringNotEqual(pLeftStr, pRightStr));
             }
             break;
         case BOH_OP_GEQUAL:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohNumberGreaterEqual(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumberI64(bohNumberGreaterEqual(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohBoharesStringGreaterEqual(pLeftStr, pRightStr));
+                return bohExprInterpResultCreateNumberI64(bohBoharesStringGreaterEqual(pLeftStr, pRightStr));
             }
             break;
         case BOH_OP_LEQUAL:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohNumberLessEqual(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumberI64(bohNumberLessEqual(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohBoharesStringLessEqual(pLeftStr, pRightStr));
+                return bohExprInterpResultCreateNumberI64(bohBoharesStringLessEqual(pLeftStr, pRightStr));
             }
             break;
         case BOH_OP_EQUAL:
             if (pLeftNumber) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohNumberEqual(pLeftNumber, pRightNumber));
+                return bohExprInterpResultCreateNumberI64(bohNumberEqual(pLeftNumber, pRightNumber));
             } else if (pLeftStr) {
-                return bohRawExprStmtInterpResultCreateNumberI64(bohBoharesStringEqual(pLeftStr, pRightStr));
+                return bohExprInterpResultCreateNumberI64(bohBoharesStringEqual(pLeftStr, pRightStr));
             }
             break;
         default:
             break;
     }
 
-    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&left), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
+    BOH_INTERP_EXPECT(bohExprInterpResultIsNumber(&left), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "can't use binary %s operator with non numbers types", pOperatorStr);
-    BOH_INTERP_EXPECT(bohRawExprStmtInterpResultIsNumber(&right), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
+    BOH_INTERP_EXPECT(bohExprInterpResultIsNumber(&right), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
         "can't use binary %s operator with non numbers types", pOperatorStr);
 
     if (bohParsIsBitwiseExprOperator(pBinaryExpr->op)) {
@@ -743,28 +743,28 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr
 
     switch (pBinaryExpr->op) {
         case BOH_OP_MINUS:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberSub(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberSub(pLeftNumber, pRightNumber));
         case BOH_OP_MULT:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberMult(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberMult(pLeftNumber, pRightNumber));
         case BOH_OP_DIV:
             BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), "right operand of / is zero");
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberDiv(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberDiv(pLeftNumber, pRightNumber));
         case BOH_OP_MOD:
             BOH_INTERP_EXPECT(!bohNumberIsZero(pRightNumber), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), "right operand of % is zero");
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberMod(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberMod(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_AND:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseAnd(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberBitwiseAnd(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_OR:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseOr(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberBitwiseOr(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_XOR:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseXor(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberBitwiseXor(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_RSHIFT:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseRShift(pLeftNumber, pRightNumber));
+            return bohExprInterpResultCreateNumber(bohNumberBitwiseRShift(pLeftNumber, pRightNumber));
         case BOH_OP_BITWISE_LSHIFT:
-            return bohRawExprStmtInterpResultCreateNumber(bohNumberBitwiseLShift(pLeftNumber, pRightNumber));    
+            return bohExprInterpResultCreateNumber(bohNumberBitwiseLShift(pLeftNumber, pRightNumber));    
         default:
             BOH_ASSERT(false && "Invalid binary operator");
-            return bohRawExprStmtInterpResultCreateNumberI64(-1);
+            return bohExprInterpResultCreateNumberI64(-1);
     }
 }
 
@@ -772,34 +772,23 @@ static bohRawExprStmtInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr
 static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt);
 
 
-static bohStmtInterpResult bohAstInterpretRawExprStmt(const bohRawExprStmt* pRawExprStmt)
-{
-    BOH_ASSERT(pRawExprStmt);
-
-    bohRawExprStmtInterpResult interpResult = interpInterpretExpr(pRawExprStmt->pExpr);
-    return bohStmtInterpResultCreateRawExprResultMove(&interpResult);
-}
-
-
 static bohStmtInterpResult bohAstInterpretPrintStmt(const bohPrintStmt* pPrintStmt)
 {
     BOH_ASSERT(pPrintStmt);
 
-    bohStmtInterpResult argInterpResult = bohAstInterpretStmt(pPrintStmt->pArgStmt);
+    bohExprInterpResult argInterpResult = interpInterpretExpr(pPrintStmt->pArgExpr);
+    bohExprInterpResult* pArgInterpResult = &argInterpResult;
 
-    BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(&argInterpResult) && "Only raw expr for now");
-    const bohRawExprStmtInterpResult* pArgRawExprStmtResult = bohStmtInterpResultGetRawExprStmtResult(&argInterpResult);
-
-    if (bohRawExprStmtInterpResultIsNumber(pArgRawExprStmtResult)) {
-        const bohNumber* pNumber = bohRawExprStmtInterpResultGetNumber(pArgRawExprStmtResult);
+    if (bohExprInterpResultIsNumber(pArgInterpResult)) {
+        const bohNumber* pNumber = bohExprInterpResultGetNumber(pArgInterpResult);
 
         if (bohNumberIsI64(pNumber)) {
             fprintf_s(stdout, "%d", bohNumberGetI64(pNumber));
         } else {
             fprintf_s(stdout, "%f", bohNumberGetF64(pNumber));
         }
-    } else if (bohRawExprStmtInterpResultIsString(pArgRawExprStmtResult)) {
-        const bohBoharesString* pBohString = bohRawExprStmtInterpResultGetString(pArgRawExprStmtResult);
+    } else if (bohExprInterpResultIsString(pArgInterpResult)) {
+        const bohBoharesString* pBohString = bohExprInterpResultGetString(pArgInterpResult);
 
         if (bohBoharesStringIsString(pBohString)) {
             const bohString* pString = bohBoharesStringGetString(pBohString);
@@ -812,7 +801,7 @@ static bohStmtInterpResult bohAstInterpretPrintStmt(const bohPrintStmt* pPrintSt
         BOH_ASSERT(false && "Invalid raw expr stmt interp result value type");
     }
 
-    bohStmtInterpResultDestroy(&argInterpResult);
+    bohExprInterpResultDestroy(pArgInterpResult);
 
     bohPrintStmtInterpResult interpResult = bohPrintStmtInterpResultCreate();
     return bohStmtInterpResultCreatePrintStmtMove(&interpResult);
@@ -823,12 +812,10 @@ static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt)
 {
     BOH_ASSERT(pIfStmt);
 
-    bohStmtInterpResult condInterpResult = bohAstInterpretStmt(pIfStmt->pCondStmt);
+    bohExprInterpResult argInterpResult = interpInterpretExpr(pIfStmt->pCondExpr);
+    bohExprInterpResult* pArgInterpResult = &argInterpResult;
 
-    BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(&condInterpResult) && "Only raw expr for now");
-    const bohRawExprStmtInterpResult* pArgRawExprStmtResult = bohStmtInterpResultGetRawExprStmtResult(&condInterpResult);
-
-    if (bohRawExprStmtInterpResultToBool(pArgRawExprStmtResult)) {
+    if (bohExprInterpResultToBool(pArgInterpResult)) {
         const size_t thenStmtCount = bohIfStmtGetThenStmtsCount(pIfStmt);
 
         for (size_t i = 0; i < thenStmtCount; ++i) {
@@ -844,7 +831,7 @@ static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt)
         }
     }
     
-    bohStmtInterpResultDestroy(&condInterpResult);
+    bohExprInterpResultDestroy(pArgInterpResult);
 
     bohIfStmtInterpResult interpResult = bohIfStmtInterpResultCreate();
     return bohStmtInterpResultCreateIfStmtMove(&interpResult);
@@ -856,8 +843,6 @@ static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt)
     BOH_ASSERT(pStmt);
 
     switch(pStmt->type) {
-        case BOH_STMT_TYPE_RAW_EXPR:
-            return bohAstInterpretRawExprStmt(bohStmtGetRawExpr(pStmt));
         case BOH_STMT_TYPE_PRINT:
             return bohAstInterpretPrintStmt(bohStmtGetPrint(pStmt));
         case BOH_STMT_TYPE_IF:
@@ -888,7 +873,7 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult)
 
     switch (pResult->type) {
         case BOH_INTERP_RES_TYPE_RAW_EXPR:
-            bohRawExprStmtInterpResultDestroy(&pResult->rawExprStmtInterpResult);
+            bohExprInterpResultDestroy(&pResult->exprInterpResult);
             break;
         case BOH_INTERP_RES_TYPE_PRINT:
             bohPrintStmtInterpResultDestroy(&pResult->printStmtInterpResult);
@@ -905,14 +890,14 @@ void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult)
 }
 
 
-bohStmtInterpResult bohStmtInterpResultCreateRawExprResultMove(bohRawExprStmtInterpResult* pResult)
+bohStmtInterpResult bohStmtInterpResultCreateExprResultMove(bohExprInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
 
     bohStmtInterpResult result = {0};
     
     result.type = BOH_INTERP_RES_TYPE_RAW_EXPR;
-    bohRawExprStmtInterpResultMove(&result.rawExprStmtInterpResult, pResult);
+    bohExprInterpResultMove(&result.exprInterpResult, pResult);
 
     return result;
 }
@@ -944,7 +929,7 @@ bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* p
 }
 
 
-bool bohStmtInterpResultIsRawExprStmt(const bohStmtInterpResult* pResult)
+bool bohStmtInterpResultIsExpr(const bohStmtInterpResult* pResult)
 {
     BOH_ASSERT(pResult);
     return pResult->type == BOH_INTERP_RES_TYPE_RAW_EXPR;
@@ -965,10 +950,10 @@ bool bohStmtInterpResultIsIfStmt(const bohStmtInterpResult *pResult)
 }
 
 
-const bohRawExprStmtInterpResult* bohStmtInterpResultGetRawExprStmtResult(const bohStmtInterpResult* pResult)
+const bohExprInterpResult* bohStmtInterpResultGetExprResult(const bohStmtInterpResult* pResult)
 {
-    BOH_ASSERT(bohStmtInterpResultIsRawExprStmt(pResult));
-    return &pResult->rawExprStmtInterpResult;
+    BOH_ASSERT(bohStmtInterpResultIsExpr(pResult));
+    return &pResult->exprInterpResult;
 }
 
 

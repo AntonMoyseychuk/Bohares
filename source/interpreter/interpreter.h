@@ -5,75 +5,75 @@
 #include "parser/parser.h"
 
 
-typedef enum RawExprStmtInterpResultType
+typedef enum ExprStmtInterpResultType
 {
-    BOH_RAW_EXPR_INTERP_RES_TYPE_NUMBER,
-    BOH_RAW_EXPR_INTERP_RES_TYPE_STRING
-} bohRawExprStmtInterpResultType;
+    BOH_EXPR_INTERP_RES_TYPE_NUMBER,
+    BOH_EXPR_INTERP_RES_TYPE_STRING
+} bohExprInterpResultType;
 
-const char* bohRawExprStmtInterpResultTypeToStr(bohRawExprStmtInterpResultType type);
+const char* bohExprInterpResultTypeToStr(bohExprInterpResultType type);
 
 
-typedef struct RawExprStmtInterpResult
+typedef struct ExprInterpResult
 {
-    bohRawExprStmtInterpResultType type;
+    bohExprInterpResultType type;
     
     union {
         bohBoharesString string;
         bohNumber number;
     };
-} bohRawExprStmtInterpResult;
+} bohExprInterpResult;
 
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreate(void);
-void bohRawExprStmtInterpResultDestroy(bohRawExprStmtInterpResult* pResult);
+bohExprInterpResult bohExprInterpResultCreate(void);
+void bohExprInterpResultDestroy(bohExprInterpResult* pResult);
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringStringViewPtr(bohRawExprStmtInterpResult* pResult, const bohStringView* pStrView);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringStringView(bohRawExprStmtInterpResult* pResult, bohStringView strView);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringCStr(bohRawExprStmtInterpResult* pResult, const char* pCStr);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetString(bohRawExprStmtInterpResult* pResult, const bohString* pString);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringViewStringViewPtr(bohRawExprStmtInterpResult* pResult, const bohStringView* pStrView);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetStringViewStringView(bohRawExprStmtInterpResult* pResult, bohStringView strView);
+bohExprInterpResult* bohExprInterpResultSetStringStringViewPtr(bohExprInterpResult* pResult, const bohStringView* pStrView);
+bohExprInterpResult* bohExprInterpResultSetStringStringView(bohExprInterpResult* pResult, bohStringView strView);
+bohExprInterpResult* bohExprInterpResultSetStringCStr(bohExprInterpResult* pResult, const char* pCStr);
+bohExprInterpResult* bohExprInterpResultSetString(bohExprInterpResult* pResult, const bohString* pString);
+bohExprInterpResult* bohExprInterpResultSetStringViewStringViewPtr(bohExprInterpResult* pResult, const bohStringView* pStrView);
+bohExprInterpResult* bohExprInterpResultSetStringViewStringView(bohExprInterpResult* pResult, bohStringView strView);
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumberPtr(bohRawExprStmtInterpResult* pResult, const bohNumber* pNumber);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumber(bohRawExprStmtInterpResult* pResult, bohNumber number);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumberI64(bohRawExprStmtInterpResult* pResult, int64_t value);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultSetNumberF64(bohRawExprStmtInterpResult* pResult, double value);
+bohExprInterpResult* bohExprInterpResultSetNumberPtr(bohExprInterpResult* pResult, const bohNumber* pNumber);
+bohExprInterpResult* bohExprInterpResultSetNumber(bohExprInterpResult* pResult, bohNumber number);
+bohExprInterpResult* bohExprInterpResultSetNumberI64(bohExprInterpResult* pResult, int64_t value);
+bohExprInterpResult* bohExprInterpResultSetNumberF64(bohExprInterpResult* pResult, double value);
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateString(const bohString* pString);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringCStr(const char* pCStr);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringStringViewPtr(const bohStringView* pStrView);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringStringView(bohStringView strView);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringBoharesStringRVal(bohBoharesString string);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringViewStringViewPtr(const bohStringView* pStrView);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateStringViewStringView(bohStringView strView);
+bohExprInterpResult bohExprInterpResultCreateString(const bohString* pString);
+bohExprInterpResult bohExprInterpResultCreateStringCStr(const char* pCStr);
+bohExprInterpResult bohExprInterpResultCreateStringStringViewPtr(const bohStringView* pStrView);
+bohExprInterpResult bohExprInterpResultCreateStringStringView(bohStringView strView);
+bohExprInterpResult bohExprInterpResultCreateStringBoharesStringRValPtr(bohBoharesString* pString);
+bohExprInterpResult bohExprInterpResultCreateStringBoharesStringRVal(bohBoharesString string);
+bohExprInterpResult bohExprInterpResultCreateStringBoharesStringPtr(const bohBoharesString* pString);
+bohExprInterpResult bohExprInterpResultCreateStringViewStringViewPtr(const bohStringView* pStrView);
+bohExprInterpResult bohExprInterpResultCreateStringViewStringView(bohStringView strView);
 
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumberPtr(const bohNumber* pNumber);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumber(bohNumber number);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumberI64(int64_t value);
-bohRawExprStmtInterpResult bohRawExprStmtInterpResultCreateNumberF64(double value);
+bohExprInterpResult bohExprInterpResultCreateNumberPtr(const bohNumber* pNumber);
+bohExprInterpResult bohExprInterpResultCreateNumber(bohNumber number);
+bohExprInterpResult bohExprInterpResultCreateNumberI64(int64_t value);
+bohExprInterpResult bohExprInterpResultCreateNumberF64(double value);
 
-bool bohRawExprStmtInterpResultIsNumber(const bohRawExprStmtInterpResult* pResult);
-bool bohRawExprStmtInterpResultIsNumberI64(const bohRawExprStmtInterpResult* pResult);
-bool bohRawExprStmtInterpResultIsNumberF64(const bohRawExprStmtInterpResult* pResult);
-bool bohRawExprStmtInterpResultIsString(const bohRawExprStmtInterpResult* pResult);
-bool bohRawExprStmtInterpResultIsStringStringView(const bohRawExprStmtInterpResult* pResult);
-bool bohRawExprStmtInterpResultIsStringString(const bohRawExprStmtInterpResult* pResult);
+bool bohExprInterpResultIsNumber(const bohExprInterpResult* pResult);
+bool bohExprInterpResultIsNumberI64(const bohExprInterpResult* pResult);
+bool bohExprInterpResultIsNumberF64(const bohExprInterpResult* pResult);
+bool bohExprInterpResultIsString(const bohExprInterpResult* pResult);
+bool bohExprInterpResultIsStringStringView(const bohExprInterpResult* pResult);
+bool bohExprInterpResultIsStringString(const bohExprInterpResult* pResult);
 
-const bohNumber* bohRawExprStmtInterpResultGetNumber(const bohRawExprStmtInterpResult* pResult);
-int64_t bohRawExprStmtInterpResultGetNumberI64(const bohRawExprStmtInterpResult* pResult);
-double bohRawExprStmtInterpResultGetNumberF64(const bohRawExprStmtInterpResult* pResult);
+const bohNumber* bohExprInterpResultGetNumber(const bohExprInterpResult* pResult);
+int64_t bohExprInterpResultGetNumberI64(const bohExprInterpResult* pResult);
+double bohExprInterpResultGetNumberF64(const bohExprInterpResult* pResult);
 
-bool bohRawExprStmtInterpResultToBool(const bohRawExprStmtInterpResult* pResult);
+bool bohExprInterpResultToBool(const bohExprInterpResult* pResult);
 
-const bohBoharesString* bohRawExprStmtInterpResultGetString(const bohRawExprStmtInterpResult* pResult);
-const bohString* bohRawExprStmtInterpResultGetStringString(const bohRawExprStmtInterpResult* pResult);
-const bohStringView* bohRawExprStmtInterpResultGetStringStringView(const bohRawExprStmtInterpResult* pResult);
+const bohBoharesString* bohExprInterpResultGetString(const bohExprInterpResult* pResult);
+const bohString* bohExprInterpResultGetStringString(const bohExprInterpResult* pResult);
+const bohStringView* bohExprInterpResultGetStringStringView(const bohExprInterpResult* pResult);
 
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultMove(bohRawExprStmtInterpResult* pDst, bohRawExprStmtInterpResult* pSrc);
-bohRawExprStmtInterpResult* bohRawExprStmtInterpResultAssing(bohRawExprStmtInterpResult* pDst, const bohRawExprStmtInterpResult* pSrc);
+bohExprInterpResult* bohExprInterpResultMove(bohExprInterpResult* pDst, bohExprInterpResult* pSrc);
+bohExprInterpResult* bohExprInterpResultAssing(bohExprInterpResult* pDst, const bohExprInterpResult* pSrc);
 
 
 typedef struct PrintStmtInterpResult
@@ -112,7 +112,7 @@ typedef struct StmtInterpResult
 {
     bohStmtInterpResultType type;
     union {
-        bohRawExprStmtInterpResult rawExprStmtInterpResult;
+        bohExprInterpResult exprInterpResult;
         bohPrintStmtInterpResult printStmtInterpResult;
         bohIfStmtInterpResult ifStmtInterpResult;
     };
@@ -121,15 +121,15 @@ typedef struct StmtInterpResult
 
 void bohStmtInterpResultDestroy(bohStmtInterpResult* pResult);
 
-bohStmtInterpResult bohStmtInterpResultCreateRawExprResultMove(bohRawExprStmtInterpResult* pResult);
+bohStmtInterpResult bohStmtInterpResultCreateExprResultMove(bohExprInterpResult* pResult);
 bohStmtInterpResult bohStmtInterpResultCreatePrintStmtMove(bohPrintStmtInterpResult* pResult);
 bohStmtInterpResult bohStmtInterpResultCreateIfStmtMove(bohIfStmtInterpResult* pResult);
 
-bool bohStmtInterpResultIsRawExprStmt(const bohStmtInterpResult* pResult);
+bool bohStmtInterpResultIsExpr(const bohStmtInterpResult* pResult);
 bool bohStmtInterpResultIsPrintStmt(const bohStmtInterpResult* pResult);
 bool bohStmtInterpResultIsIfStmt(const bohStmtInterpResult* pResult);
 
-const bohRawExprStmtInterpResult* bohStmtInterpResultGetRawExprStmtResult(const bohStmtInterpResult* pResult);
+const bohExprInterpResult* bohStmtInterpResultGetExprResult(const bohStmtInterpResult* pResult);
 const bohPrintStmtInterpResult* bohStmtInterpResultGetPrintStmtResult(const bohStmtInterpResult* pResult);
 const bohIfStmtInterpResult* bohStmtInterpResultGetIfStmtResult(const bohStmtInterpResult* pResult);
 

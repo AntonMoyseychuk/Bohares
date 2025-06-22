@@ -1746,8 +1746,8 @@ void bohAstDestroy(bohAST* pAST)
 
     bohDynArrayDestroy(&pAST->stmtPtrsStorage);
 
-    bohMemoryArenaDestroy(&pAST->stmtMemArena);
-    bohMemoryArenaDestroy(&pAST->epxrMemArena);
+    bohArenaAllocatorDestroy(&pAST->stmtMemArena);
+    bohArenaAllocatorDestroy(&pAST->epxrMemArena);
 }
 
 
@@ -1757,8 +1757,8 @@ bohAST bohAstCreate(void)
 
     ast.stmtPtrsStorage = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
 
-    ast.stmtMemArena = bohMemoryArenaCreate((size_t)1 << 20);
-    ast.epxrMemArena = bohMemoryArenaCreate((size_t)1 << 20);
+    ast.stmtMemArena = bohArenaAllocatorCreate((size_t)1 << 20);
+    ast.epxrMemArena = bohArenaAllocatorCreate((size_t)1 << 20);
 
     return ast;
 }
@@ -1767,14 +1767,14 @@ bohAST bohAstCreate(void)
 bohExpr* bohAstAllocateExpr(bohAST* pAst)
 {
     BOH_ASSERT(pAst);
-    return BOH_MEMORY_ARENA_ALLOC(&pAst->epxrMemArena, bohExpr);
+    return BOH_ARENA_ALLOCATOR_ALLOC(&pAst->epxrMemArena, bohExpr);
 }
 
 
 bohStmt* bohAstAllocateStmt(bohAST* pAst)
 {
     BOH_ASSERT(pAst);
-    return BOH_MEMORY_ARENA_ALLOC(&pAst->stmtMemArena, bohStmt);
+    return BOH_ARENA_ALLOCATOR_ALLOC(&pAst->stmtMemArena, bohStmt);
 }
 
 
@@ -1809,8 +1809,8 @@ size_t bohAstGetMemorySize(const bohAST* pAst)
     BOH_ASSERT(pAst);
     
     return bohDynArrayGetMemorySize(&pAst->stmtPtrsStorage) + 
-        bohMemoryArenaGetCapacity(&pAst->epxrMemArena) + 
-        bohMemoryArenaGetCapacity(&pAst->stmtMemArena);
+        bohArenaAllocatorGetCapacity(&pAst->epxrMemArena) + 
+        bohArenaAllocatorGetCapacity(&pAst->stmtMemArena);
 }
 
 

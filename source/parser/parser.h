@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/memory/memory_arena.h"
+#include "utils/memory/arena_allocator.h"
 #include "types.h"
 
 
@@ -322,8 +322,8 @@ typedef struct AST
 {
     bohDynArray stmtPtrsStorage;
 
-    bohMemoryArena stmtMemArena;
-    bohMemoryArena epxrMemArena;
+    bohArenaAllocator stmtMemArena;
+    bohArenaAllocator epxrMemArena;
 } bohAST;
 
 

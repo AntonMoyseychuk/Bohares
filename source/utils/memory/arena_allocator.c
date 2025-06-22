@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "memory_arena.h"
+#include "arena_allocator.h"
 
 #include "core.h"
 
@@ -15,9 +15,9 @@ static size_t bohAlignForward(size_t ptr, size_t alignment)
 }
 
 
-bohMemoryArena bohMemoryArenaCreate(size_t capacity)
+bohArenaAllocator bohArenaAllocatorCreate(size_t capacity)
 {
-    bohMemoryArena arena = {0};
+    bohArenaAllocator arena = {0};
 
     arena.pMemory = malloc(capacity);
     memset(arena.pMemory, 0, capacity);
@@ -29,7 +29,7 @@ bohMemoryArena bohMemoryArenaCreate(size_t capacity)
 }
 
 
-void bohMemoryArenaDestroy(bohMemoryArena* pArena)
+void bohArenaAllocatorDestroy(bohArenaAllocator* pArena)
 {
     BOH_ASSERT(pArena);
 
@@ -40,7 +40,7 @@ void bohMemoryArenaDestroy(bohMemoryArena* pArena)
 }
 
 
-void* bohMemoryArenaAlloc(bohMemoryArena* pArena, size_t size, size_t alignment)
+void* bohArenaAllocatorAlloc(bohArenaAllocator* pArena, size_t size, size_t alignment)
 {
     BOH_ASSERT(pArena);
 
@@ -55,14 +55,14 @@ void* bohMemoryArenaAlloc(bohMemoryArena* pArena, size_t size, size_t alignment)
 }
 
 
-size_t bohMemoryArenaGetOffset(const bohMemoryArena* pArena)
+size_t bohArenaAllocatorGetOffset(const bohArenaAllocator* pArena)
 {
     BOH_ASSERT(pArena);
     return pArena->offset;
 }
 
 
-size_t bohMemoryArenaGetCapacity(const bohMemoryArena* pArena)
+size_t bohArenaAllocatorGetCapacity(const bohArenaAllocator* pArena)
 {
     BOH_ASSERT(pArena);
     return pArena->capacity;

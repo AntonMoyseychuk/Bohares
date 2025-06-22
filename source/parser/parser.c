@@ -877,6 +877,51 @@ bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc)
 }
 
 
+void bohVarDeclStmtDestroy(bohVarDeclStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    bohStringViewReset(&pStmt->name);
+}
+
+
+void bohVarDeclStmtCreateInPlace(bohVarDeclStmt* pStmt, const bohStringView* pName)
+{
+    BOH_ASSERT(pStmt);
+    BOH_ASSERT(pName);
+
+    bohStringViewAssignStringViewPtr(&pStmt->name, pName);
+}
+
+
+const bohStringView* bohVarDeclStmtGetName(const bohVarDeclStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return &pStmt->name;
+}
+
+
+bohVarDeclStmt* bohVarDeclStmtAssign(bohVarDeclStmt* pDst, const bohVarDeclStmt* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohStringViewAssignStringViewPtr(&pDst->name, &pSrc->name);
+
+    return pDst;
+}
+
+
+bohVarDeclStmt* bohVarDeclStmtMove(bohVarDeclStmt* pDst, bohVarDeclStmt* pSrc)
+{
+    BOH_ASSERT(pDst);
+    BOH_ASSERT(pSrc);
+
+    bohStringViewMove(&pDst->name, &pSrc->name);
+
+    return pDst;
+}
+
+
 void bohAssignmentStmtDestroy(bohAssignmentStmt* pStmt)
 {
     BOH_ASSERT(pStmt);
@@ -958,6 +1003,9 @@ void bohStmtDestroy(bohStmt* pStmt)
         case BOH_STMT_TYPE_IF:
             bohIfStmtDestroy(&pStmt->ifStmt);
             break;
+        case BOH_STMT_TYPE_VAR_DECL:
+            bohVarDeclStmtDestroy(&pStmt->varDeclStmt);
+            break;
         case BOH_STMT_TYPE_ASSIGNMENT:
             bohAssignmentStmtDestroy(&pStmt->assignStmt);
             break;
@@ -1001,6 +1049,17 @@ void bohStmtCreateAssignInPlace(bohStmt* pStmt, const bohExpr* pLeft, const bohE
 }
 
 
+void bohStmtCreateVarDeclInPlace(bohStmt* pStmt, const bohStringView* pName, bohLineNmb line, bohColumnNmb column)
+{
+    BOH_ASSERT(pStmt);
+    BOH_ASSERT(pName);
+
+    pStmt->type = BOH_STMT_TYPE_VAR_DECL;
+    bohVarDeclStmtCreateInPlace(&pStmt->varDeclStmt, pName);
+    bohStmtSetLineColumnNmb(pStmt, line, column);
+}
+
+
 bool bohStmtIsEmpty(const bohStmt *pStmt)
 {
     BOH_ASSERT(pStmt);
@@ -1029,6 +1088,13 @@ bool bohStmtIsAssignment(const bohStmt* pStmt)
 }
 
 
+bool bohStmtIsVarDecl(const bohStmt* pStmt)
+{
+    BOH_ASSERT(pStmt);
+    return pStmt->type == BOH_STMT_TYPE_VAR_DECL;
+}
+
+
 const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt)
 {
     BOH_ASSERT(bohStmtIsPrint(pStmt));
@@ -1050,6 +1116,13 @@ const bohAssignmentStmt* bohStmtGetAssignment(const bohStmt* pStmt)
 }
 
 
+const bohVarDeclStmt* bohStmtGetVarDecl(const bohStmt* pStmt)
+{
+    BOH_ASSERT(bohStmtIsVarDecl(pStmt));
+    return &pStmt->varDeclStmt;
+}
+
+
 bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
 {
     BOH_ASSERT(pDst);
@@ -1067,6 +1140,9 @@ bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc)
             break;
         case BOH_STMT_TYPE_IF:
             bohIfStmtAssign(&pDst->ifStmt, &pSrc->ifStmt);
+            break;
+        case BOH_STMT_TYPE_VAR_DECL:
+            bohVarDeclStmtAssign(&pDst->varDeclStmt, &pSrc->varDeclStmt);
             break;
         case BOH_STMT_TYPE_ASSIGNMENT:
             bohAssignmentStmtAssign(&pDst->assignStmt, &pSrc->assignStmt);
@@ -1100,6 +1176,9 @@ bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc)
             break;
         case BOH_STMT_TYPE_IF:
             bohIfStmtMove(&pDst->ifStmt, &pSrc->ifStmt);
+            break;
+        case BOH_STMT_TYPE_VAR_DECL:
+            bohVarDeclStmtMove(&pDst->varDeclStmt, &pSrc->varDeclStmt);
             break;
         case BOH_STMT_TYPE_ASSIGNMENT:
             bohAssignmentStmtMove(&pDst->assignStmt, &pSrc->assignStmt);
@@ -1212,6 +1291,20 @@ static const bohToken* parsPeekPrevToken(const bohParser* pParser)
     BOH_ASSERT(prevTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage));
 
     return BOH_DYN_ARRAY_AT_CONST(bohToken, pParser->pTokenStorage, prevTokenIdx);
+}
+
+
+static const bohToken* parsPeekNextToken(const bohParser* pParser)
+{
+    BOH_ASSERT(pParser);
+
+    const size_t nextTokenIdx = pParser->currTokenIdx + 1;
+
+    if (nextTokenIdx < bohDynArrayGetSize(pParser->pTokenStorage)) {
+        return BOH_DYN_ARRAY_AT_CONST(bohToken, pParser->pTokenStorage, nextTokenIdx);
+    }
+
+    return NULL;
 }
 
 
@@ -1623,15 +1716,11 @@ static bohStmt* parsParsNextStmt(bohParser* pParser);
 static bohStmt* parsParsPrintStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
-
-    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
     
-    const bool isPrintStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PRINT);
-    BOH_ASSERT(isPrintStmt);
+    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+    const bohExpr* pArgExpr = parsParsExpr(pParser);
 
     bohStmt* pPrintStmt = bohAstAllocateStmt(&pParser->ast);
-
-    const bohExpr* pArgExpr = parsParsExpr(pParser);
     bohStmtCreatePrintInPlace(pPrintStmt, pArgExpr, pCurrToken->line, pCurrToken->column);
 
     return pPrintStmt;
@@ -1644,10 +1733,6 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     BOH_ASSERT(pParser);
 
     const bohToken* pCurrToken = parsPeekCurrToken(pParser);
-
-    const bool isIfStmt = parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_IF);
-    BOH_ASSERT(isIfStmt);
-
     const bohExpr* pCondExpr = parsParsExpr(pParser);
     
     BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column, 
@@ -1696,16 +1781,36 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
 }
 
 
+// <if_stmt> = "var" name
+static bohStmt* parsParsVarDeclStmt(bohParser* pParser)
+{
+    BOH_ASSERT(pParser);
+
+    const bohToken* pCurrToken = parsPeekCurrToken(pParser);
+    BOH_PARSER_EXPECT(pCurrToken->type == BOH_TOKEN_TYPE_IDENTIFIER, pCurrToken->line, pCurrToken->line, "expected an identifier");
+
+    const bohToken* pNextToken = parsPeekNextToken(pParser);
+    if (pNextToken->type != BOH_TOKEN_TYPE_ASSIGNMENT) {
+        // If next token is '=' than we don't have to advance curr token position.
+        parsAdvanceToken(pParser);
+    }
+
+    bohStmt* pVarDeclStmt = bohAstAllocateStmt(&pParser->ast);
+    bohStmtCreateVarDeclInPlace(pVarDeclStmt, &pCurrToken->lexeme, pCurrToken->line, pCurrToken->column);
+    return pVarDeclStmt;
+}
+
+
 static bohStmt* parsParsNextStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
 
-    const bohTokenType type = bohTokenGetType(parsPeekCurrToken(pParser));
-
-    if (type == BOH_TOKEN_TYPE_PRINT) {
+    if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_PRINT)) {
         return parsParsPrintStmt(pParser);
-    } else if (type == BOH_TOKEN_TYPE_IF) {
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_IF)) {
         return parsParsIfStmt(pParser);
+    } else if (parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_VAR)) {
+        return parsParsVarDeclStmt(pParser);
     } else {
         const bohToken* pCurrToken = parsPeekCurrToken(pParser);
 
@@ -1717,8 +1822,6 @@ static bohStmt* parsParsNextStmt(bohParser* pParser)
             bohStmt* pAssignmentStmt = bohAstAllocateStmt(&pParser->ast);
             bohStmtCreateAssignInPlace(pAssignmentStmt, pLeftExpr, pRightExpr, pCurrToken->line, pCurrToken->column);
             return pAssignmentStmt;
-        } else {
-
         }
 
         BOH_ASSERT_FAIL("Invalid token type");

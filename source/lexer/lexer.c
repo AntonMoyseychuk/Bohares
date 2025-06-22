@@ -24,6 +24,7 @@ typedef struct KeyWordToken
 
 
 static const bohKeyWordToken BOH_KEY_WORDS[] = {
+    { "var",     BOH_TOKEN_TYPE_VAR },
     { "if",     BOH_TOKEN_TYPE_IF },
     { "else",   BOH_TOKEN_TYPE_ELSE },
     { "true",   BOH_TOKEN_TYPE_TRUE },
@@ -92,6 +93,7 @@ const char* bohLexerConvertTokenTypeToStr(bohTokenType type)
         case BOH_TOKEN_TYPE_STRING: return "BOH_TOKEN_TYPE_STRING";
         case BOH_TOKEN_TYPE_INTEGER: return "BOH_TOKEN_TYPE_INTEGER";
         case BOH_TOKEN_TYPE_FLOAT: return "BOH_TOKEN_TYPE_FLOAT";
+        case BOH_TOKEN_TYPE_VAR: return "BOH_TOKEN_TYPE_VAR";
         case BOH_TOKEN_TYPE_IF: return "BOH_TOKEN_TYPE_IF";
         case BOH_TOKEN_TYPE_ELSE: return "BOH_TOKEN_TYPE_ELSE";
         case BOH_TOKEN_TYPE_TRUE: return "BOH_TOKEN_TYPE_TRUE";

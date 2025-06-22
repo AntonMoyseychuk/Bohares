@@ -26,7 +26,7 @@
 #if defined(_DEBUG) || !defined(NDEBUG)
     #define BOH_ASSERT_MSG(COND, MSG)                                                                                     \
         if (!(COND)) {                                                                                                    \
-            fprintf_s(stderr, "%s%s: %s(%d)%s", BOH_OUTPUT_COLOR_RED, MSG, __FILE__, __LINE__, BOH_OUTPUT_COLOR_RESET);   \
+            fprintf_s(stderr, "%s%s: %s (%d)%s", BOH_OUTPUT_COLOR_RED, MSG, __FILE__, __LINE__, BOH_OUTPUT_COLOR_RESET);   \
             BOH_DEBUG_BREAK();                                                                                            \
         }
 

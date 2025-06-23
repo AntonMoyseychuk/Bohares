@@ -5,6 +5,11 @@
 #include "core.h"
 
 
+void bohStrIDEngineInit(void);
+void bohStrIDEngineTerminate(void);
+size_t bohStrIDEngineGetOccupiedMemorySize(void);
+
+
 typedef struct StringView bohStringView;
 typedef struct String bohString;
 
@@ -18,9 +23,6 @@ typedef struct StrID
     uint64_t ID;
 } bohStrID;
 
-void bohStrIDInitStorage(void);
-void bohStrIDTermStorage(void);
-size_t bohStrIDGetStorageMemorySize(void);
 
 bohStrID bohStrIDCreate(void);
 bohStrID bohStrIDCreateCStr(const char* pCStr);

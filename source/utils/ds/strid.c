@@ -145,6 +145,9 @@ typedef struct StrIDDataStorage
 } bohStrIDDataStorage;
 
 
+static bohStrIDDataStorage s_storage;
+
+
 static uint64_t bohStrIDDataStorageFindLocationIdx(const bohStrIDDataStorage* pStorage, uint64_t hash)
 {   
     const size_t mappingsCount = bohDynArrayGetSize(&pStorage->hashToDataLocationIdx);
@@ -282,22 +285,19 @@ uint64_t bohStrIDDataStorageGetSize(const bohStrIDDataStorage* pStorage)
 }
 
 
-static bohStrIDDataStorage s_storage;
-
-
-void bohStrIDInitStorage(void)
+void bohStrIDEngineInit(void)
 {
     bohStrIDDataStorageCreateInPlace(&s_storage);
 }
 
 
-void bohStrIDTermStorage(void)
+void bohStrIDEngineTerminate(void)
 {
     bohStrIDDataStorageDestroy(&s_storage);
 }
 
 
-size_t bohStrIDGetStorageMemorySize(void)
+size_t bohStrIDEngineGetOccupiedMemorySize(void)
 {
     return bohDynArrayGetMemorySize(&s_storage.dataStorage) + bohDynArrayGetMemorySize(&s_storage.hashToDataLocationIdx)
         + bohDynArrayGetMemorySize(&s_storage.strDataLocations);
@@ -457,7 +457,10 @@ bool bohStrIDLess(const bohStrID* pLeft, const bohStrID* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    return pLeft->ID < pRight->ID;
+    const bohStringView leftStrView = bohStringViewCreateConstCStr(bohStrIDGetCStr(pLeft));
+    const bohStringView rightStrView = bohStringViewCreateConstCStr(bohStrIDGetCStr(pRight));
+    
+    return bohStringViewLessPtr(&leftStrView, &rightStrView);
 }
 
 
@@ -466,7 +469,10 @@ bool bohStrIDGreater(const bohStrID* pLeft, const bohStrID* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    return pLeft->ID > pRight->ID;
+    const bohStringView leftStrView = bohStringViewCreateConstCStr(bohStrIDGetCStr(pLeft));
+    const bohStringView rightStrView = bohStringViewCreateConstCStr(bohStrIDGetCStr(pRight));
+    
+    return bohStringViewGreaterPtr(&leftStrView, &rightStrView);
 }
 
 
@@ -475,7 +481,7 @@ bool bohStrIDLessEqual(const bohStrID* pLeft, const bohStrID* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    return pLeft->ID <= pRight->ID;
+    return bohStrIDEqual(pLeft, pRight) || bohStrIDLess(pLeft, pRight);
 }
 
 
@@ -484,7 +490,7 @@ bool bohStrIDGreaterEqual(const bohStrID* pLeft, const bohStrID* pRight)
     BOH_ASSERT(pLeft);
     BOH_ASSERT(pRight);
 
-    return pLeft->ID >= pRight->ID;
+    return bohStrIDEqual(pLeft, pRight) || bohStrIDGreater(pLeft, pRight);
 }
 
 

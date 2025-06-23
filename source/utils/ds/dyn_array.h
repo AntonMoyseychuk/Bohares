@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 
 typedef void (*bohDynArrElemDefConstr)(void* pElement);
 typedef void (*bohDynArrElemDestr)(void* pElement);
@@ -38,6 +40,9 @@ void* bohDynArrayPushBack(bohDynArray* pArray, const void* pData);
 void* bohDynArrayAt(bohDynArray* pArray, size_t index);
 const void* bohDynArrayAtConst(const bohDynArray* pArray, size_t index);
 
+const void* bohDynArrayGetDataConst(const bohDynArray* pArray);
+void* bohDynArrayGetData(bohDynArray* pArray);
+
 size_t bohDynArrayGetSize(const bohDynArray* pArray);
 size_t bohDynArrayGetCapacity(const bohDynArray* pArray);
 bool bohDynArrayIsEmpty(const bohDynArray* pArray);
@@ -65,8 +70,8 @@ bohDynArray bohDynArrayCreateDouble(void);
 #define BOH_DYN_ARRAY_CREATE(ELEM_TYPE, ELEM_DEF_CONSTR, ELEM_DESTR, ELEM_COPY_FUNC) \
     bohDynArrayCreate(sizeof(ELEM_TYPE), ELEM_DEF_CONSTR, ELEM_DESTR, ELEM_COPY_FUNC)
 
-#define BOH_DYN_ARRAY_AT(ELEM_TYPE, ARRAY_PTR, INDEX) \
-    (ELEM_TYPE*)bohDynArrayAt(ARRAY_PTR, INDEX)
+#define BOH_DYN_ARRAY_AT(ELEM_TYPE, ARRAY_PTR, INDEX)       (ELEM_TYPE*)bohDynArrayAt(ARRAY_PTR, INDEX)
+#define BOH_DYN_ARRAY_AT_CONST(ELEM_TYPE, ARRAY_PTR, INDEX) (const ELEM_TYPE*)bohDynArrayAtConst(ARRAY_PTR, INDEX)
 
-#define BOH_DYN_ARRAY_AT_CONST(ELEM_TYPE, ARRAY_PTR, INDEX) \
-    (const ELEM_TYPE*)bohDynArrayAtConst(ARRAY_PTR, INDEX)
+#define BOH_DYN_ARRAY_GET_DATA(ELEM_TYPE, ARRAY_PTR)       (ELEM_TYPE*)bohDynArrayGetData(ARRAY_PTR)
+#define BOH_DYN_ARRAY_GET_DATA_CONST(ELEM_TYPE, ARRAY_PTR) (const ELEM_TYPE*)bohDynArrayGetDataConst(ARRAY_PTR)

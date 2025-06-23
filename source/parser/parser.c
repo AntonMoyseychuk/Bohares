@@ -1308,6 +1308,7 @@ static const bohToken* parsPeekNextToken(const bohParser* pParser)
 }
 
 
+// Returns current token and advance token index
 static const bohToken* parsAdvanceToken(bohParser* pParser)
 {
     BOH_ASSERT(pParser);
@@ -1781,7 +1782,7 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
 }
 
 
-// <if_stmt> = "var" name
+// <var_decl_stmt> = "var" name
 static bohStmt* parsParsVarDeclStmt(bohParser* pParser)
 {
     BOH_ASSERT(pParser);

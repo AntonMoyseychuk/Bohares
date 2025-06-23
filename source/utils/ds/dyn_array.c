@@ -228,6 +228,20 @@ const void* bohDynArrayAtConst(const bohDynArray *pArray, size_t index)
 }
 
 
+const void* bohDynArrayGetDataConst(const bohDynArray *pArray)
+{
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
+    return pArray->pData;
+}
+
+
+void* bohDynArrayGetData(bohDynArray *pArray)
+{
+    BOH_ASSERT(bohDynArrayIsValid(pArray));
+    return pArray->pData;
+}
+
+
 size_t bohDynArrayGetSize(const bohDynArray* pArray)
 {
     BOH_ASSERT(bohDynArrayIsValid(pArray));
@@ -251,7 +265,7 @@ bool bohDynArrayIsEmpty(const bohDynArray* pArray)
 size_t bohDynArrayGetMemorySize(const bohDynArray* pArray)
 {
     BOH_ASSERT(bohDynArrayIsValid(pArray));
-    return pArray->size * pArray->elementSize;
+    return pArray->capacity * pArray->elementSize;
 }
 
 

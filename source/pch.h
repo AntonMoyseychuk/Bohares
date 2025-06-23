@@ -17,5 +17,6 @@
 
 #include "utils/ds/string.h"
 #include "utils/ds/string_view.h"
+#include "utils/ds/strid.h"
 
 #include "utils/ds/dyn_array.h"

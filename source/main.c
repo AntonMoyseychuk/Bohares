@@ -406,6 +406,9 @@ int main(int argc, char* argv[])
     const char* pFilePath = "../test/test.boh";
 #endif
 
+    bohStrIDInitStorage();
+    fprintf_s(stdout, "%sSTRID Memory: %f KB\n\n", BOH_OUTPUT_COLOR_GREEN, bohStrIDGetStorageMemorySize() / 1024.f, BOH_OUTPUT_COLOR_RESET);
+
     bohErrorsStateInit();
     bohErrorsStateSetCurrProcessingFile(bohErrorsStateGet(), bohStringViewCreateConstCStr(pFilePath));
 
@@ -466,6 +469,8 @@ int main(int argc, char* argv[])
     bohLexerDestroy(&lexer);
 
     bohErrorsStateDestroy();
+
+    bohStrIDTermStorage();
 
     return EXIT_SUCCESS;
 }

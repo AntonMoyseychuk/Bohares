@@ -18,28 +18,6 @@
     }
 
 
-static void bohPtrDefContr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-    *((void**)pElement) = NULL;
-}
-
-
-static void bohPtrDestr(void* pElement)
-{
-    BOH_ASSERT(pElement);
-    *((void**)pElement) = NULL;
-}
-
-
-static void bohPtrCopyFunc(void* pDst, const void* pSrc)
-{
-    BOH_ASSERT(pDst);
-    BOH_ASSERT(pSrc);
-    *((void**)pDst) = *((void**)pSrc);
-}
-
-
 static bohBoharesString parsGetUnescapedString(const bohBoharesString* pString)
 {
     BOH_ASSERT(pString);
@@ -1739,8 +1717,8 @@ static bohStmt* parsParsIfStmt(bohParser* pParser)
     BOH_PARSER_EXPECT(parsIsCurrTokenMatch(pParser, BOH_TOKEN_TYPE_LCURLY), parsPeekPrevToken(pParser)->line, parsPeekPrevToken(pParser)->column, 
         "expected opening \'{\' in \'if\' statement block");
 
-    bohDynArray thenStmtsPtrs = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
-    bohDynArray elseStmtsPtrs = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
+    bohDynArray thenStmtsPtrs = BOH_DYN_ARRAY_CREATE(bohStmt*, NULL, NULL, NULL);
+    bohDynArray elseStmtsPtrs = BOH_DYN_ARRAY_CREATE(bohStmt*, NULL, NULL, NULL);
 
     const size_t tokensCount = bohDynArrayGetSize(pParser->pTokenStorage);
 
@@ -1859,7 +1837,7 @@ bohAST bohAstCreate(void)
 {
     bohAST ast = {0};
 
-    ast.stmtPtrsStorage = BOH_DYN_ARRAY_CREATE(bohStmt*, bohPtrDefContr, bohPtrDestr, bohPtrCopyFunc);
+    ast.stmtPtrsStorage = BOH_DYN_ARRAY_CREATE(bohStmt*, NULL, NULL, NULL);
 
     ast.stmtMemArena = bohArenaAllocatorCreate((size_t)1 << 20);
     ast.epxrMemArena = bohArenaAllocatorCreate((size_t)1 << 20);

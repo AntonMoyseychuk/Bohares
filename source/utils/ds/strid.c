@@ -185,7 +185,7 @@ static void bohStrIDDataStorageCreateInPlace(bohStrIDDataStorage* pStorage)
         StrIDDataLocationDestr, StrIDDataLocationCopy);
     bohDynArrayReserve(&pStorage->strDataLocations, BOH_PREALLOCATED_STR_IDS_COUNT);
 
-    pStorage->dataStorage = bohDynArrayCreateUI8();
+    pStorage->dataStorage = BOH_DYN_ARRAY_CREATE(char, NULL, NULL, NULL);
     bohDynArrayResize(&pStorage->dataStorage, BOH_PREALLOCATED_STORAGE_SIZE);
 
     pStorage->lastAllocatedID = BOH_INVALID_STR_ID_HASH;

@@ -55,18 +55,6 @@ bohDynArray* bohDynArrayAssign(bohDynArray* pDst, const bohDynArray* pSrc);
 bohDynArray* bohDynArrayMove(bohDynArray* pDst, bohDynArray* pSrc);
 
 
-bohDynArray bohDynArrayCreateI8(void);
-bohDynArray bohDynArrayCreateUI8(void);
-bohDynArray bohDynArrayCreateI16(void);
-bohDynArray bohDynArrayCreateUI16(void);
-bohDynArray bohDynArrayCreateI32(void);
-bohDynArray bohDynArrayCreateUI32(void);
-bohDynArray bohDynArrayCreateI64(void);
-bohDynArray bohDynArrayCreateUI64(void);
-bohDynArray bohDynArrayCreateFloat(void);
-bohDynArray bohDynArrayCreateDouble(void);
-
-
 #define BOH_DYN_ARRAY_CREATE(ELEM_TYPE, ELEM_DEF_CONSTR, ELEM_DESTR, ELEM_COPY_FUNC) \
     bohDynArrayCreate(sizeof(ELEM_TYPE), ELEM_DEF_CONSTR, ELEM_DESTR, ELEM_COPY_FUNC)
 

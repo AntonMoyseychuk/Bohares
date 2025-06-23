@@ -60,7 +60,6 @@ typedef enum TokenType
     BOH_TOKEN_TYPE_FLOAT,
     
     // Keywords
-    BOH_TOKEN_TYPE_VAR,
     BOH_TOKEN_TYPE_IF,
     BOH_TOKEN_TYPE_ELSE,
     BOH_TOKEN_TYPE_TRUE,

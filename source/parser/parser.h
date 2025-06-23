@@ -250,23 +250,6 @@ bohIfStmt* bohIfStmtAssign(bohIfStmt* pDst, const bohIfStmt* pSrc);
 bohIfStmt* bohIfStmtMove(bohIfStmt* pDst, bohIfStmt* pSrc);
 
 
-typedef struct VarDeclStmt
-{
-    bohStringView name;
-} bohVarDeclStmt;
-
-
-void bohVarDeclStmtDestroy(bohVarDeclStmt* pStmt);
-
-// NOTE: *CreateInPlace functions don't call destroy function
-void bohVarDeclStmtCreateInPlace(bohVarDeclStmt* pStmt, const bohStringView* pName);
-
-const bohStringView* bohVarDeclStmtGetName(const bohVarDeclStmt* pStmt);
-
-bohVarDeclStmt* bohVarDeclStmtAssign(bohVarDeclStmt* pDst, const bohVarDeclStmt* pSrc);
-bohVarDeclStmt* bohVarDeclStmtMove(bohVarDeclStmt* pDst, bohVarDeclStmt* pSrc);
-
-
 typedef struct AssignmentStmt
 {
     const bohExpr* pLeft;
@@ -291,7 +274,6 @@ typedef enum StmtType
     BOH_STMT_TYPE_EMPTY,
     BOH_STMT_TYPE_PRINT,
     BOH_STMT_TYPE_IF,
-    BOH_STMT_TYPE_VAR_DECL,
     BOH_STMT_TYPE_ASSIGNMENT,
 } bohStmtType;
 
@@ -304,7 +286,6 @@ typedef struct Stmt
     {
         bohIfStmt ifStmt;
         bohPrintStmt printStmt;
-        bohVarDeclStmt varDeclStmt;
         bohAssignmentStmt assignStmt;
     };
     
@@ -319,18 +300,15 @@ void bohStmtDestroy(bohStmt* pStmt);
 void bohStmtCreatePrintInPlace(bohStmt* pStmt, const bohExpr* pArgExpr, bohLineNmb line, bohColumnNmb column);
 void bohStmtCreateIfInPlace(bohStmt* pStmt, const bohExpr* pCondExpr, bohDynArray* pThenStmtPtrs, bohDynArray* pElseStmtPtrs, bohLineNmb line, bohColumnNmb column);
 void bohStmtCreateAssignInPlace(bohStmt* pStmt, const bohExpr* pLeft, const bohExpr* pRight, bohLineNmb line, bohColumnNmb column);
-void bohStmtCreateVarDeclInPlace(bohStmt* pStmt, const bohStringView* pName, bohLineNmb line, bohColumnNmb column);
 
 bool bohStmtIsEmpty(const bohStmt* pStmt);
 bool bohStmtIsPrint(const bohStmt* pStmt);
 bool bohStmtIsIf(const bohStmt* pStmt);
 bool bohStmtIsAssignment(const bohStmt* pStmt);
-bool bohStmtIsVarDecl(const bohStmt* pStmt);
 
 const bohPrintStmt* bohStmtGetPrint(const bohStmt* pStmt);
 const bohIfStmt* bohStmtGetIf(const bohStmt* pStmt);
 const bohAssignmentStmt* bohStmtGetAssignment(const bohStmt* pStmt);
-const bohVarDeclStmt* bohStmtGetVarDecl(const bohStmt* pStmt);
 
 bohStmt* bohStmtAssign(bohStmt* pDst, const bohStmt* pSrc);
 bohStmt* bohStmtMove(bohStmt* pDst, bohStmt* pSrc);

@@ -5,11 +5,11 @@
 #include "core.h"
 
 
-bohStackFrame bohStackFrameCreateChild(const bohStackFrame* pOwner)
+bohStackFrame bohStackFrameCreateChild(const bohStackFrame* pParentScope)
 {
     bohStackFrame frame = {0};
 
-    frame.pOwner = pOwner;
+    frame.pParentScope = pParentScope;
 
     return frame;
 }

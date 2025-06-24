@@ -1,30 +1,37 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 
-typedef struct StackAllocator
+typedef enum StackAllocatorType
 {
+    BOH_STACK_ALLOCATOR_TYPE_FORWARD,
+    BOH_STACK_ALLOCATOR_TYPE_REVERSE
+} bohStackAllocatorType;
+
+typedef struct {
     uint8_t* pMemory;
     size_t topOffset;
     size_t capacity;
-    int32_t addressGrowthDirection;
+    bohStackAllocatorType type;
 } bohStackAllocator;
 
 
-// the offset occurs upward in addresses from 0 to capacity
-bohStackAllocator bohStackAllocatorCreate(size_t capacity);
-// the offset occurs downward in addresses from capacity - 1 to 0
-bohStackAllocator bohStackAllocatorCreateReversed(size_t capacity);
+void bohStackAllocatorDestroy(bohStackAllocator* allocator);
 
-void bohStackAllocatorDestroy(bohStackAllocator* pAllocator);
+bohStackAllocator bohStackAllocatorCreate(size_t capacity, bohStackAllocatorType type);
 
-void* bohStackAllocatorAlloc(bohStackAllocator* pAllocator, size_t size, size_t alignment);
-void bohStackAllocatorFree(bohStackAllocator* pAllocator, size_t size, size_t alignment);
+void* bohStackAllocatorAlloc(bohStackAllocator* allocator, size_t size, size_t alignment);
+void bohStackAllocatorFree(bohStackAllocator* allocator, size_t size, size_t alignment);
 
-size_t bohStackAllocatorGetTopOffset(const bohStackAllocator* pAllocator);
 size_t bohStackAllocatorGetCapacity(const bohStackAllocator* pAllocator);
+
+bool bohStackAllocatorIsForward(const bohStackAllocator* pAllocator);
+
 
 #define BOH_STACK_ALLOCATOR_ALLOC(STACK_ALLOC_PTR, TYPE) (TYPE*)bohStackAllocatorAlloc(STACK_ALLOC_PTR, sizeof(TYPE), _Alignof(TYPE))
 #define BOH_STACK_ALLOCATOR_FREE(STACK_ALLOC_PTR, TYPE) bohStackAllocatorFree(STACK_ALLOC_PTR, sizeof(TYPE), _Alignof(TYPE))

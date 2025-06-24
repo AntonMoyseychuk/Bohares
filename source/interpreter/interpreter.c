@@ -514,18 +514,18 @@ static bohStmtInterpResult interpCreateDummyStmtInterpResult(void)
 }
 
 
-static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr);
-static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr);
+static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/);
+static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/);
 
 
-static bohExprInterpResult interpInterpretExpr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretExpr(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(pExpr);
 
     if (bohExprIsBinaryExpr(pExpr)) {
-        return interpInterpretBinaryExpr(pExpr);
+        return interpInterpretBinaryExpr(pExpr/*, pStackFrame*/);
     } else if (bohExprIsUnaryExpr(pExpr)) {
-        return interpInterpretUnaryExpr(pExpr);
+        return interpInterpretUnaryExpr(pExpr/*, pStackFrame*/);
     }
 
     if (bohExprIsValueExpr(pExpr)) {
@@ -543,14 +543,14 @@ static bohExprInterpResult interpInterpretExpr(const bohExpr* pExpr)
 }
 
 
-static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(bohExprIsUnaryExpr(pExpr));
 
     const bohUnaryExpr* pUnaryExpr = bohExprGetUnaryExpr(pExpr);
 
     const bohExpr* pOperandExpr = bohUnaryExprGetExpr(pUnaryExpr);
-    const bohExprInterpResult result = interpInterpretExpr(pOperandExpr);
+    const bohExprInterpResult result = interpInterpretExpr(pOperandExpr/*, pStackFrame*/);
     
     const char* pOperatorStr = bohParsExprOperatorToStr(pUnaryExpr->op);
     BOH_INTERP_EXPECT(bohExprInterpResultIsNumber(&result), bohExprGetLine(pExpr), bohExprGetColumn(pExpr), 
@@ -574,13 +574,13 @@ static bohExprInterpResult interpInterpretUnaryExpr(const bohExpr* pExpr)
 }
 
 
-static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
     const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
-    const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
+    const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr)/*, pStackFrame*/);
 
     BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)),
         "Invalid left bohExprInterpResult type");
@@ -592,7 +592,7 @@ static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
         return bohExprInterpResultCreateNumberI64(false);
     }
 
-    const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
+    const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr)/*, pStackFrame*/);
 
     BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult)),
         "Invalid right bohExprInterpResult type");
@@ -608,13 +608,13 @@ static bohExprInterpResult interpInterpretLogicalAnd(const bohExpr* pExpr)
 }
 
 
-static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
     const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
-    const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
+    const bohExprInterpResult leftInterpResult = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr)/*, pStackFrame*/);
 
     BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&leftInterpResult) || bohExprInterpResultIsString(&leftInterpResult)),
         "Invalid left bohExprInterpResult type");
@@ -626,7 +626,7 @@ static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
         return bohExprInterpResultCreateNumberI64(true);
     }
 
-    const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
+    const bohExprInterpResult rightInterpResult = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr)/*, pStackFrame*/);
     
     BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&rightInterpResult) || bohExprInterpResultIsString(&rightInterpResult)),
         "Invalid right bohExprInterpResult type");
@@ -642,20 +642,20 @@ static bohExprInterpResult interpInterpretLogicalOr(const bohExpr* pExpr)
 }
 
 
-static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr)
+static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(bohExprIsBinaryExpr(pExpr));
     
     const bohBinaryExpr* pBinaryExpr = bohExprGetBinaryExpr(pExpr);
 
     if (pBinaryExpr->op == BOH_OP_AND) {
-        return interpInterpretLogicalAnd(pExpr);
+        return interpInterpretLogicalAnd(pExpr/*, pStackFrame*/);
     } else if (pBinaryExpr->op == BOH_OP_OR) {
-        return interpInterpretLogicalOr(pExpr);
+        return interpInterpretLogicalOr(pExpr/*, pStackFrame*/);
     }
 
-    const bohExprInterpResult left = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr));
-    const bohExprInterpResult right = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr));
+    const bohExprInterpResult left = interpInterpretExpr(bohBinaryExprGetLeftExpr(pBinaryExpr)/*, pStackFrame*/);
+    const bohExprInterpResult right = interpInterpretExpr(bohBinaryExprGetRightExpr(pBinaryExpr)/*, pStackFrame*/);
 
     BOH_ASSERT_MSG((bohExprInterpResultIsNumber(&left) || bohExprInterpResultIsString(&left)),
         "Invalid left bohExprInterpResult type");
@@ -769,14 +769,14 @@ static bohExprInterpResult interpInterpretBinaryExpr(const bohExpr* pExpr)
 }
 
 
-static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt);
+static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt/*, bohStackFrame* pStackFrame*/);
 
 
-static bohStmtInterpResult bohAstInterpretPrintStmt(const bohPrintStmt* pPrintStmt)
+static bohStmtInterpResult bohAstInterpretPrintStmt(const bohPrintStmt* pPrintStmt/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(pPrintStmt);
 
-    bohExprInterpResult argInterpResult = interpInterpretExpr(pPrintStmt->pArgExpr);
+    bohExprInterpResult argInterpResult = interpInterpretExpr(pPrintStmt->pArgExpr/*, pStackFrame*/);
     bohExprInterpResult* pArgInterpResult = &argInterpResult;
 
     if (bohExprInterpResultIsNumber(pArgInterpResult)) {
@@ -808,11 +808,11 @@ static bohStmtInterpResult bohAstInterpretPrintStmt(const bohPrintStmt* pPrintSt
 }
 
 
-static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt)
+static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(pIfStmt);
 
-    bohExprInterpResult argInterpResult = interpInterpretExpr(pIfStmt->pCondExpr);
+    bohExprInterpResult argInterpResult = interpInterpretExpr(pIfStmt->pCondExpr/*, pStackFrame*/);
     bohExprInterpResult* pArgInterpResult = &argInterpResult;
 
     if (bohExprInterpResultToBool(pArgInterpResult)) {
@@ -820,14 +820,14 @@ static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt)
 
         for (size_t i = 0; i < thenStmtCount; ++i) {
             const bohStmt* pThenStmt = bohIfStmtGetThenStmtAt(pIfStmt, i);
-            bohAstInterpretStmt(pThenStmt);
+            bohAstInterpretStmt(pThenStmt/*, pStackFrame*/);
         }
     } else {
         const size_t elseStmtCount = bohIfStmtGetElseStmtsCount(pIfStmt);
 
         for (size_t i = 0; i < elseStmtCount; ++i) {
             const bohStmt* pElseStmt = bohIfStmtGetElseStmtAt(pIfStmt, i);
-            bohAstInterpretStmt(pElseStmt);
+            bohAstInterpretStmt(pElseStmt/*, pStackFrame*/);
         }
     }
     
@@ -838,15 +838,15 @@ static bohStmtInterpResult bohAstInterpretIfStmt(const bohIfStmt* pIfStmt)
 }
 
 
-static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt)
+static bohStmtInterpResult bohAstInterpretStmt(const bohStmt* pStmt/*, bohStackFrame* pStackFrame*/)
 {
     BOH_ASSERT(pStmt);
 
     switch(pStmt->type) {
         case BOH_STMT_TYPE_PRINT:
-            return bohAstInterpretPrintStmt(bohStmtGetPrint(pStmt));
+            return bohAstInterpretPrintStmt(bohStmtGetPrint(pStmt)/*, pStackFrame*/);
         case BOH_STMT_TYPE_IF:
-            return bohAstInterpretIfStmt(bohStmtGetIf(pStmt));
+            return bohAstInterpretIfStmt(bohStmtGetIf(pStmt)/*, bohStackFrameCreateChild(pStackFrame)*/);
         default:
             BOH_ASSERT_FAIL("Invalid statement type");
             return interpCreateDummyStmtInterpResult();
@@ -860,9 +860,11 @@ static void bohAstInterpretStmts(const bohAST* pAst)
     
     const size_t stmtCount = bohAstGetStmtCount(pAst);
 
+    // bohStackFrame baseStackFrame = ...
+
     for (size_t i = 0; i < stmtCount; ++i) {
         const bohStmt* pStmt = bohAstGetStmtByIdx(pAst, i);
-        bohAstInterpretStmt(pStmt);
+        bohAstInterpretStmt(pStmt/*, &baseStackFrame*/);
     }
 }
 
@@ -964,7 +966,7 @@ const bohPrintStmtInterpResult* bohStmtInterpResultGetPrintStmtResult(const bohS
 }
 
 
-const bohIfStmtInterpResult *bohStmtInterpResultGetIfStmtResult(const bohStmtInterpResult *pResult)
+const bohIfStmtInterpResult* bohStmtInterpResultGetIfStmtResult(const bohStmtInterpResult* pResult)
 {
     BOH_ASSERT(bohStmtInterpResultIsIfStmt(pResult));
     return &pResult->ifStmtInterpResult;

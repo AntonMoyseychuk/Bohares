@@ -5,78 +5,70 @@
 #include "core.h"
 
 
-#define BOH_STACK_GROWTH_UP 1
-#define BOH_STACK_GROWTH_DOWN -1
-
 #define BOH_ALIGN_UP(PTR, ALIGNMENT) ((void *)(((uintptr_t)(PTR) + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1)))
-
-
-static bohStackAllocator bohStackAllocatorCreateDirectional(size_t capacity, bool isReversed)
-{
-    BOH_ASSERT(capacity > 0);
-
-    bohStackAllocator allocator = {0};
-    
-    allocator.pMemory = malloc(capacity);
-    memset(allocator.pMemory, 0, capacity);
-
-    allocator.addressGrowthDirection = isReversed ? -1 : 1;
-
-    allocator.topOffset = isReversed ? capacity : 0;
-    allocator.capacity = capacity;
-
-    return allocator;
-}
-
-
-bohStackAllocator bohStackAllocatorCreate(size_t capacity)
-{
-    return bohStackAllocatorCreateDirectional(capacity, false);
-}
-
-
-bohStackAllocator bohStackAllocatorCreateReversed(size_t capacity)
-{
-    return bohStackAllocatorCreateDirectional(capacity, true);
-}
+#define BOH_ALIGN_DOWN(PTR, ALIGNMENT) ((void *)(((uintptr_t)(PTR)) & ~(uintptr_t)((ALIGNMENT) - 1)))
 
 
 void bohStackAllocatorDestroy(bohStackAllocator* pAllocator)
 {
-    BOH_ASSERT(pAllocator);
+    BOH_ASSERT(pAllocator);    
 
     free(pAllocator->pMemory);
     pAllocator->pMemory = NULL;
-
-    pAllocator->capacity = 0;
     pAllocator->topOffset = 0;
-    pAllocator->addressGrowthDirection = 1;
+    pAllocator->capacity = 0;
+}
+
+
+bohStackAllocator bohStackAllocatorCreate(size_t capacity, bohStackAllocatorType type)
+{
+    bohStackAllocator allocator = {0};
+    
+    allocator.pMemory = (uint8_t*)malloc(capacity);
+    BOH_ASSERT(allocator.pMemory);
+
+    memset(allocator.pMemory, 0, capacity);
+
+    allocator.capacity = capacity;
+    allocator.type = type;
+    allocator.topOffset = (type == BOH_STACK_ALLOCATOR_TYPE_FORWARD) ? 0 : capacity;
+
+    return allocator;
 }
 
 
 void* bohStackAllocatorAlloc(bohStackAllocator* pAllocator, size_t size, size_t alignment)
 {
     BOH_ASSERT(pAllocator);
+    BOH_ASSERT(pAllocator->pMemory);
     BOH_ASSERT(size > 0);
     BOH_ASSERT(alignment > 0);
+    
+    uintptr_t base = (uintptr_t)pAllocator->pMemory;
 
-    const size_t alignedSize = (size + alignment - 1) & ~(alignment - 1);
-
-    // Check if there is enough space for allocation
-    if (pAllocator->addressGrowthDirection == BOH_STACK_GROWTH_UP) {
-        BOH_ASSERT(pAllocator->topOffset + alignedSize <= pAllocator->capacity);
+    if (pAllocator->type == BOH_STACK_ALLOCATOR_TYPE_FORWARD) {
+        const uintptr_t raw     = base + pAllocator->topOffset;
+        const uintptr_t aligned = BOH_ALIGN_UP(raw, alignment);
+        const size_t offset     = aligned + size - base;
         
-        void* pAlloc = pAllocator->pMemory + pAllocator->topOffset;
-        pAllocator->topOffset += alignedSize;
+        if (offset > pAllocator->capacity) {
+            BOH_ASSERT_FAIL("Out of memory");
+            return NULL;
+        }
 
-        return BOH_ALIGN_UP(pAlloc, alignment);
+        pAllocator->topOffset = offset;
+        return (void*)aligned;
     } else {
-        BOH_ASSERT(pAllocator->topOffset >= alignedSize);
-
-        pAllocator->topOffset -= alignedSize;
-        void* pAlloc = pAllocator->pMemory + pAllocator->topOffset;
-
-        return BOH_ALIGN_UP(pAlloc, alignment);
+        const uintptr_t raw = base + pAllocator->topOffset - size;
+        const uintptr_t aligned = BOH_ALIGN_DOWN(raw, alignment);
+        
+        if (aligned < base) {
+            BOH_ASSERT_FAIL("Out of memory");
+            return NULL;
+        }
+        
+        pAllocator->topOffset = aligned - base;
+        return (void*)aligned;
     }
 }
 
@@ -84,23 +76,19 @@ void* bohStackAllocatorAlloc(bohStackAllocator* pAllocator, size_t size, size_t 
 void bohStackAllocatorFree(bohStackAllocator* pAllocator, size_t size, size_t alignment)
 {
     BOH_ASSERT(pAllocator);
+    BOH_ASSERT(pAllocator->pMemory);
     BOH_ASSERT(size > 0);
     BOH_ASSERT(alignment > 0);
 
     const size_t alignedSize = (size + alignment - 1) & ~(alignment - 1);
 
-    if (pAllocator->addressGrowthDirection == BOH_STACK_GROWTH_UP) {
+    if (pAllocator->type == BOH_STACK_ALLOCATOR_TYPE_FORWARD) {
+        BOH_ASSERT(pAllocator->topOffset >= alignedSize);
         pAllocator->topOffset -= alignedSize;
     } else {
+        BOH_ASSERT(pAllocator->topOffset + alignedSize <= pAllocator->capacity);
         pAllocator->topOffset += alignedSize;
     }
-}
-
-
-size_t bohStackAllocatorGetTopOffset(const bohStackAllocator* pAllocator)
-{
-    BOH_ASSERT(pAllocator);
-    return pAllocator->topOffset;
 }
 
 
@@ -108,4 +96,11 @@ size_t bohStackAllocatorGetCapacity(const bohStackAllocator* pAllocator)
 {
     BOH_ASSERT(pAllocator);
     return pAllocator->capacity;
+}
+
+
+bool bohStackAllocatorIsForward(const bohStackAllocator* pAllocator)
+{
+    BOH_ASSERT(pAllocator);
+    return pAllocator->type == BOH_STACK_ALLOCATOR_TYPE_FORWARD;
 }
